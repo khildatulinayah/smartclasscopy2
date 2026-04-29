@@ -1,0 +1,60 @@
+-- Update nama siswa
+UPDATE users SET name = 
+CASE id
+    WHEN 4 THEN 'Harry James Potter'
+    ...
+END
+WHERE id >= 4;
+
+-- Update email siswa
+UPDATE users 
+SET email = CONCAT(
+    LOWER(SUBSTRING_INDEX(name, ' ', 1)),
+    '@smartclass.com'
+)
+WHERE id >= 4;
+
+--update email siswa dari id 7 sampe 41 jadi ada absen
+UPDATE users 
+SET email = CONCAT(
+    LOWER(SUBSTRING_INDEX(name, ' ', 1)),
+    (id - 6),
+    '@smartclass.com'
+)
+WHERE id BETWEEN 7 AND 41;
+
+
+-- buat data palsu untuk kas
+INSERT INTO weekly_payments
+(student_id, week_number, month, year, amount, status, payment_date, created_by, created_at)
+SELECT 
+s.student_id,
+w.week,
+m.month,
+m.year,
+5000,
+IF(RAND() > 0.25, 'paid', 'unpaid'),
+IF(RAND() > 0.25, DATE_ADD(m.start_date, INTERVAL (w.week-1)*7 DAY), NULL),
+1,
+NOW()
+FROM
+(
+    SELECT 4 AS student_id UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8
+    UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13
+    UNION SELECT 14 UNION SELECT 15 UNION SELECT 16 UNION SELECT 17 UNION SELECT 18
+    UNION SELECT 19 UNION SELECT 20 UNION SELECT 21 UNION SELECT 22 UNION SELECT 23
+    UNION SELECT 24 UNION SELECT 25 UNION SELECT 26 UNION SELECT 27 UNION SELECT 28
+    UNION SELECT 29 UNION SELECT 30 UNION SELECT 31 UNION SELECT 32 UNION SELECT 33
+    UNION SELECT 34 UNION SELECT 35 UNION SELECT 36 UNION SELECT 37 UNION SELECT 38
+    UNION SELECT 39 UNION SELECT 40 UNION SELECT 41
+) s
+CROSS JOIN
+(
+    SELECT 1 AS week UNION SELECT 2 UNION SELECT 3 UNION SELECT 4
+) w
+CROSS JOIN
+(
+    SELECT 'January' AS month, 2026 AS year, '2026-01-05' AS start_date
+    UNION
+    SELECT 'February', 2026, '2026-02-02'
+) m;
