@@ -4,53 +4,28 @@
 
 @section('content')
 <div class="dashboard-layout">
-    <!-- Same sidebar as dashboard/weekly -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="logo-img">
-                <span class="logo-text">SMARTCLASS</span>
-            </div>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="{{ route('bendahara.dashboard') }}" class="nav-item">
-                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                <span>Dashboard</span>
-            </a>
-            <a href="{{ route('bendahara.kas') }}" class="nav-item">
-                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span>Keuangan</span>
-            </a>
-            <a href="{{ route('bendahara.weekly.payments') }}" class="nav-item">
-                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span>Pembayaran Mingguan</span>
-            </a>
-                    </nav>
-        <div class="sidebar-footer">
-            <div class="user-profile-mini">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=3b82f6&color=fff" alt="User" class="user-avatar-mini">
-                <div class="user-info-mini">
-                    <div class="user-name-mini">{{ auth()->user()->name }}</div>
-                    <div class="user-role-mini">{{ ucfirst(auth()->user()->role) }}</div>
-                </div>
-            </div>
-            <form method="POST" action="{{ route('logout') }}" class="logout-form">
-                @csrf
-                <button type="submit" class="logout-btn">
-                    <svg class="logout-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    <span>Logout</span>
-                </button>
-            </form>
-        </div>
-    </aside>
+    @include('components.bendahara-sidebar')
 
     <div class="main-area">
         <main class="main-content">
             <!-- Greeting -->
             <section class="greeting-section mb-8">
                 <div class="greeting-card">
-                    <h1 class="greeting-title">Pembayaran Mingguan Siswa</h1>
-                    <p class="greeting-subtitle">Tabel sederhana untuk tracking status pembayaran 4 minggu per bulan</p>
+                    <!-- Month Navigation -->
+                    <div class="flex items-center justify-between mb-6">
+                        <a href="?month={{ $prevMonth ?? ($month == 1 ? 12 : $month - 1) }}&year={{ $prevYear ?? ($month == 1 ? $year - 1 : $year) }}" class="nav-btn">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                            Bulan Sebelumnya
+                        </a>
+                        <div class="text-center">
+                            <h1 class="greeting-title">{{ $currentMonthName ?? \Carbon\Carbon::create($year ?? now()->year, $month ?? now()->month)->locale('id')->translatedFormat('F Y') }}</h1>
+                            <p class="greeting-subtitle">Pembayaran Mingguan Siswa</p>
+                        </div>
+                        <a href="?month={{ $nextMonth ?? ($month == 12 ? 1 : $month + 1) }}&year={{ $nextYear ?? ($month == 12 ? $year + 1 : $year) }}" class="nav-btn">
+                            Bulan Selanjutnya
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </a>
+                    </div>
                 </div>
             </section>
 
@@ -61,6 +36,42 @@
                         <div class="stat-header">
                             <div class="stat-icon payment">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                            </div>
+                            <div class="stat-title">Total Siswa</div>
+                        </div>
+                        <div class="stat-value">{{ $totalStudents ?? 0 }}</div>
+                        <div class="stat-description">Siswa aktif bulan ini</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon income">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div class="stat-title">Sudah Bayar</div>
+                        </div>
+                        <div class="stat-value">{{ $paidBills ?? 0 }}</div>
+                        <div class="stat-description">Dari {{ $totalBills ?? 0 }} total tagihan</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon expense">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 0l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                            <div class="stat-title">Belum Bayar</div>
+                        </div>
+                        <div class="stat-value">{{ $unpaidBills ?? 0 }}</div>
+                        <div class="stat-description">Masih menunggak pembayaran</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon balance">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div class="stat-title">Kas Masuk</div>
+                        </div>
+                        <div class="stat-value">Rp {{ number_format($paidAmount ?? 0, 0, ',', '.') }}</div>
+                        <div class="stat-description">Total pembayaran bulan ini</div>
+                    </div>
                 </div>
             </section>
 
@@ -80,6 +91,7 @@
                                     <th class="text-center">Minggu 3</th>
                                     <th class="text-center">Minggu 4</th>
                                     <th class="text-center">Total</th>
+                                    <th class="text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -104,11 +116,21 @@
                                             {{ $paidCount }}/4
                                         </span>
                                     </td>
+                                    <td class="text-center">
+                                        @if($paidCount < 4)
+                                            <button onclick="showPaymentModal({{ $payments->first()->student->id }}, '{{ $payments->first()->student->name }}', {{ $month ?? now()->month }}, {{ $year ?? now()->year }})" class="action-btn">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                Bayar
+                                            </button>
+                                        @else
+                                            <span class="text-green-600 text-sm">Lunas</span>
+                                        @endif
+                                    </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-8 text-gray-500">
-                                        Belum ada data pembayaran
+                                    <td colspan="7" class="text-center py-8 text-gray-500">
+                                        Belum ada data pembayaran untuk bulan {{ $currentMonthName ?? \Carbon\Carbon::create($year ?? now()->year, $month ?? now()->month)->locale('id')->translatedFormat('F Y') }}
                                     </td>
                                 </tr>
                                 @endforelse
@@ -181,8 +203,189 @@
 .status-badge.success { background: #dcfce7; color: #166534; }
 .status-badge.danger { background: #fee2e2; color: #dc2626; }
 .status-badge.warning { background: #fef3c7; color: #92400e; }
+.nav-btn { display: flex; align-items: center; gap: 8px; background: #3b82f6; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s ease; }
+.nav-btn:hover { background: #2563eb; transform: translateY(-1px); }
+.action-btn { display: inline-flex; align-items: center; gap: 4px; background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.action-btn:hover { background: #059669; transform: translateY(-1px); }
 @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px) { .sidebar { width: 260px; } .main-content { padding: 20px; } .stats-grid { grid-template-columns: 1fr; } .tables-section { grid-template-columns: 1fr; } }
 </style>
+
+<!-- Modal Pembayaran -->
+<div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-bold mb-4">Proses Pembayaran Mingguan</h3>
+        
+        <form id="paymentForm" class="space-y-4">
+            <input type="hidden" id="student_id" name="student_id">
+            <input type="hidden" id="payment_month" name="month">
+            <input type="hidden" id="payment_year" name="year">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siswa:</label>
+                <div id="student_name" class="p-2 bg-gray-100 rounded font-semibold"></div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Bulan:</label>
+                <div id="payment_month_display" class="p-2 bg-gray-100 rounded"></div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Minggu:</label>
+                <select id="week_select" name="week_number" class="w-full p-2 border border-gray-300 rounded-lg" required>
+                    <option value="">-- Pilih Minggu --</option>
+                    <option value="1">Minggu 1</option>
+                    <option value="2">Minggu 2</option>
+                    <option value="3">Minggu 3</option>
+                    <option value="4">Minggu 4</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah:</label>
+                <div class="p-2 bg-green-100 rounded font-semibold">Rp 5.000</div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Pembayaran:</label>
+                <input type="date" id="payment_date" name="payment_date" 
+                       class="w-full p-2 border border-gray-300 rounded-lg" required>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan:</label>
+                <input type="text" id="payment_description" name="description" 
+                       placeholder="Pembayaran kas mingguan" 
+                       class="w-full p-2 border border-gray-300 rounded-lg">
+            </div>
+            
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 font-semibold">
+                    Proses Pembayaran
+                </button>
+                <button type="button" onclick="closePaymentModal()" 
+                        class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 font-semibold">
+                    Batal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showPaymentModal(studentId, studentName, month, year) {
+    document.getElementById('student_id').value = studentId;
+    document.getElementById('student_name').textContent = studentName;
+    document.getElementById('payment_month').value = month;
+    document.getElementById('payment_year').value = year;
+    
+    // Format month name
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    document.getElementById('payment_month_display').textContent = monthNames[month - 1] + ' ' + year;
+    
+    // Set default date
+    document.getElementById('payment_date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('payment_description').value = 'Pembayaran kas mingguan';
+    
+    // Show modal
+    document.getElementById('paymentModal').classList.remove('hidden');
+}
+
+function closePaymentModal() {
+    document.getElementById('paymentModal').classList.add('hidden');
+    document.getElementById('paymentForm').reset();
+}
+
+// Handle form submission
+document.getElementById('paymentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    
+    submitBtn.textContent = 'Memproses...';
+    submitBtn.disabled = true;
+    
+    // Create transaction first
+    fetch('/bendahara/kas/store', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.transaction) {
+            // Find and process the weekly payment
+            return fetch('/bendahara/api/find-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    student_id: formData.get('student_id'),
+                    week_number: formData.get('week_number'),
+                    month: formData.get('month'),
+                    year: formData.get('year')
+                })
+            });
+        } else {
+            throw new Error(data.message || 'Transaksi gagal');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.payment) {
+            // Process the payment
+            return fetch('/bendahara/process-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    payment_id: data.payment.id,
+                    transaction_id: data.transaction_id
+                })
+            });
+        } else {
+            throw new Error('Pembayaran tidak ditemukan');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Pembayaran berhasil dicatat!');
+            closePaymentModal();
+            location.reload();
+        } else {
+            alert('Gagal memproses pembayaran: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan: ' + error.message);
+    })
+    .finally(() => {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+// Close modal when clicking outside
+document.getElementById('paymentModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePaymentModal();
+    }
+});
+</script>
 @endsection
 

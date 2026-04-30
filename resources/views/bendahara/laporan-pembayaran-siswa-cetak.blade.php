@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Laporan Pembayaran Siswa - <?php echo e($monthName); ?> <?php echo e($year); ?></title>
+    <title>Laporan Pembayaran Siswa - {{ $monthName }} {{ $year }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background: white; }
@@ -34,39 +34,39 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="<?php echo e(asset('images/logo.png')); ?>" alt="Logo SMARTCLASS" class="logo" onerror="this.style.display='none'">
+            <img src="{{ asset('images/logo.png') }}" alt="Logo SMARTCLASS" class="logo" onerror="this.style.display='none'">
             <h1>LAPORAN PEMBAYARAN SISWA MINGGUAN</h1>
-            <div class="period"><?php echo e($monthName); ?> <?php echo e($year); ?></div>
-            <div>Dicetak pada: <?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i')); ?></div>
+            <div class="period">{{ $monthName }} {{ $year }}</div>
+            <div>Dicetak pada: {{ now()->locale('id')->translatedFormat('d F Y, H:i') }}</div>
             <div>Bendahara Kelas</div>
         </div>
 
-        <?php if($payments->count() > 0): ?>
+        @if($payments->count() > 0)
             <div class="summary">
                 <div class="summary-card">
                     <div>Total Tagihan</div>
-                    <div class="summary-value">Rp <?php echo e(number_format($totalBills, 0, ',', '.')); ?></div>
+                    <div class="summary-value">Rp {{ number_format($totalBills, 0, ',', '.') }}</div>
                 </div>
                 <div class="summary-card">
                     <div>Sudah Dibayar</div>
-                    <div class="summary-value">Rp <?php echo e(number_format($totalPaid, 0, ',', '.')); ?></div>
+                    <div class="summary-value">Rp {{ number_format($totalPaid, 0, ',', '.') }}</div>
                 </div>
                 <div class="summary-card">
                     <div>Tunggakan</div>
-                    <div class="summary-value text-red-600">Rp <?php echo e(number_format($totalBills - $totalPaid, 0, ',', '.')); ?></div>
+                    <div class="summary-value text-red-600">Rp {{ number_format($totalBills - $totalPaid, 0, ',', '.') }}</div>
                 </div>
                 <div class="summary-card">
                     <div>Jumlah Siswa</div>
-                    <div class="summary-value"><?php echo e($paymentsByStudent->count()); ?></div>
+                    <div class="summary-value">{{ $paymentsByStudent->count() }}</div>
                 </div>
             </div>
 
-            <?php $__currentLoopData = $paymentsByStudent; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $studentPayments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                <?php $student = $studentPayments->first()->student; ?>
+            @foreach($paymentsByStudent as $studentId => $studentPayments)
+                @php $student = $studentPayments->first()->student; @endphp
                 <div class="students-section">
                     <div class="student-header">
-                        <div class="student-name"><?php echo e($student->name); ?></div>
-                        <div style="font-size: 14px; opacity: 0.9;"><?php echo e(count($studentPayments)); ?> tagihan | Rp <?php echo e(number_format($studentPayments->sum('amount'), 0, ',', '.')); ?> total</div>
+                        <div class="student-name">{{ $student->name }}</div>
+                        <div style="font-size: 14px; opacity: 0.9;">{{ count($studentPayments) }} tagihan | Rp {{ number_format($studentPayments->sum('amount'), 0, ',', '.') }} total</div>
                     </div>
                     <table>
                         <thead>
@@ -78,41 +78,39 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <?php $__currentLoopData = $studentPayments->sortBy('week_number'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $payment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            @foreach($studentPayments->sortBy('week_number') as $payment)
                                 <tr>
-                                    <td>Minggu <?php echo e($payment->week_number); ?></td>
+                                    <td>Minggu {{ $payment->week_number }}</td>
                                     <td>
-                                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold <?php echo e($payment->status == 'paid' ? 'bg-green-100 text-green-800 status-paid' : 'bg-red-100 text-red-800 status-unpaid'); ?>">
-                                            <?php echo e($payment->status == 'paid' ? 'LUNAS' : 'BELUM BAYAR'); ?>
-
+                                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $payment->status == 'paid' ? 'bg-green-100 text-green-800 status-paid' : 'bg-red-100 text-red-800 status-unpaid' }}">
+                                            {{ $payment->status == 'paid' ? 'LUNAS' : 'BELUM BAYAR' }}
                                         </span>
                                     </td>
-                                    <td><?php echo e($payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->locale('id')->isoFormat('D MMM YY') : '-'); ?></td>
-                                    <td class="text-right font-mono">Rp <?php echo e(number_format($payment->amount, 0, ',', '.')); ?></td>
+                                    <td>{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->locale('id')->isoFormat('D MMM YY') : '-' }}</td>
+                                    <td class="text-right font-mono">Rp {{ number_format($payment->amount, 0, ',', '.') }}</td>
                                 </tr>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            @endforeach
                             <tr class="total-row">
                                 <td colspan="3" class="text-right pr-4">TOTAL:</td>
-                                <td class="text-right">Rp <?php echo e(number_format($studentPayments->sum('amount'), 0, ',', '.')); ?></td>
+                                <td class="text-right">Rp {{ number_format($studentPayments->sum('amount'), 0, ',', '.') }}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-        <?php else: ?>
+            @endforeach
+        @else
             <div style="text-align: center; padding: 80px; color: #6b7280;">
                 <div style="font-size: 5rem; margin-bottom: 30px;">📋</div>
                 <h2 style="font-size: 28px; margin-bottom: 15px;">Belum ada data pembayaran</h2>
-                <p>Data pembayaran siswa untuk <?php echo e($monthName); ?> <?php echo e($year); ?> belum tersedia.</p>
+                <p>Data pembayaran siswa untuk {{ $monthName }} {{ $year }} belum tersedia.</p>
             </div>
-        <?php endif; ?>
+        @endif
 
         <div class="footer">
-            <p><strong>Dicetak oleh:</strong> <?php echo e(auth()->user()->name); ?> (<?php echo e(ucfirst(auth()->user()->role)); ?>)</p>
-            <p><?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i:s')); ?></p>
+            <p><strong>Dicetak oleh:</strong> {{ auth()->user()->name }} ({{ ucfirst(auth()->user()->role) }})</p>
+            <p>{{ now()->locale('id')->translatedFormat('d F Y, H:i:s') }}</p>
             <p style="font-size: 12px; margin-top: 20px;">SMARTCLASS - Sistem Manajemen Kelas Digital</p>
         </div>
     </div>
 </body>
 </html>
-<?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/laporan-pembayaran-siswa-cetak.blade.php ENDPATH**/ ?>

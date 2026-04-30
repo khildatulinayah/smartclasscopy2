@@ -4,208 +4,334 @@
 @section('title', 'Tracking Pembayaran Mingguan')
 
 @section('content')
-<div class="max-w-6xl mx-auto">
-    <h2 class="pixel-font text-center text-yellow-400 mb-8" style="font-size: 20px; letter-spacing: 2px;">~ TRACKING PEMBAYARAN MINGGUAN ~</h2>
+<div class="dashboard-layout">
+   
+@include('components.bendahara-sidebar')
+
+    <div class="main-area">
+        <main class="main-content">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Pembayaran Mingguan</h1>
+                <p class="text-gray-600">Kelola dan pantau pembayaran kas siswa per minggu</p>
+            </div>
     
     <!-- Month Navigation -->
-    <div class="flex items-center justify-center mb-8 space-x-4 px-4">
-        <a href="?month={{ $prevMonth }}&year={{ $prevYear }}" class="pixel-button px-6 py-3 bg-gray-400 text-black hover:bg-gray-500 font-bold shadow-lg transform hover:scale-105 transition-all">
-            << Bulan Sebelumnya
+    <div class="flex items-center justify-center mb-8 space-x-4">
+        <a href="?month={{ $prevMonth }}&year={{ $prevYear }}" class="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium">
+            ← Bulan Sebelumnya
         </a>
-        <div class="pixel-font text-2xl md:text-3xl font-bold bg-blue-500 text-white px-12 py-6 border-6 border-black shadow-2xl rounded-lg">
-            {{ $currentMonthName }}
+        <div class="bg-blue-500 text-white px-8 py-4 rounded-xl shadow-lg">
+            <div class="text-xl font-bold">{{ $currentMonthName }}</div>
         </div>
-        <a href="?month={{ $nextMonth }}&year={{ $nextYear }}" class="pixel-button px-6 py-3 bg-gray-400 text-black hover:bg-gray-500 font-bold shadow-lg transform hover:scale-105 transition-all">
-            Bulan Selanjutnya >>
+        <a href="?month={{ $nextMonth }}&year={{ $nextYear }}" class="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium">
+            Bulan Selanjutnya →
         </a>
     </div>
     
-    <!-- Statistik -->
-    <div class="pixel-card p-4 mb-6 bg-blue-200">
-        <div class="grid grid-cols-2 md:grid-cols-6 gap-4 text-center">
-            <div>
-                <div class="pixel-font text-lg font-bold">{{ $totalStudents }}</div>
-                <div class="pixel-font text-xs">Total Siswa</div>
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center mb-2">
+                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-gray-800">{{ $totalStudents }}</div>
+                    <div class="text-sm text-gray-500">Total Siswa</div>
+                </div>
             </div>
-            <div>
-                <div class="pixel-font text-lg font-bold">{{ $totalBills }}</div>
-                <div class="pixel-font text-xs">Total Tagihan</div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center mb-2">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-gray-800">{{ $totalBills }}</div>
+                    <div class="text-sm text-gray-500">Total Tagihan</div>
+                </div>
             </div>
-            <div>
-                <div class="pixel-font text-lg font-bold text-green-700">{{ $paidBills }}</div>
-                <div class="pixel-font text-xs">Sudah Bayar</div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center mb-2">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-green-600">{{ $paidBills }}</div>
+                    <div class="text-sm text-gray-500">Sudah Bayar</div>
+                </div>
             </div>
-            <div>
-                <div class="pixel-font text-lg font-bold text-red-700">{{ $unpaidBills }}</div>
-                <div class="pixel-font text-xs">Belum Bayar</div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center mb-2">
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-red-600">{{ $unpaidBills }}</div>
+                    <div class="text-sm text-gray-500">Belum Bayar</div>
+                </div>
             </div>
-            @if(isset($isFriday) && $isFriday)
-            <div>
-                <div class="pixel-font text-lg font-bold text-red-500 animate-pulse">{{ $currentWeekUnpaid }}</div>
-                <div class="pixel-font text-xs">Minggu Ini Belum</div>
+        </div>
+        
+        @if(isset($isFriday) && $isFriday)
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center mb-2">
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-orange-600">{{ $currentWeekUnpaid }}</div>
+                    <div class="text-sm text-gray-500">Minggu Ini Belum</div>
+                </div>
             </div>
-            @endif
-            <div>
-                <div class="pixel-font text-lg font-bold">Rp {{ number_format($paidAmount, 0, ',', '.') }}</div>
-                <div class="pixel-font text-xs">Kas Masuk</div>
+        </div>
+        @endif
+        
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center mb-2">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-blue-600">Rp {{ number_format($paidAmount, 0, ',', '.') }}</div>
+                    <div class="text-sm text-gray-500">Kas Masuk</div>
+                </div>
             </div>
-            <div>
-                <div class="pixel-font text-lg font-bold">Rp {{ number_format($unpaidAmount, 0, ',', '.') }}</div>
-                <div class="pixel-font text-xs">Tunggakan</div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center mb-2">
+                <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-yellow-600">Rp {{ number_format($unpaidAmount, 0, ',', '.') }}</div>
+                    <div class="text-sm text-gray-500">Tunggakan</div>
+                </div>
             </div>
         </div>
     </div>
-
-    {{-- Banner Dinamis Hari Jumat --}}
-@if(isset($isWednesday) && $isWednesday)
-    <div class="pixel-card p-6 mb-6 bg-red-500 text-white text-center border-4 border-black shadow-2xl">
-        <h2 class="pixel-font text-2xl font-bold mb-2 animate-bounce">🚨 HARI RABU - PEMBAYARAN KAS!</h2>
-        <p class="text-lg">Prioritaskan <strong>{{ $currentWeekUnpaid }}</strong> siswa untuk Minggu ke-{{ $currentWeek }}</p>
-    </div>
-@else
-    <div class="pixel-card p-6 mb-6 bg-yellow-400 text-black text-center border-4 border-black shadow-xl">
-<h2 class="pixel-font text-xl font-bold mb-2">⏳ Selanjutnya: Hari Rabu</h2>
-<p class="text-lg">Rabu, {{ $nextWednesday ?? 'Minggu ini' }} | {{ $currentWeekUnpaid ?? 0 }} belum bayar minggu ini</p>
-    </div>
+    
+    {{-- Banner Dinamis Hari Rabu --}}
+    @if(isset($isWednesday) && $isWednesday)
+        <div class="bg-red-500 text-white rounded-xl shadow-lg p-6 mb-8 text-center">
+            <div class="flex items-center justify-center mb-2">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+                <h2 class="text-xl font-bold">HARI RABU - PEMBAYARAN KAS!</h2>
+            </div>
+            <p class="text-lg">Prioritaskan <strong>{{ $currentWeekUnpaid }}</strong> siswa untuk Minggu ke-{{ $currentWeek }}</p>
+        </div>
+    @else
+        <div class="bg-yellow-100 border border-yellow-200 rounded-xl shadow-md p-6 mb-8 text-center">
+            <div class="flex items-center justify-center mb-2">
+                <svg class="w-6 h-6 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h2 class="text-lg font-semibold text-yellow-800">Selanjutnya: Hari Rabu</h2>
+            </div>
+            <p class="text-gray-700">Rabu, {{ $nextWednesday ?? 'Minggu ini' }} | {{ $currentWeekUnpaid ?? 0 }} belum bayar minggu ini</p>
+        </div>
     @endif
     
-    <!-- Daftar Pembayaran per Siswa -->
-    <div class="pixel-card p-6">
-        @foreach($paymentsByStudent as $studentId => $payments)
-            <div class="mb-6 p-4 border-4 border-black bg-gray-50">
-                <h3 class="pixel-font text-sm mb-3">{{ $payments->first()->student->name }}</h3>
-                
-                <div class="grid grid-cols-4 gap-2">
-                    @for($week = 1; $week <= 4; $week++)
-@php
-                        $payment = $payments->where('week_number', $week)->first();
-                        $isPaid = $payment && $payment->status === 'paid';
-                        
-                        // Hitung tanggal Rabu untuk minggu ini
-                        $now = Carbon::now();
-                        $startOfMonth = Carbon::create($now->year, $now->month)->startOfMonth();
-                        $firstWednesday = $startOfMonth->copy()->next(Carbon::WEDNESDAY);
-                        $weekWednesday = $firstWednesday->copy()->addWeeks($week - 1);
-                        $dateLabel = $weekWednesday->locale('id')->isoFormat('D MMM YYYY');
-                        
-                        $highlightClass = (isset($isWednesday) && $isWednesday && $week == $currentWeek) ? 'ring-4 ring-red-500 bg-yellow-200 animate-pulse shadow-lg border-red-400' : '';
+    <!-- Tabel Pembayaran -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">Daftar Pembayaran Siswa</h2>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Minggu 1</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Minggu 2</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Minggu 3</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Minggu 4</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Tagihan</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Bayar</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Tunggakan</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($paymentsByStudent as $studentId => $payments)
+                        @php
+                            $totalPaid = $payments->where('status', 'paid')->sum('amount');
+                            $totalBill = $payments->sum('amount');
+                            $totalArrears = $totalBill - $totalPaid;
+                            $paidCount = $payments->where('status', 'paid')->count();
+                            $status = $paidCount === 4 ? 'Lunas' : ($paidCount > 0 ? 'Tunggakan' : 'Belum Lunas');
+                            $statusColor = $paidCount === 4 ? 'green' : ($paidCount > 0 ? 'yellow' : 'red');
                         @endphp
-                        <div class="text-center p-2 {{ $isPaid ? 'bg-green-100 border-green-400' : 'bg-red-100 border-red-400' }} {{ $highlightClass }} border-2 {{ $isPaid ? '' : 'hover:shadow-md transition-all' }}">
-                            <div class="pixel-font text-xs font-bold">Minggu {{ $week }}</div>
-<div class="pixel-font text-xs text-gray-600">Rabu, {{ $dateLabel }}</div>
-                            <div class="pixel-font text-xs font-bold mt-1">
-                                @if($isPaid)
-                                    <span class="text-green-700">✓ Rp 5.000</span>
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ $payments->first()->student->name }}</div>
+                            </td>
+                            @for($week = 1; $week <= 4; $week++)
+                                @php
+                                    $payment = $payments->where('week_number', $week)->first();
+                                    $isPaid = $payment && $payment->status === 'paid';
+                                    $highlightClass = (isset($isWednesday) && $isWednesday && $week == $currentWeek) ? 'ring-2 ring-red-400 bg-red-50' : '';
+                                @endphp
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <div class="inline-flex items-center justify-center w-16 h-8 rounded {{ $isPaid ? 'bg-green-100' : 'bg-red-100' }} {{ $highlightClass }}">
+                                        @if($isPaid)
+                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        @else
+                                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        @endif
+                                    </div>
+                                </td>
+                            @endfor
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                                Rp {{ number_format($totalBill, 0, ',', '.') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                                Rp {{ number_format($totalPaid, 0, ',', '.') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                                Rp {{ number_format($totalArrears, 0, ',', '.') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                    @if($statusColor === 'green') bg-green-100 text-green-800
+                                    @elseif($statusColor === 'yellow') bg-yellow-100 text-yellow-800
+                                    @else bg-red-100 text-red-800 @endif">
+                                    {{ $status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                @if($totalArrears > 0)
+                                    <button onclick="showArrearsModal({{ $studentId }}, '{{ $payments->first()->student->name }}', {{ $totalArrears }}, '{{ $payments->where('status', 'unpaid')->pluck('week_number')->implode(',') }}')" 
+                                            class="text-red-600 hover:text-red-900 font-medium">
+                                        Lihat Tunggakan
+                                    </button>
                                 @else
-                                    <span class="text-red-700">✗ Rp 5.000</span>
+                                    <span class="text-gray-400">Lunas</span>
                                 @endif
-                            </div>
-                            @if(!$isPaid)
-                                <button class="pixel-button px-2 py-1 {{ isset($isWednesday) && $isWednesday && $week == $currentWeek ? 'bg-green-500 animate-pulse shadow-lg' : 'bg-blue-400' }} text-black text-xs mt-2 font-bold" 
-                                        onclick="showPaymentModal({{ $payment->id ?? '' }}, '{{ $payments->first()->student->name }}', {{ $week }}, {{ $payments->first()->student->id }})">
-                                    BAYAR SEKARANG
-                                </button>
-                            @endif
-                        </div>
-                    @endfor
-                </div>
-                
-                <!-- Total per siswa -->
-                <div class="mt-3 text-right">
-                    <span class="pixel-font text-xs">
-                        Total: <span class="font-bold">Rp {{ number_format($payments->sum('amount'), 0, ',', '.') }}</span>
-                        | Lunas: <span class="font-bold text-green-700">{{ $payments->where('status', 'paid')->count() }}/4</span>
-                    </span>
-                </div>
-            </div>
-        @endforeach
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
     
-    <!-- Link ke daftar tunggakan -->
-    <div class="text-center mt-6">
-        <button onclick="showArrearsList()" class="pixel-button px-6 py-3 bg-red-400 text-black pixel-font text-xs">
-            🚨 LIHAT DAFTAR TUNGGAKAN
+    <!-- Action Buttons -->
+    <div class="flex justify-center space-x-4 mt-8">
+        <button onclick="showArrearsList()" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium shadow-sm">
+            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            Lihat Daftar Tunggakan
         </button>
-        <a href="{{ route('bendahara.dashboard') }}" class="pixel-button px-6 py-3 bg-gray-400 text-black pixel-font text-xs ml-4">
-            ← KEMBALI
+        <a href="{{ route('bendahara.dashboard') }}" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium shadow-sm">
+            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Kembali ke Dashboard
         </a>
     </div>
 </div>
 
 <!-- Modal Daftar Tunggakan -->
 <div id="arrearsListModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-    <div class="pixel-card p-6 bg-white max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <h3 class="pixel-font text-lg text-center mb-4">DAFTAR SISWA MENUNGGAK</h3>
-        
-        <div class="pixel-card p-4 mb-4 bg-blue-200 text-center">
-            <div class="pixel-font text-sm font-bold text-blue-700">BULAN MARET 2026</div>
-            <div class="pixel-font text-xs text-gray-600">Pembayaran kas setiap hari Rabu: 5, 12, 19, 26 Maret</div>
+    <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Daftar Siswa Menunggak</h3>
         </div>
         
-        <!-- Total Tunggakan -->
-        <div class="pixel-card p-4 mb-4 bg-red-200 text-center">
-            <div class="pixel-font text-2xl font-bold text-red-700">
-                Rp {{ number_format($unpaidAmount, 0, ',', '.') }}
+        <div class="p-6">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-center">
+                <div class="text-sm font-semibold text-blue-800">{{ $currentMonthName }}</div>
+                <div class="text-xs text-gray-600">Pembayaran kas setiap hari Rabu</div>
             </div>
-            <div class="pixel-font text-xs">TOTAL TUNGGAKAN BULAN INI</div>
-        </div>
-        
-        <!-- Daftar Siswa Menunggak -->
-        <div class="pixel-card p-4">
-            @foreach($paymentsByStudent as $studentId => $payments)
-                @php
-                $unpaidPayments = $payments->where('status', 'unpaid');
-                if ($unpaidPayments->count() === 0) {
-                    continue;
-                }
-                
-                $totalArrears = $unpaidPayments->sum('amount');
-                $unpaidWeeks = $unpaidPayments->pluck('week_number');
-                @endphp
-                <div class="mb-4 p-4 border-4 border-black bg-red-50">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h3 class="pixel-font text-sm font-bold">{{ $payments->first()->student->name }}</h3>
-                            <p class="pixel-font text-xs text-gray-600">
-                                Menunggak {{ $unpaidPayments->count() }} minggu:<br>
-                                Minggu {{ implode(', ', $unpaidWeeks->toArray()) }} 
+            
+            <!-- Total Tunggakan -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-center">
+                <div class="text-2xl font-bold text-red-700">
+                    Rp {{ number_format($unpaidAmount, 0, ',', '.') }}
+                </div>
+                <div class="text-sm text-red-600">Total Tunggakan Bulan Ini</div>
+            </div>
+            
+            <!-- Daftar Siswa Menunggak -->
+            <div class="space-y-4">
+                @foreach($paymentsByStudent as $studentId => $payments)
+                    @php
+                    $unpaidPayments = $payments->where('status', 'unpaid');
+                    if ($unpaidPayments->count() === 0) {
+                        continue;
+                    }
+                    
+                    $totalArrears = $unpaidPayments->sum('amount');
+                    $unpaidWeeks = $unpaidPayments->pluck('week_number');
+                    @endphp
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800">{{ $payments->first()->student->name }}</h3>
+                                <p class="text-xs text-gray-600 mt-1">
+                                    Menunggak {{ $unpaidPayments->count() }} minggu:<br>
+                                    Minggu {{ implode(', ', $unpaidWeeks->toArray()) }}
 @php
-                                $now = Carbon::now();
-                                $startOfMonth = Carbon::create($now->year, $now->month)->startOfMonth();
-                                $firstWednesday = $startOfMonth->copy()->next(Carbon::WEDNESDAY);
-                                foreach($unpaidWeeks as $uw) {
-                                    $uwWednesday = $firstWednesday->copy()->addWeeks($uw - 1);
-                                    echo '(Rabu, ' . $uwWednesday->locale('id')->isoFormat('D MMM') . ') ';
-                                }
-                                @endphp
-                            </p>
-                            <p class="pixel-font text-xs text-gray-500 mt-1">
-                                @if(in_array(3, $unpaidWeeks->toArray()))
-                                    ⚠️ Pembayaran Rabu 19 Maret belum dilunaskan
-                                @endif
-                                @if(in_array(4, $unpaidWeeks->toArray()))
-                                    ⏳ Pembayaran Rabu 26 Maret akan datang
-                                @endif
-                            </p>
-                        </div>
-                        <div class="text-right">
-                            <div class="pixel-font text-lg font-bold text-red-700">
-                                Rp {{ number_format($totalArrears, 0, ',', '.') }}
+                                    $now = Carbon::now();
+                                    $startOfMonth = Carbon::create($now->year, $now->month)->startOfMonth();
+                                    $firstWednesday = $startOfMonth->copy()->next(Carbon::WEDNESDAY);
+                                    foreach($unpaidWeeks as $uw) {
+                                        $uwWednesday = $firstWednesday->copy()->addWeeks($uw - 1);
+                                        echo '(Rabu, ' . $uwWednesday->locale('id')->isoFormat('D MMM') . ') ';
+                                    }
+                                    @endphp
+                                </p>
                             </div>
-                            <div class="pixel-font text-xs">Total Tunggakan</div>
-                            <button class="pixel-button px-3 py-1 bg-purple-400 text-black text-xs mt-2"
-                                    onclick="showArrearsModal({{ $studentId }}, '{{ $payments->first()->student->name }}', {{ $totalArrears }}, '{{ implode(',', $unpaidWeeks->toArray()) }}')">
-                                LUNASI TUNGGAKAN
-                            </button>
+                            <div class="text-right">
+                                <div class="text-lg font-bold text-red-700">
+                                    Rp {{ number_format($totalArrears, 0, ',', '.') }}
+                                </div>
+                                <div class="text-xs text-gray-500 mb-2">Total Tunggakan</div>
+                                <button class="px-3 py-2 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
+                                        onclick="showArrearsModal({{ $studentId }}, '{{ $payments->first()->student->name }}', {{ $totalArrears }}, '{{ implode(',', $unpaidWeeks->toArray()) }}')">
+                                    Lunasi Tunggakan
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
         
-        <div class="text-center mt-4">
-            <button onclick="closeArrearsList()" class="pixel-button px-6 py-3 bg-gray-400 text-black pixel-font text-xs">
-                TUTUP
+        <div class="px-6 py-4 border-t border-gray-200">
+            <button onclick="closeArrearsList()" class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                Tutup
             </button>
         </div>
     </div>
@@ -213,47 +339,49 @@
 
 <!-- Modal Pelunasan Tunggakan -->
 <div id="arrearsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-    <div class="pixel-card p-6 bg-white max-w-md w-full mx-4">
-        <h3 class="pixel-font text-lg text-center mb-4">LUNASI TUNGGAKAN</h3>
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Lunasi Tunggakan</h3>
+        </div>
         
-        <form id="arrearsForm" class="space-y-4">
+        <form id="arrearsForm" class="p-6 space-y-4">
             <input type="hidden" id="arrears_student_id" name="student_id">
             
             <div>
-                <label class="pixel-font text-xs">Nama Siswa:</label>
-                <div id="arrears_student_name" class="pixel-card p-2 bg-gray-100 text-sm font-bold"></div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nama Siswa:</label>
+                <div id="arrears_student_name" class="px-3 py-2 bg-gray-100 rounded-lg text-sm font-semibold"></div>
             </div>
             
             <div>
-                <label class="pixel-font text-xs">Minggu Tunggak:</label>
-                <div id="arrears_weeks" class="pixel-card p-2 bg-red-100 text-sm font-bold"></div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Minggu Tunggak:</label>
+                <div id="arrears_weeks" class="px-3 py-2 bg-red-50 rounded-lg text-sm font-semibold text-red-700"></div>
             </div>
             
             <div>
-                <label class="pixel-font text-xs">Total Tunggakan:</label>
-                <div id="arrears_total" class="pixel-card p-2 bg-red-100 text-lg font-bold text-red-700"></div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Total Tunggakan:</label>
+                <div id="arrears_total" class="px-3 py-2 bg-red-50 rounded-lg text-lg font-bold text-red-700"></div>
             </div>
             
             <div>
-                <label class="pixel-font text-xs">Tanggal Pelunasan:</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Pelunasan:</label>
                 <input type="date" id="arrears_date" name="payment_date" 
-                       class="pixel-card px-3 py-2 text-xs w-full" required>
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
             </div>
             
             <div>
-                <label class="pixel-font text-xs">Keterangan:</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan:</label>
                 <input type="text" id="arrears_description" name="description" 
                        placeholder="Pelunasan tunggakan kas" 
-                       class="pixel-card px-3 py-2 text-xs w-full">
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
             </div>
             
-            <div class="flex gap-2">
-                <button type="submit" class="pixel-button px-4 py-2 bg-green-400 text-black pixel-font text-xs flex-1">
-                    LUNASI SEKARANG
+            <div class="flex gap-3 pt-4">
+                <button type="submit" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                    Lunasi Sekarang
                 </button>
                 <button type="button" onclick="closeArrearsModal()" 
-                        class="pixel-button px-4 py-2 bg-red-400 text-black pixel-font text-xs flex-1">
-                    BATAL
+                        class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Batal
                 </button>
             </div>
         </form>
@@ -311,55 +439,6 @@ function processPayment(paymentId) {
 }
 </script>
 
-<!-- Modal Pembayaran -->
-<div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-    <div class="pixel-card p-6 bg-white max-w-md w-full mx-4">
-        <h3 class="pixel-font text-lg text-center mb-4">CATAT PEMBAYARAN</h3>
-        
-        <form id="paymentForm" class="space-y-4">
-            <input type="hidden" id="payment_id" name="payment_id">
-            
-            <div>
-                <label class="pixel-font text-xs">Nama Siswa:</label>
-                <div id="student_name" class="pixel-card p-2 bg-gray-100 text-sm font-bold"></div>
-            </div>
-            
-            <div>
-                <label class="pixel-font text-xs">Minggu Ke:</label>
-                <div id="week_number" class="pixel-card p-2 bg-gray-100 text-sm font-bold"></div>
-            </div>
-            
-            <div>
-                <label class="pixel-font text-xs">Jumlah:</label>
-                <div class="pixel-card p-2 bg-green-100 text-sm font-bold">Rp 5.000</div>
-            </div>
-            
-            <div>
-                <label class="pixel-font text-xs">Tanggal Pembayaran:</label>
-                <input type="date" id="payment_date" name="payment_date" 
-                       class="pixel-card px-3 py-2 text-xs w-full" required>
-            </div>
-            
-            <div>
-                <label class="pixel-font text-xs">Keterangan:</label>
-                <input type="text" id="description" name="description" 
-                       placeholder="Pembayaran kas mingguan" 
-                       class="pixel-card px-3 py-2 text-xs w-full">
-            </div>
-            
-            <div class="flex gap-2">
-                <button type="submit" class="pixel-button px-4 py-2 bg-green-400 text-black pixel-font text-xs flex-1">
-                    SIMPAN PEMBAYARAN
-                </button>
-                <button type="button" onclick="closePaymentModal()" 
-                        class="pixel-button px-4 py-2 bg-red-400 text-black pixel-font text-xs flex-1">
-                    BATAL
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script>
 // Simple modal functions
 function showPaymentModal(paymentId, studentName, week, studentId) {
@@ -370,9 +449,11 @@ function showPaymentModal(paymentId, studentName, week, studentId) {
     document.getElementById('payment_id').dataset.studentId = studentId;
     document.getElementById('student_name').textContent = studentName;
     document.getElementById('week_number').textContent = week;
-@php $jsDate = $weekWednesday->toDateString(); $jsDesc = "Pembayaran kas Minggu $week - $dateLabel"; @endphp
-    document.getElementById('payment_date').value = '{{ $jsDate }}';
-    document.getElementById('description').value = `{{ addslashes($jsDesc) }}`;
+    
+    // Set current date and default description
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('payment_date').value = today;
+    document.getElementById('description').value = `Pembayaran kas Minggu ${week} - ${studentName}`;
     
     // Show modal
     const modal = document.getElementById('paymentModal');
@@ -651,4 +732,7 @@ document.getElementById('arrearsModal')?.addEventListener('click', function(e) {
     }
 });
 </script>
+        </main>
+    </div>
+</div>
 @endsection

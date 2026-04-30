@@ -361,7 +361,187 @@ class BendaharaController extends Controller
         }
     }
 
-    
+    // Simple Weekly Payments - untuk simple-weekly-payments.blade.php
+    public function simpleWeeklyPayments(Request $request)
+    {
+        $month = $request->get('month', now()->month);
+        $year = $request->get('year', now()->year);
+        
+        $currentMonthDate = Carbon::create($year, $month);
+        $currentMonthName = $currentMonthDate->locale('id')->translatedFormat('F Y');
+        
+        // Prev/Next navigation
+        $prevMonth = ($month == 1) ? 12 : $month - 1;
+        $prevYear = ($month == 1) ? $year - 1 : $year;
+        $nextMonth = ($month == 12) ? 1 : $month + 1;
+        $nextYear = ($month == 12) ? $year + 1 : $year;
+        
+        // Generate bills for selected month
+        $this->generateMonthlyBills($month, $year);
+        
+        $payments = WeeklyPayment::with(['student', 'transaction'])
+            ->where('month', $month)
+            ->where('year', $year)
+            ->orderBy('week_number')
+            ->orderBy('student_id')
+            ->get();
+        
+        $paymentsByStudent = $payments->groupBy('student_id');
+        
+        $totalStudents = User::where('role', 'siswa')->where('is_active', true)->count();
+        $totalBills = $payments->count();
+        $paidBills = $payments->where('status', 'paid')->count();
+        $unpaidBills = $payments->where('status', 'unpaid')->count();
+        $totalAmount = $payments->sum('amount');
+        $paidAmount = $payments->where('status', 'paid')->sum('amount');
+        $unpaidAmount = $payments->where('status', 'unpaid')->sum('amount');
+        
+        return view('bendahara.simple-weekly-payments', compact(
+            'paymentsByStudent',
+            'totalStudents',
+            'totalBills',
+            'paidBills',
+            'unpaidBills',
+            'totalAmount',
+            'paidAmount',
+            'unpaidAmount',
+            'month',
+            'year',
+            'currentMonthName',
+            'prevMonth',
+            'prevYear',
+            'nextMonth',
+            'nextYear'
+        ));
+    }
+
+    // API: Find payment by student, week, month, year
+    public function findPayment(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required|exists:users,id',
+            'week_number' => 'required|integer|min:1|max:4',
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2020|max:2030'
+        ]);
+
+        $payment = WeeklyPayment::where('student_id', $request->student_id)
+            ->where('week_number', $request->week_number)
+            ->where('month', $request->month)
+            ->where('year', $request->year)
+            ->first();
+
+        if (!$payment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pembayaran tidak ditemukan'
+            ], 404);
+        }
+
+        // Find latest transaction that can be used
+        $transaction = Transaction::where('type', 'income')
+            ->where('amount', 5000)
+            ->whereNull('weekly_payment_id')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$transaction) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada transaksi yang tersedia. Silahkan input transaksi terlebih dahulu.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'payment' => $payment,
+            'transaction_id' => $transaction->id
+        ]);
+    }
+
+    /**
+     * Laporan cetak - Halaman utama
+     */
+    public function laporan()
+    {
+        $currentYear = now()->year;
+        $currentMonth = now()->month;
+        
+        // Get available years from data (last 3 years)
+        $years = Transaction::selectRaw('YEAR(date) as year')
+            ->union(WeeklyPayment::selectRaw('year'))
+            ->distinct()
+            ->orderByDesc('year')
+            ->limit(5)
+            ->pluck('year');
+        
+        $months = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        
+        return view('bendahara.laporan', compact('currentYear', 'currentMonth', 'years', 'months'));
+    }
+
+    /**
+     * Cetak laporan riwayat keluar masuk uang (Transaction)
+     */
+    public function cetakKeuangan($month, $year = null)
+    {
+        $year = $year ?? now()->year;
+        
+        $monthName = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ][$month] ?? 'Tahun Ini';
+        
+        $transactions = Transaction::whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->with(['student', 'creator'])
+            ->orderBy('date', 'desc')
+            ->get();
+        
+        $income = $transactions->where('type', 'income')->sum('amount');
+        $expense = $transactions->where('type', 'expense')->sum('amount');
+        $balance = $income - $expense;
+        
+        return view('bendahara.laporan-keuangan-cetak', compact(
+            'transactions', 'income', 'expense', 'balance', 
+            'month', 'year', 'monthName'
+        ));
+    }
+
+    /**
+     * Cetak laporan pembayaran siswa mingguan (WeeklyPayment)
+     */
+    public function cetakPembayaranSiswa($month, $year = null)
+    {
+        $year = $year ?? now()->year;
+        
+        $monthName = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ][$month] ?? 'Tahun Ini';
+        
+        $payments = WeeklyPayment::where('month', $month)
+            ->where('year', $year)
+            ->with(['student', 'transaction'])
+            ->orderBy('student_id')
+            ->orderBy('week_number')
+            ->get();
+        
+        $paymentsByStudent = $payments->groupBy('student_id');
+        $totalPaid = $payments->where('status', 'paid')->sum('amount');
+        $totalBills = $payments->sum('amount');
+        
+        return view('bendahara.laporan-pembayaran-siswa-cetak', compact(
+            'payments', 'paymentsByStudent', 'totalPaid', 'totalBills',
+            'month', 'year', 'monthName'
+        ));
+    }
 }
 
 

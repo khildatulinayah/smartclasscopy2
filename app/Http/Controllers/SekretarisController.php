@@ -200,7 +200,7 @@ class SekretarisController extends Controller
         ]);
     }
 
-    // Attendance Tracker (Simple Version)
+// Attendance Tracker (Simple Version)
     public function simpleTracker()
     {
         $currentMonth = request('month', now()->month);
@@ -208,29 +208,60 @@ class SekretarisController extends Controller
         
         $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name')->get();
         
-        // Get attendance data for current month
-        $attendances = Attendance::whereMonth('date', $currentMonth)
+        // Get all attendance data for current month (not grouped yet)
+        $allAttendances = Attendance::whereMonth('date', $currentMonth)
                                 ->whereYear('date', $currentYear)
                                 ->orderBy('date')
-                                ->get()
-                                ->groupBy('student_id');
+                                ->get();
         
-        // Calculate statistics
+        // Get holidays for current month to exclude from working days
+        $holidays = Holiday::whereMonth('date', $currentMonth)
+                        ->whereYear('date', $currentYear)
+                        ->pluck('date')
+                        ->map(function($date) {
+                            return $date->format('Y-m-d');
+                        })
+                        ->toArray();
+        
+        // Calculate total working days in month (excluding weekends and holidays)
+        $daysInMonth = \Carbon\Carbon::create($currentYear, $currentMonth)->daysInMonth;
+        $workingDays = 0;
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $date = \Carbon\Carbon::create($currentYear, $currentMonth, $day);
+            $dateString = $date->format('Y-m-d');
+            // Skip if Saturday (6) or Sunday (0) or holiday
+            $dayOfWeek = $date->dayOfWeek;
+            if (!in_array($dayOfWeek, [0, 6]) && !in_array($dateString, $holidays)) {
+                $workingDays++;
+            }
+        }
+        
+        // Group attendances by student_id for easy lookup
+        $attendances = $allAttendances->groupBy('student_id');
+        
+        // Calculate total per status (each student = 1 count, not each attendance)
         $totalHadir = 0;
         $totalSakit = 0;
         $totalIzin = 0;
         $totalAlpha = 0;
         
-        foreach ($attendances as $studentAttendances) {
-            foreach ($studentAttendances as $attendance) {
-                switch($attendance->status) {
-                    case 'hadir': $totalHadir++; break;
-                    case 'sakit': $totalSakit++; break;
-                    case 'izin': $totalIzin++; break;
-                    case 'alpha': $totalAlpha++; break;
-                }
-            }
+        foreach ($students as $student) {
+            $studentAttendances = $attendances->get($student->id, collect());
+            // Count unique dates with each status for this student
+            $statuses = $studentAttendances->pluck('status')->toArray();
+            if (in_array('hadir', $statuses)) $totalHadir++;
+            if (in_array('sakit', $statuses)) $totalSakit++;
+            if (in_array('izin', $statuses)) $totalIzin++;
+            if (in_array('alpha', $statuses)) $totalAlpha++;
         }
+        
+        // Total attendances in the month (count each student once per status)
+        $totalAttendances = $totalHadir + $totalSakit + $totalIzin + $totalAlpha;
+        
+        // Calculate working days used (based on how many students have any attendance record)
+        // If workingDays = 10 and 3 students, total possible = 30
+        // But simpler: just use workingDays as reference
+        $totalDays = $workingDays;
         
         return view('sekretaris.tracker', compact(
             'students',
@@ -240,7 +271,9 @@ class SekretarisController extends Controller
             'totalHadir',
             'totalSakit',
             'totalIzin',
-            'totalAlpha'
+            'totalAlpha',
+            'totalDays',
+            'workingDays'
         ));
     }
 

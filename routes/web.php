@@ -64,8 +64,15 @@ Route::get('/kas', [BendaharaController::class, 'simpleCash'])->name('kas'); // 
         Route::get('/api/transactions', [BendaharaController::class, 'getTransactions'])->name('api.transactions');
         Route::delete('/transactions/{id}', [BendaharaController::class, 'deleteTransaction'])->name('transactions.delete');
         Route::get('/weekly-payments', [BendaharaController::class, 'weeklyPayments'])->name('weekly.payments');
+        Route::get('/simple-weekly-payments', [BendaharaController::class, 'simpleWeeklyPayments'])->name('simple.weekly.payments');
         Route::post('/process-payment', [BendaharaController::class, 'processWeeklyPayment'])->name('process.payment');
         Route::post('/api/process-arrears', [BendaharaController::class, 'processArrears'])->name('api.process_arrears');
+        Route::post('/api/find-payment', [BendaharaController::class, 'findPayment'])->name('api.find_payment');
+        
+        // Laporan Routes
+        Route::get('/laporan', [BendaharaController::class, 'laporan'])->name('laporan');
+        Route::get('/laporan/keuangan/cetak/{month}/{year?}', [BendaharaController::class, 'cetakKeuangan'])->name('cetak.keuangan');
+        Route::get('/laporan/pembayaran-siswa/cetak/{month}/{year?}', [BendaharaController::class, 'cetakPembayaranSiswa'])->name('cetak.pembayaran.siswa');
     });
     
 

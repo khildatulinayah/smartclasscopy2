@@ -1,14 +1,19 @@
 @extends('layouts.app')
 
 @section('content')
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    @include('components.sekretaris-sidebar')
 
-<div class="bg-white p-6 rounded-lg shadow-md">
+    <div class="main-area">
+        <main class="main-content">
+            <div class="bg-white p-6 rounded-lg shadow-md">
 
-    <div class="mb-4 flex gap-4">
-        <a href="{{ route('sekretaris.laporan') }}" 
-           class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-            ← Kembali
-        </a>
+                <div class="mb-4 flex gap-4">
+                    <a href="{{ route('sekretaris.laporan') }}" 
+                       class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
+                        ← Kembali
+                    </a>
 
         <a href="{{ route('sekretaris.laporan.cetak', ['bulan'=>$bulan, 'tahun'=>$tahun]) }}" 
            target="_blank"
@@ -90,6 +95,9 @@
         <p class="text-sm font-semibold">Sekretaris</p>
     </div>
 
+</div>
+        </main>
+    </div>
 </div>
 
 @endsection
