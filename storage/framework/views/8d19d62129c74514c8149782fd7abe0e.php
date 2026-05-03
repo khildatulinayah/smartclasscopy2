@@ -1181,7 +1181,7 @@ function confirmPayment() {
     
     // Validate form
     if (!formData.get('payment_method') || !formData.get('payment_date')) {
-        alert('Mohon lengkapi semua field yang wajib diisi');
+        showWarningToast('Mohon lengkapi semua field yang wajib diisi');
         return;
     }
     
@@ -1189,7 +1189,7 @@ function confirmPayment() {
     console.log('Payment confirmed:', Object.fromEntries(formData));
     
     // Show success message
-    alert('Pembayaran berhasil dikonfirmasi!');
+    showSuccessToast('Pembayaran berhasil dikonfirmasi!');
     closePaymentModal();
     
     // Reload page to show updated payment status

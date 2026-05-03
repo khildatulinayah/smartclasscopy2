@@ -85,6 +85,11 @@ Route::get('/kas', [BendaharaController::class, 'simpleCash'])->name('kas'); // 
         Route::post('/absensi/holiday', [SekretarisController::class, 'deleteHoliday'])->name('absensi.delete_holiday');
         Route::get('/tracker', [SekretarisController::class, 'simpleTracker'])->name('tracker');
         Route::get('/api/student-attendance/{studentId}', [SekretarisController::class, 'getStudentAttendance']);
+        
+        // Laporan Routes
+        Route::get('/laporan', [SekretarisController::class, 'laporan'])->name('laporan');
+        Route::get('/laporan/cetak/{month}/{year}', [SekretarisController::class, 'cetakAbsensi'])->name('laporan.cetak');
+        Route::get('/laporan/pdf/{month}/{year}', [SekretarisController::class, 'laporanAbsensiPdf'])->name('laporan.pdf');
     });
 
     // Siswa routes

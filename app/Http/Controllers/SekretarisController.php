@@ -289,4 +289,219 @@ class SekretarisController extends Controller
         
         return response()->json($data);
     }
+
+    /**
+     * Halaman utama laporan absensi
+     */
+    public function laporan()
+    {
+        // Prepare months and years for dropdown
+        $months = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+        
+        // Generate years list (current year and 2 years back)
+        $years = [];
+        for ($i = 0; $i < 3; $i++) {
+            $years[] = $currentYear - $i;
+        }
+        
+        return view('sekretaris.laporan', compact('months', 'currentMonth', 'currentYear', 'years'));
+    }
+
+    /**
+     * Cetak laporan absensi (HTML version)
+     */
+    public function cetakAbsensi($month, $year)
+    {
+        // Validate month and year
+        if ($month < 1 || $month > 12 || $year < 2020 || $year > 2030) {
+            abort(404, 'Invalid month or year');
+        }
+        
+        // Get attendance data
+        $students = User::where('role', 'siswa')
+                        ->where('is_active', true)
+                        ->with('student')
+                        ->orderBy('name')
+                        ->get();
+        
+        $attendances = Attendance::whereMonth('date', $month)
+                                ->whereYear('date', $year)
+                                ->with('student')
+                                ->orderBy('date')
+                                ->get();
+        
+        // Get holidays
+        $holidays = Holiday::whereMonth('date', $month)
+                          ->whereYear('date', $year)
+                          ->get()
+                          ->mapWithKeys(function ($holiday) {
+                              return [$holiday->date->format('Y-m-d') => $holiday->note];
+                          });
+        
+        // Calculate statistics
+        $stats = $this->calculateAttendanceStats($students, $attendances, $holidays, $month, $year);
+        
+        // Group attendances by student for easy display
+        $attendancesByStudent = $attendances->groupBy('student_id');
+        
+        $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
+        
+        return view('sekretaris.laporan-absensi-cetak', compact(
+            'students', 
+            'attendancesByStudent', 
+            'holidays', 
+            'stats', 
+            'month', 
+            'year', 
+            'monthName'
+        ));
+    }
+
+    /**
+     * Generate PDF laporan absensi
+     */
+    public function laporanAbsensiPdf($month, $year)
+    {
+        // Validate month and year
+        if ($month < 1 || $month > 12 || $year < 2020 || $year > 2030) {
+            abort(404, 'Invalid month or year');
+        }
+        
+        // Get attendance data (same as cetakAbsensi)
+        $students = User::where('role', 'siswa')
+                        ->where('is_active', true)
+                        ->with('student')
+                        ->orderBy('name')
+                        ->get();
+        
+        $attendances = Attendance::whereMonth('date', $month)
+                                ->whereYear('date', $year)
+                                ->with('student')
+                                ->orderBy('date')
+                                ->get();
+        
+        // Get holidays
+        $holidays = Holiday::whereMonth('date', $month)
+                          ->whereYear('date', $year)
+                          ->get()
+                          ->mapWithKeys(function ($holiday) {
+                              return [$holiday->date->format('Y-m-d') => $holiday->note];
+                          });
+        
+        // Calculate statistics
+        $stats = $this->calculateAttendanceStats($students, $attendances, $holidays, $month, $year);
+        
+        // Group attendances by student for easy display
+        $attendancesByStudent = $attendances->groupBy('student_id');
+        
+        $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
+        
+        // Generate PDF
+        $pdf = Pdf::loadView('sekretaris.laporan-absensi-cetak', compact(
+            'students', 
+            'attendancesByStudent', 
+            'holidays', 
+            'stats', 
+            'month', 
+            'year', 
+            'monthName'
+        ));
+        
+        $pdf->setPaper('a4', 'landscape'); // Landscape for better table display
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'Arial',
+            'isFontSubsettingEnabled' => true,
+            'dpi' => 150
+        ]);
+        
+        $filename = 'laporan-absensi-' . strtolower(str_replace(' ', '-', $monthName)) . '.pdf';
+        
+        return response($pdf->output())
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="' . $filename . '"');
+    }
+
+    /**
+     * Calculate attendance statistics
+     */
+    private function calculateAttendanceStats($students, $attendances, $holidays, $month, $year)
+    {
+        // Calculate working days (excluding weekends and holidays)
+        $daysInMonth = Carbon::create($year, $month)->daysInMonth;
+        $workingDays = 0;
+        $workingDates = [];
+        
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $date = Carbon::create($year, $month, $day);
+            $dateString = $date->format('Y-m-d');
+            $dayOfWeek = $date->dayOfWeek;
+            
+            // Skip if Saturday (6) or Sunday (0) or holiday
+            if (!in_array($dayOfWeek, [0, 6]) && !$holidays->has($dateString)) {
+                $workingDays++;
+                $workingDates[] = $dateString;
+            }
+        }
+        
+        // Initialize counters
+        $totalHadir = 0;
+        $totalSakit = 0;
+        $totalIzin = 0;
+        $totalAlpha = 0;
+        $totalBelumAbsen = 0;
+        
+        // Count attendances
+        foreach ($attendances as $attendance) {
+            $dateString = $attendance->date->format('Y-m-d');
+            $isHoliday = $holidays->has($dateString);
+            
+            // Skip counting 'belum_absen' if it's a holiday
+            if ($attendance->status === 'belum_absen' && $isHoliday) {
+                continue;
+            }
+            
+            switch ($attendance->status) {
+                case 'hadir':
+                    $totalHadir++;
+                    break;
+                case 'sakit':
+                    $totalSakit++;
+                    break;
+                case 'izin':
+                    $totalIzin++;
+                    break;
+                case 'alpha':
+                    $totalAlpha++;
+                    break;
+                case 'belum_absen':
+                    $totalBelumAbsen++;
+                    break;
+            }
+        }
+        
+        // Calculate percentage
+        $totalPossibleAttendances = $students->count() * $workingDays;
+        $attendanceRate = $totalPossibleAttendances > 0 ? round(($totalHadir / $totalPossibleAttendances) * 100, 2) : 0;
+        
+        return [
+            'workingDays' => $workingDays,
+            'totalStudents' => $students->count(),
+            'totalHadir' => $totalHadir,
+            'totalSakit' => $totalSakit,
+            'totalIzin' => $totalIzin,
+            'totalAlpha' => $totalAlpha,
+            'totalBelumAbsen' => $totalBelumAbsen,
+            'attendanceRate' => $attendanceRate,
+            'totalPossibleAttendances' => $students->count() * $workingDays
+        ];
+    }
 }
