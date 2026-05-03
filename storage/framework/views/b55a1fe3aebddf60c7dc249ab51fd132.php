@@ -149,12 +149,28 @@
                                     <td><?php echo e(\Carbon\Carbon::parse($attendance->date)->format('d/m/Y')); ?></td>
                                     <td><?php echo e(\Carbon\Carbon::parse($attendance->date)->translatedFormat('l')); ?></td>
                                     <td>
-                                        <span class="status-badge <?php echo e($attendance->status); ?>">
-                                            <?php echo e(ucfirst($attendance->status)); ?>
+                                        <?php
+                                            $statusConfig = [
+                                                'hadir' => ['label' => 'Hadir', 'class' => 'hadir'],
+                                                'sakit' => ['label' => 'Sakit', 'class' => 'sakit'],
+                                                'izin' => ['label' => 'Izin', 'class' => 'izin'],
+                                                'alpha' => ['label' => 'Alpa', 'class' => 'alpha'],
+                                                'belum_absen' => ['label' => 'Belum Absen', 'class' => 'belum_absen']
+                                            ];
+                                            
+                                            // Jika status libur, tambahkan konfigurasi libur
+                                            if ($attendance->status === 'libur') {
+                                                $statusConfig['libur'] = ['label' => '📅 ' . ($attendance->holiday_note ?? 'Hari Libur'), 'class' => 'libur'];
+                                            }
+                                            
+                                            $status = $statusConfig[$attendance->status] ?? $statusConfig['belum_absen'];
+                                        ?>
+                                        <span class="status-badge <?php echo e($status['class']); ?>">
+                                            <?php echo e($status['label']); ?>
 
                                         </span>
                                     </td>
-                                    <td><?php echo e($attendance->description ?? '-'); ?></td>
+                                    <td><?php echo e($attendance->description ?? ($attendance->holiday_note ?? '-')); ?></td>
                                     <td><?php echo e($attendance->check_in ?? '-'); ?></td>
                                     <td><?php echo e($attendance->check_out ?? '-'); ?></td>
                                 </tr>
@@ -652,6 +668,16 @@
 .status-badge.alpa {
     background: #fee2e2;
     color: #ef4444;
+}
+
+.status-badge.belum_absen {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.status-badge.libur {
+    background: #e0e7ff;
+    color: #3730a3;
 }
 
 .no-data {

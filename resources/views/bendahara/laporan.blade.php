@@ -236,7 +236,7 @@ function cetakKeuangan() {
     if (month && year) {
         window.open(`{{ route('bendahara.cetak.keuangan', ['month' => ':month', 'year' => ':year']) }}`.replace(':month', month).replace(':year', year), '_blank');
     } else {
-        alert('Silakan pilih bulan dan tahun terlebih dahulu');
+        showWarningToast('Silakan pilih bulan dan tahun terlebih dahulu');
     }
 }
 
@@ -246,7 +246,7 @@ function downloadKeuanganPDF() {
     if (month && year) {
         window.open(`{{ route('bendahara.laporan.pdf', ['month' => ':month', 'year' => ':year', 'type' => 'keuangan']) }}`.replace(':month', month).replace(':year', year), '_blank');
     } else {
-        alert('Silakan pilih bulan dan tahun terlebih dahulu');
+        showWarningToast('Silakan pilih bulan dan tahun terlebih dahulu');
     }
 }
 
@@ -257,7 +257,7 @@ function cetakPembayaran() {
     if (month && year) {
         window.open(`{{ route('bendahara.cetak.pembayaran.siswa', ['month' => ':month', 'year' => ':year']) }}`.replace(':month', month).replace(':year', year), '_blank');
     } else {
-        alert('Silakan pilih bulan dan tahun terlebih dahulu');
+        showWarningToast('Silakan pilih bulan dan tahun terlebih dahulu');
     }
 }
 
@@ -267,7 +267,7 @@ function downloadPembayaranPDF() {
     if (month && year) {
         window.open(`{{ route('bendahara.laporan.pdf', ['month' => ':month', 'year' => ':year', 'type' => 'pembayaran']) }}`.replace(':month', month).replace(':year', year), '_blank');
     } else {
-        alert('Silakan pilih bulan dan tahun terlebih dahulu');
+        showWarningToast('Silakan pilih bulan dan tahun terlebih dahulu');
     }
 </script>
 @endsection

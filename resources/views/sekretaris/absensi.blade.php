@@ -34,22 +34,46 @@
                 </div>
             </section>
 
-            <!-- Date Navigation -->
-            <section class="feature-cards mb-8" style="grid-template-columns: 1fr auto 1fr; gap: 12px;">
-                <a href="{{ route('sekretaris.absensi', ['date' => \Carbon\Carbon::parse($selectedDate)->subDay()->format('Y-m-d')]) }}" class="feature-card text-center" style="background: linear-gradient(135deg, #f8fafc, #e2e8f0);">
-                    <svg class="feature-icon" style="width: 48px; height: 48px; margin: 0 auto 8px; background: transparent; color: #64748b;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                    <h3 class="feature-title" style="font-size: 16px;">Kemarin</h3>
-                </a>
-                <a href="{{ route('sekretaris.absensi') }}" class="feature-card text-center" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;">
-                    <div class="feature-icon" style="background: rgba(255,255,255,0.2); color: white; width: 48px; height: 48px; margin: 0 auto 8px;">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <!-- Date Navigation with Picker -->
+            <section class="date-navigation-section mb-8">
+                <div class="date-navigation-card">
+                    <div class="date-nav-content">
+                        <!-- Date Picker -->
+                        <div class="date-picker-inline">
+                            <label for="selectedDate" class="date-picker-label">Pilih Tanggal:</label>
+                            <div class="date-input-wrapper">
+                                <input type="date" id="selectedDate" name="selectedDate" value="{{ $selectedDate }}" class="date-input" onchange="window.location.href='/sekretaris/absensi?date=' + this.value">
+                                <div class="date-input-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Navigation -->
+                        <div class="quick-nav-buttons">
+                            <a href="{{ route('sekretaris.absensi', ['date' => \Carbon\Carbon::parse($selectedDate)->subDay()->format('Y-m-d')]) }}" class="quick-nav-btn prev-btn">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                                Kemarin
+                            </a>
+                            <a href="{{ route('sekretaris.absensi') }}" class="quick-nav-btn today-btn">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Hari Ini
+                            </a>
+                            <a href="{{ route('sekretaris.absensi', ['date' => \Carbon\Carbon::parse($selectedDate)->addDay()->format('Y-m-d')]) }}" class="quick-nav-btn next-btn">
+                                Besok
+                                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </a>
+                        </div>
                     </div>
-                    <h3 class="feature-title" style="color: white; font-size: 18px;">Hari Ini</h3>
-                </a>
-                <a href="{{ route('sekretaris.absensi', ['date' => \Carbon\Carbon::parse($selectedDate)->addDay()->format('Y-m-d')]) }}" class="feature-card text-center" style="background: linear-gradient(135deg, #f8fafc, #e2e8f0);">
-                    <svg class="feature-icon" style="width: 48px; height: 48px; margin: 0 auto 8px; background: transparent; color: #64748b;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19l-7-7 7-7"></path></svg>
-                    <h3 class="feature-title" style="font-size: 16px;">Besok</h3>
-                </a>
+                </div>
             </section>
 
             @if($holiday)
@@ -280,8 +304,144 @@
 .progress-bar { width: 100%; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 4px; transition: width 0.3s ease; }
 .progress-text { text-align: center; font-size: 18px; font-weight: 700; color: #1e293b; }
-@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 768px) { .sidebar { width: 100%; position: absolute; z-index: 50; transform: translateX(-100%); } .main-content { padding: 20px; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .feature-cards { grid-template-columns: 1fr; } .lg\:flex-row { flex-direction: column; } }
-</style>
-@endsection
+/* Date Navigation Styles */
+.date-navigation-section {
+    margin-bottom: 32px;
+}
 
+.date-navigation-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.date-nav-content {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.date-picker-inline {
+    flex: 1;
+    min-width: 250px;
+}
+
+.date-picker-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.date-input-wrapper {
+    position: relative;
+    max-width: 300px;
+}
+
+.date-input {
+    width: 100%;
+    padding: 12px 16px 12px 48px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1e293b;
+    background: white;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.date-input:hover {
+    border-color: #cbd5e1;
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.date-input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    pointer-events: none;
+}
+
+.date-input-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.quick-nav-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.quick-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.quick-nav-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.quick-nav-btn.prev-btn {
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.quick-nav-btn.prev-btn:hover {
+    background: #e2e8f0;
+    color: #3b82f6;
+}
+
+.quick-nav-btn.today-btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.quick-nav-btn.today-btn:hover {
+    background: #2563eb;
+}
+
+.quick-nav-btn.next-btn {
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.quick-nav-btn.next-btn:hover {
+    background: #e2e8f0;
+    color: #3b82f6;
+}
+
+@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .tables-section { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .sidebar { width: 100%; position: absolute; z-index: 50; transform: translateX(-100%); } .main-content { padding: 20px; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .feature-cards { grid-template-columns: 1fr; } .lg\:flex-row { flex-direction: column; } 
+    .date-navigation-card { padding: 16px; }
+    .date-nav-content { flex-direction: column; align-items: stretch; gap: 16px; }
+    .date-picker-inline { min-width: 100%; }
+    .date-input-wrapper { max-width: 100%; }
+    .quick-nav-buttons { justify-content: center; }
+}
+</style>
+
+
+@endsection

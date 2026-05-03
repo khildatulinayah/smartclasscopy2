@@ -72,7 +72,6 @@ Route::get('/kas', [BendaharaController::class, 'simpleCash'])->name('kas'); // 
         // Laporan Routes
         Route::get('/laporan', [BendaharaController::class, 'laporan'])->name('laporan');
         Route::get('/laporan/pembayaran', [BendaharaController::class, 'laporanPembayaran'])->name('laporan.pembayaran');
-        Route::post('/laporan/pembayaran/cetak', [BendaharaController::class, 'laporanCetak'])->name('laporan.pembayaran.cetak');
         Route::get('/laporan/pdf/{month}/{year}/{type}', [BendaharaController::class, 'laporanPdf'])->name('laporan.pdf');
         Route::get('/laporan/keuangan/cetak/{month}/{year?}', [BendaharaController::class, 'cetakKeuangan'])->name('cetak.keuangan');
         Route::get('/laporan/pembayaran-siswa/cetak/{month}/{year?}', [BendaharaController::class, 'cetakPembayaranSiswa'])->name('cetak.pembayaran.siswa');
@@ -85,8 +84,6 @@ Route::get('/kas', [BendaharaController::class, 'simpleCash'])->name('kas'); // 
         Route::post('/absensi/update', [SekretarisController::class, 'batchUpdateAttendance'])->name('absensi.update');
         Route::post('/absensi/holiday', [SekretarisController::class, 'deleteHoliday'])->name('absensi.delete_holiday');
         Route::get('/tracker', [SekretarisController::class, 'simpleTracker'])->name('tracker');
-        Route::get('/laporan-absensi', [SekretarisController::class, 'laporanAbsensi'])->name('laporan');
-        Route::get('/laporan-absensi/cetak', [SekretarisController::class, 'cetakAbsensi'])->name('laporan.cetak');
         Route::get('/api/student-attendance/{studentId}', [SekretarisController::class, 'getStudentAttendance']);
     });
 

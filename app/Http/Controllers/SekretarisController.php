@@ -28,6 +28,9 @@ class SekretarisController extends Controller
                                       ->get()
                                       ->keyBy('student_id');
         
+        // Cek hari libur (dipindahkan ke atas agar bisa digunakan dalam statistik)
+        $holiday = Holiday::where('date', $today)->first();
+        
         // Pastikan semua siswa punya record absensi hari ini (create jika belum ada)
         foreach ($students as $student) {
             if (!$todayAttendances->has($student->id)) {
@@ -42,14 +45,14 @@ class SekretarisController extends Controller
             }
         }
         
-        // Hitung statistik
+        // Hitung statistik (exclude holidays from 'belum_absen' count)
         $stats = [
             'total' => $students->count(),
             'hadir' => $todayAttendances->where('status', 'hadir')->count(),
             'sakit' => $todayAttendances->where('status', 'sakit')->count(),
             'izin' => $todayAttendances->where('status', 'izin')->count(),
             'alpha' => $todayAttendances->where('status', 'alpha')->count(),
-            'belum_absen' => $todayAttendances->where('status', 'belum_absen')->count(),
+            'belum_absen' => $holiday ? 0 : $todayAttendances->where('status', 'belum_absen')->count(),
         ];
         
         // Data untuk tabel (limit 10 untuk dashboard)
@@ -62,9 +65,6 @@ class SekretarisController extends Controller
                 'class' => $student->student ? $student->student->class : '-',
             ];
         })->take(10);
-        
-        // Cek hari libur
-        $holiday = Holiday::where('date', $today)->first();
         
         return view('sekretaris.dashboard', compact(
             'today',
@@ -197,12 +197,28 @@ class SekretarisController extends Controller
         
         foreach ($students as $student) {
             $studentAttendances = $attendances->get($student->id, collect());
-            // Count unique dates with each status for this student
-            $statuses = $studentAttendances->pluck('status')->toArray();
-            if (in_array('hadir', $statuses)) $totalHadir++;
-            if (in_array('sakit', $statuses)) $totalSakit++;
-            if (in_array('izin', $statuses)) $totalIzin++;
-            if (in_array('alpha', $statuses)) $totalAlpha++;
+            
+            // Check each attendance and exclude holidays from 'belum_absen' count
+            foreach ($studentAttendances as $attendance) {
+                $dateString = $attendance->date->format('Y-m-d');
+                $isHoliday = in_array($dateString, $holidays);
+                
+                // Skip counting 'belum_absen' if it's a holiday
+                if ($attendance->status === 'belum_absen' && $isHoliday) {
+                    continue;
+                }
+                
+                // Count each status (but don't double count per student)
+                if ($attendance->status === 'hadir') {
+                    $totalHadir++;
+                } elseif ($attendance->status === 'sakit') {
+                    $totalSakit++;
+                } elseif ($attendance->status === 'izin') {
+                    $totalIzin++;
+                } elseif ($attendance->status === 'alpha') {
+                    $totalAlpha++;
+                }
+            }
         }
         
         // Total attendances in the month (count each student once per status)
@@ -250,126 +266,27 @@ class SekretarisController extends Controller
         // Transform data untuk JSON response yang aman
         $data = $attendances->map(function ($attendance) use ($holidays) {
             $dateString = $attendance->date ? $attendance->date->format('Y-m-d') : null;
+            $holidayNote = $holidays[$dateString] ?? null;
+            
+            // Jika hari libur dan status belum_absen, ubah menjadi 'libur'
+            $status = $attendance->status;
+            if ($holidayNote && $status === 'belum_absen') {
+                $status = 'libur';
+            }
             
             return [
                 'id' => $attendance->id,
                 'student_id' => $attendance->student_id,
                 'date' => $dateString,
-                'status' => $attendance->status,
+                'status' => $status,
                 'attendance_time' => $attendance->attendance_time ? $attendance->attendance_time->format('H:i:s') : null,
                 'created_by' => $attendance->created_by,
                 'created_at' => $attendance->created_at,
                 'updated_at' => $attendance->updated_at,
-                'holiday_note' => $holidays[$dateString] ?? null,
+                'holiday_note' => $holidayNote,
             ];
         });
         
         return response()->json($data);
-    }
-
-    
-    // Laporan Absensi
-    public function laporanAbsensi(Request $request)
-    {
-        $bulan = $request->bulan;
-        $tahun = $request->tahun;
-
-        // kalau belum pilih bulan → tampilkan halaman filter dulu
-        if (!$bulan || !$tahun) {
-            return view('sekretaris.laporan-filter', compact('bulan', 'tahun'));
-        }
-
-        // kalau sudah pilih → baru generate laporan
-        $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name')->get();
-
-        $attendances = Attendance::whereMonth('date', $bulan)
-            ->whereYear('date', $tahun)
-            ->get()
-            ->groupBy('student_id');
-
-        $jumlahHari = \Carbon\Carbon::create($tahun, $bulan)->daysInMonth;
-
-        $laporan = [];
-
-        foreach ($students as $student) {
-            $dataPerHari = [];
-            $dataAbsensi = $attendances[$student->id] ?? collect();
-
-            for ($i = 1; $i <= $jumlahHari; $i++) {
-                $tanggal = \Carbon\Carbon::create($tahun, $bulan, $i)->toDateString();
-                $absen = $dataAbsensi->firstWhere('date', $tanggal);
-                $dataPerHari[$i] = $absen ? $absen->status : '-';
-            }
-
-            $total = [
-                'hadir' => $dataAbsensi->where('status', 'hadir')->count(),
-                'sakit' => $dataAbsensi->where('status', 'sakit')->count(),
-                'izin'  => $dataAbsensi->where('status', 'izin')->count(),
-                'alpha' => $dataAbsensi->where('status', 'alpha')->count(),
-            ];
-
-            $laporan[] = [
-                'nama' => $student->name,
-                'hari' => $dataPerHari,
-                'total' => $total
-            ];
-        }
-
-        return view('sekretaris.laporan', compact(
-            'laporan',
-            'bulan',
-            'tahun',
-            'jumlahHari'
-        ));
-    }
-
-    public function cetakAbsensi(Request $request)
-    {
-        $bulan = $request->bulan;
-        $tahun = $request->tahun;
-
-        $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name')->get();
-
-        $attendances = Attendance::whereMonth('date', $bulan)
-            ->whereYear('date', $tahun)
-            ->get()
-            ->groupBy('student_id');
-
-        $jumlahHari = \Carbon\Carbon::create($tahun, $bulan)->daysInMonth;
-
-        $laporan = [];
-
-        foreach ($students as $student) {
-            $dataPerHari = [];
-            $dataAbsensi = $attendances[$student->id] ?? collect();
-
-            for ($i = 1; $i <= $jumlahHari; $i++) {
-                $tanggal = \Carbon\Carbon::create($tahun, $bulan, $i)->toDateString();
-                $absen = $dataAbsensi->firstWhere('date', $tanggal);
-                $dataPerHari[$i] = $absen ? $absen->status : '-';
-            }
-
-            $total = [
-                'hadir' => $dataAbsensi->where('status', 'hadir')->count(),
-                'sakit' => $dataAbsensi->where('status', 'sakit')->count(),
-                'izin'  => $dataAbsensi->where('status', 'izin')->count(),
-                'alpha' => $dataAbsensi->where('status', 'alpha')->count(),
-            ];
-
-            $laporan[] = [
-                'nama' => $student->name,
-                'hari' => $dataPerHari,
-                'total' => $total
-            ];
-        }
-
-        $pdf = Pdf::loadView('sekretaris.laporan-cetak', compact(
-            'laporan',
-            'bulan',
-            'tahun',
-            'jumlahHari'
-        ))->setPaper('a3', 'landscape');
-
-        return $pdf->stream("laporan-absensi-$bulan-$tahun.pdf");
     }
 }

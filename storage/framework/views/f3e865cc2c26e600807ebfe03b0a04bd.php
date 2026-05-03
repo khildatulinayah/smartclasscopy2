@@ -20,7 +20,9 @@
                             </a>
                             <a href="?month=<?php echo e(min(12, $currentMonth + 1)); ?>" class="feature-btn px-4 py-2 text-sm" style="background: #6b7280;">
                                 Selanjutnya
-                                <svg class="inline w-4 h-4 -mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19l-7-7 7-7"></path></svg>
+                                <svg class="inline w-4 h-4 -mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                            </svg>
                             </a>
                         </div>
                     </div>
@@ -213,13 +215,22 @@ function showDetail(studentId) {
                     'sakit': 'warning', 
                     'izin': 'info',
                     'alpha': 'danger',
-                    'belum_absen': 'secondary'
+                    'belum_absen': 'secondary',
+                    'libur': 'primary'
                 }[attendance.status] || 'secondary';
+                
+                // Format status label
+                let statusLabel = attendance.status.charAt(0).toUpperCase() + attendance.status.slice(1).replace('_', ' ');
+                if (attendance.status === 'libur' && attendance.holiday_note) {
+                    statusLabel = `📅 ${attendance.holiday_note}`;
+                } else if (attendance.status === 'libur') {
+                    statusLabel = '📅 Hari Libur';
+                }
                 
                 html += `
                     <tr>
                         <td class="font-medium">${formatDate(attendance.date)}</td>
-                        <td><span class="status-badge ${statusClass} px-3 py-1">${ucfirst(attendance.status)}</span></td>
+                        <td><span class="status-badge ${statusClass} px-3 py-1">${statusLabel}</span></td>
                         <td>${formatTime(attendance.attendance_time)}</td>
                     </tr>`;
             });
@@ -306,12 +317,12 @@ document.getElementById('detailModal').addEventListener('click', function(e) {
 .status-badge.info { background: #dbeafe; color: #1e40af; border-color: #3b82f6; }
 .status-badge.danger { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
 .status-badge.secondary { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
+.status-badge.primary { background: #e0e7ff; color: #3730a3; border-color: #6366f1; }
 .feature-btn { display: inline-flex; align-items: center; gap: 8px; background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s ease; white-space: nowrap; }
 .feature-btn:hover { background: #2563eb; transform: translateY(-1px); }
 #detailModal { transition: opacity 0.3s ease; }
 @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .main-content { padding: 20px; } .stats-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>
 <?php $__env->stopSection(); ?>
-
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/sekretaris/tracker.blade.php ENDPATH**/ ?>

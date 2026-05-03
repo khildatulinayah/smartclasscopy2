@@ -512,7 +512,7 @@ function processPayment(paymentId) {
         .then(response => response.json())
         .then(paymentData => {
             if (!paymentData.success) {
-                alert(paymentData.message);
+                showErrorToast(paymentData.message);
                 return;
             }
             
@@ -521,7 +521,7 @@ function processPayment(paymentId) {
         })
         .catch(error => {
             console.error('Error finding payment:', error);
-            alert('Gagal menemukan data pembayaran');
+            showErrorToast('Gagal menemukan data pembayaran');
         });
     } else {
         // Existing payment ID
@@ -558,7 +558,7 @@ function processPaymentWithTransaction(paymentId) {
             
             if (!availableTransaction) {
                 console.log('No available transaction found. Available transactions:', transactions.filter(t => t.type === 'income'));
-                alert('Tidak ada transaksi pembayaran yang tersedia.\n\nLangkah yang harus dilakukan:\n1. Klik menu "Kas" di sidebar\n2. Klik "Tambah Transaksi"\n3. Pilih tipe "Pemasukan"\n4. Masukkan nominal Rp ' + paymentAmount + '\n5. Simpan transaksi\n6. Kembali ke halaman ini dan coba lagi');
+                showWarningToast('Tidak ada transaksi pembayaran yang tersedia.\n\nLangkah yang harus dilakukan:\n1. Klik menu "Kas" di sidebar\n2. Klik "Tambah Transaksi"\n3. Pilih tipe "Pemasukan"\n4. Masukkan nominal Rp ' + paymentAmount + '\n5. Simpan transaksi\n6. Kembali ke halaman ini dan coba lagi', 'Transaksi Tidak Tersedia', 10000);
                 return;
             }
             
@@ -577,21 +577,21 @@ function processPaymentWithTransaction(paymentId) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Pembayaran berhasil dicatat!');
+                    showSuccessToast('Pembayaran berhasil dicatat!');
                     location.reload();
                 } else {
-                    alert(data.message || 'Terjadi kesalahan');
+                    showErrorToast(data.message || 'Terjadi kesalahan');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Terjadi kesalahan saat memproses pembayaran');
+                showErrorToast('Terjadi kesalahan saat memproses pembayaran');
             });
         })
         .catch(error => {
             console.error('Error fetching transactions:', error);
             console.error('Error details:', error.message);
-            alert('Gagal mengambil data transaksi: ' + error.message);
+            showErrorToast('Gagal mengambil data transaksi: ' + error.message);
         });
 }
 </script>
@@ -608,7 +608,7 @@ function showPaymentModal(paymentId, studentName, week, studentId) {
     
     if (!modal) {
         console.error('Payment modal not found!');
-        alert('Modal tidak ditemukan!');
+        showErrorToast('Modal tidak ditemukan!');
         return;
     }
     
@@ -730,16 +730,16 @@ document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
         console.log('Payment response:', data);
         
         if (data.success) {
-            alert('Pembayaran berhasil dicatat!');
+            showSuccessToast('Pembayaran berhasil dicatat!');
             closePaymentModal();
             location.reload();
         } else {
-            alert('Gagal memproses pembayaran: ' + (data.message || 'Unknown error'));
+            showErrorToast('Gagal memproses pembayaran: ' + (data.message || 'Unknown error'));
         }
     })
     .catch(error => {
         console.error('Full error:', error);
-        alert('Terjadi kesalahan: ' + error.message);
+        showErrorToast('Terjadi kesalahan: ' + error.message);
     })
     .finally(() => {
         // Reset button
@@ -790,7 +790,7 @@ function showArrearsModal(studentId, studentName, totalArrears, weeks) {
     const modal = document.getElementById('arrearsModal');
     if (!modal) {
         console.error('Arrears modal not found!');
-        alert('Modal tidak ditemukan!');
+        showErrorToast('Modal tidak ditemukan!');
         return;
     }
     
@@ -842,7 +842,7 @@ document.getElementById('arrearsForm')?.addEventListener('submit', function(e) {
     console.log('Arrears form data:', {studentId, paymentDate, description, totalAmount});
     
     if (!studentId || !paymentDate || totalAmount === 0) {
-        alert('Data form tidak lengkap!');
+        showWarningToast('Data form tidak lengkap!');
         return;
     }
     
@@ -911,17 +911,17 @@ document.getElementById('arrearsForm')?.addEventListener('submit', function(e) {
         console.log('Arrears data:', data);
         
         if (data.success) {
-            alert('Tunggakan berhasil dilunasi!');
+            showSuccessToast('Tunggakan berhasil dilunasi!');
             closeArrearsModal();
             closeArrearsList();
             location.reload();
         } else {
-            alert('Gagal melunasi tunggakan: ' + (data.message || 'Unknown error'));
+            showErrorToast('Gagal melunasi tunggakan: ' + (data.message || 'Unknown error'));
         }
     })
     .catch(error => {
         console.error('Arrears error:', error);
-        alert('Terjadi kesalahan: ' + error.message);
+        showErrorToast('Terjadi kesalahan: ' + error.message);
     })
     .finally(() => {
         // Reset button

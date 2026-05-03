@@ -157,22 +157,9 @@
                                             <span class="method-value"><?php echo e(ucfirst($payment->payment_method)); ?></span>
                                         </div>
                                     <?php endif; ?>
-                                <?php else: ?>
-                                    <div class="payment-due">
-                                        <span class="due-label">Jatuh Tempo:</span>
-                                        <span class="due-value"><?php echo e(\Carbon\Carbon::parse($payment->due_date)->format('d/m/Y')); ?></span>
-                                    </div>
                                 <?php endif; ?>
-                            </div>
                             
-                            <?php if($payment->status == 'unpaid'): ?>
-                                <div class="payment-actions">
-                                    <button class="pay-btn" onclick="showPaymentModal(<?php echo e($payment->week_number); ?>, <?php echo e($payment->amount ?? 15000); ?>)">
-                                        Bayar Sekarang
-                                    </button>
-                                </div>
-                            <?php endif; ?>
-                        </div>
+                                                    </div>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <div class="no-payments">
                             <div class="no-payments-icon">
@@ -1150,10 +1137,18 @@
         flex-direction: column;
         gap: 24px;
         text-align: center;
+        align-items: center;
     }
     
     .payments-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+    }
+    
+    @media (max-width: 480px) {
+        .payments-grid {
+            grid-template-columns: 1fr !important;
+        }
     }
     
     .history-table {

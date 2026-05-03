@@ -158,22 +158,9 @@
                                             <span class="method-value">{{ ucfirst($payment->payment_method) }}</span>
                                         </div>
                                     @endif
-                                @else
-                                    <div class="payment-due">
-                                        <span class="due-label">Jatuh Tempo:</span>
-                                        <span class="due-value">{{ \Carbon\Carbon::parse($payment->due_date)->format('d/m/Y') }}</span>
-                                    </div>
                                 @endif
-                            </div>
                             
-                            @if($payment->status == 'unpaid')
-                                <div class="payment-actions">
-                                    <button class="pay-btn" onclick="showPaymentModal({{ $payment->week_number }}, {{ $payment->amount ?? 15000 }})">
-                                        Bayar Sekarang
-                                    </button>
-                                </div>
-                            @endif
-                        </div>
+                                                    </div>
                     @empty
                         <div class="no-payments">
                             <div class="no-payments-icon">
@@ -1151,10 +1138,18 @@
         flex-direction: column;
         gap: 24px;
         text-align: center;
+        align-items: center;
     }
     
     .payments-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+    }
+    
+    @media (max-width: 480px) {
+        .payments-grid {
+            grid-template-columns: 1fr !important;
+        }
     }
     
     .history-table {
@@ -1187,7 +1182,7 @@ function confirmPayment() {
     
     // Validate form
     if (!formData.get('payment_method') || !formData.get('payment_date')) {
-        alert('Mohon lengkapi semua field yang wajib diisi');
+        showWarningToast('Mohon lengkapi semua field yang wajib diisi');
         return;
     }
     
@@ -1195,7 +1190,7 @@ function confirmPayment() {
     console.log('Payment confirmed:', Object.fromEntries(formData));
     
     // Show success message
-    alert('Pembayaran berhasil dikonfirmasi!');
+    showSuccessToast('Pembayaran berhasil dikonfirmasi!');
     closePaymentModal();
     
     // Reload page to show updated payment status

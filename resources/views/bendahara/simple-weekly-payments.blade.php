@@ -287,7 +287,7 @@ function showPaymentModal(studentId, studentName, month, year) {
     
     // Set default date
     document.getElementById('payment_date').value = new Date().toISOString().split('T')[0];
-    document.getElementById('payment_description').value = 'Pembayaran kas mingguan';
+    document.getElementById('payment_description').value = `Pembayaran kas ${monthNames[month - 1]} - ${studentName}`;
     
     // Show modal
     document.getElementById('paymentModal').classList.remove('hidden');
@@ -363,16 +363,16 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Pembayaran berhasil dicatat!');
+            showSuccessToast('Pembayaran berhasil dicatat!');
             closePaymentModal();
             location.reload();
         } else {
-            alert('Gagal memproses pembayaran: ' + (data.message || 'Unknown error'));
+            showErrorToast('Gagal memproses pembayaran: ' + (data.message || 'Unknown error'));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Terjadi kesalahan: ' + error.message);
+        showErrorToast('Terjadi kesalahan: ' + error.message);
     })
     .finally(() => {
         submitBtn.textContent = originalText;

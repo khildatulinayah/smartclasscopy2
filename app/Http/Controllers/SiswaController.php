@@ -119,6 +119,14 @@ class SiswaController extends Controller
         $prevMonth = $currentDate->copy()->subMonth();
         $nextMonth = $currentDate->copy()->addMonth();
         
+        // Get holidays for the month
+        $holidays = Holiday::whereMonth('date', $month)
+                          ->whereYear('date', $year)
+                          ->get()
+                          ->mapWithKeys(function ($holiday) {
+                              return [$holiday->date->format('Y-m-d') => $holiday->note];
+                          });
+        
         // Get attendance history for specified month
         $attendances = Attendance::where('student_id', $student->id)
             ->whereMonth('date', $month)
@@ -126,7 +134,24 @@ class SiswaController extends Controller
             ->orderBy('date', 'desc')
             ->get();
         
-        // Calculate attendance statistics
+        // Transform attendance data to handle holidays
+        $attendances = $attendances->map(function ($attendance) use ($holidays) {
+            $dateString = $attendance->date->format('Y-m-d');
+            $holidayNote = $holidays[$dateString] ?? null;
+            
+            // If it's a holiday and status is belum_absen, change to 'libur'
+            $status = $attendance->status;
+            if ($holidayNote && $status === 'belum_absen') {
+                $status = 'libur';
+            }
+            
+            $attendance->status = $status;
+            $attendance->holiday_note = $holidayNote;
+            
+            return $attendance;
+        });
+        
+        // Calculate attendance statistics (excluding holidays from 'belum_absen' count)
         $totalHadir = $attendances->where('status', 'hadir')->count();
         $totalSakit = $attendances->where('status', 'sakit')->count();
         $totalIzin = $attendances->where('status', 'izin')->count();
