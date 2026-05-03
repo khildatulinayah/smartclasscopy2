@@ -362,9 +362,7 @@
             <button type="submit" class="login-button">Masuk</button>
         </form>
         
-        <div class="forgot-password">
-            <a href="#" onclick="alert('Fitur reset password akan segera tersedia'); return false;">Lupa password?</a>
-        </div>
+      
     </div>
     
     <div class="footer">

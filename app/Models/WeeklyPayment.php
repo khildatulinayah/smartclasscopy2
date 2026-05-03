@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -63,8 +64,13 @@ class WeeklyPayment extends Model
     }
 
     // Helper: generate tagihan mingguan untuk siswa
-    public static function generateWeeklyBills($studentId, $month, $year, $amountPerWeek = 5000)
+    public static function generateWeeklyBills($studentId, $month, $year, $amountPerWeek = null)
     {
+        // Ambil nominal dari settings, atau gunakan parameter jika diberikan
+        if ($amountPerWeek === null) {
+            $amountPerWeek = (int) Setting::get('weekly_payment_amount', 5000);
+        }
+        
         $bills = [];
         $weeksInMonth = self::getWeeksInMonth($month, $year);
         
@@ -100,11 +106,122 @@ class WeeklyPayment extends Model
         return count($bills);
     }
 
-    // Helper: hitung jumlah minggu dalam bulan
-    private static function getWeeksInMonth($month, $year)
+    /**
+     * Sync monthly bills - Buat/update tagihan untuk semua siswa aktif di bulan tertentu
+     * Ini idempotent: akan membuat tagihan untuk siswa baru, tapi tidak mengubah yang sudah ada
+     */
+    public static function syncMonthlyBills($month, $year)
     {
-        // Sederhana: anggap 4 minggu per bulan
-        return 4;
+        $amountPerWeek = (int) Setting::get('weekly_payment_amount', 5000);
+        $students = User::where('role', 'siswa')->where('is_active', true)->get();
+        $generatedCount = 0;
+        
+        foreach ($students as $student) {
+            // Cek berapa tagihan yang sudah ada untuk bulan ini
+            $existingCount = self::where('student_id', $student->id)
+                                ->where('month', $month)
+                                ->where('year', $year)
+                                ->count();
+            
+            $weeksInMonth = self::getWeeksInMonth($month, $year);
+            
+            // Jika belum ada tagihan sama sekali, buat untuk semua minggu
+            if ($existingCount === 0) {
+                for ($week = 1; $week <= $weeksInMonth; $week++) {
+                    self::create([
+                        'student_id' => $student->id,
+                        'week_number' => $week,
+                        'month' => $month,
+                        'year' => $year,
+                        'amount' => $amountPerWeek,
+                        'status' => 'unpaid',
+                        'payment_date' => null,
+                        'transaction_id' => null,
+                        'created_by' => auth()->id() ?? 1,
+                    ]);
+                    $generatedCount++;
+                }
+            } else if ($existingCount < $weeksInMonth) {
+                // Jika ada minggu yang belum ada, buat yang kurang
+                for ($week = 1; $week <= $weeksInMonth; $week++) {
+                    $existing = self::where('student_id', $student->id)
+                                    ->where('week_number', $week)
+                                    ->where('month', $month)
+                                    ->where('year', $year)
+                                    ->first();
+                    
+                    if (!$existing) {
+                        self::create([
+                            'student_id' => $student->id,
+                            'week_number' => $week,
+                            'month' => $month,
+                            'year' => $year,
+                            'amount' => $amountPerWeek,
+                            'status' => 'unpaid',
+                            'payment_date' => null,
+                            'transaction_id' => null,
+                            'created_by' => auth()->id() ?? 1,
+                        ]);
+                        $generatedCount++;
+                    }
+                }
+            }
+        }
+        
+        return $generatedCount;
+    }
+
+    /**
+     * Hitung jumlah minggu dalam bulan berdasarkan hari Rabu
+     * Hari Rabu adalah hari pembayaran kas
+     */
+    public static function getWeeksInMonth($month, $year)
+    {
+        $startDate = Carbon::createFromDate($year, $month, 1);
+        $endDate = $startDate->copy()->endOfMonth();
+        
+        $wednesdayCount = 0;
+        $current = $startDate->copy();
+        
+        // Iterate through all days in the month and count Wednesdays
+        while ($current->lte($endDate)) {
+            if ($current->dayOfWeek === 3) { // 3 = Wednesday (Carbon::WEDNESDAY)
+                $wednesdayCount++;
+            }
+            $current->addDay();
+        }
+        
+        return $wednesdayCount > 0 ? $wednesdayCount : 4; // Minimal 4 minggu jika tidak ada Rabu
+    }
+
+    /**
+     * Dapatkan daftar tanggal Rabu dalam bulan tertentu
+     * Berguna untuk menampilkan di UI atau keperluan lain
+     */
+    public static function getWednesdayDatesInMonth($month, $year)
+    {
+        $startDate = Carbon::createFromDate($year, $month, 1);
+        $endDate = $startDate->copy()->endOfMonth();
+        
+        $wednesdays = [];
+        $current = $startDate->copy();
+        
+        while ($current->lte($endDate)) {
+            if ($current->dayOfWeek === 3) { // 3 = Wednesday
+                $wednesdays[] = $current->copy();
+            }
+            $current->addDay();
+        }
+        
+        return $wednesdays;
+    }
+
+    /**
+     * Get weekly payment amount from settings
+     */
+    public static function getWeeklyPaymentAmount()
+    {
+        return (int) Setting::get('weekly_payment_amount', 5000);
     }
 
     // Helper: hitung total tunggakan siswa

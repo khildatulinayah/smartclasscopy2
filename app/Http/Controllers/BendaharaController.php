@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Transaction;
 use App\Models\WeeklyPayment;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BendaharaController extends Controller
 {
@@ -16,36 +18,45 @@ class BendaharaController extends Controller
         $today = Carbon::now();
         $isWednesday = $today->dayOfWeek === 3;
         
-        // Perbaikan: hitung week number berdasarkan hari Rabu, bukan weekOfMonth
-        $startOfMonth = $today->copy()->startOfMonth();
-        $firstWednesday = $startOfMonth->copy()->next(Carbon::WEDNESDAY);
+        $currentMonth = $today->month;
+        $currentYear = $today->year;
         
-        // Jika hari ini sebelum Rabu pertama bulan ini, pakai minggu 1
-        if ($today->lt($firstWednesday)) {
-            $currentWeek = 1;
-        } else {
-            // Hitung selisih hari dari Rabu pertama, dibagi 7, +1
-            $daysSinceFirstWednesday = $today->diffInDays($firstWednesday);
-            $currentWeek = min(4, intval($daysSinceFirstWednesday / 7) + 1);
+        // Get weeks in current month (dynamic based on Wednesdays)
+        $weeksInMonth = WeeklyPayment::getWeeksInMonth($currentMonth, $currentYear);
+        $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($currentMonth, $currentYear);
+        
+        // Calculate current week based on actual Wednesdays
+        $currentWeek = 1;
+        if (!empty($wednesdayDates)) {
+            $firstWednesday = $wednesdayDates[0];
+            
+            if ($today->gte($firstWednesday)) {
+                foreach ($wednesdayDates as $index => $wednesday) {
+                    if ($today->gte($wednesday)) {
+                        $currentWeek = $index + 1;
+                    }
+                }
+            }
         }
         
         $nextWednesday = $today->copy()->next(Carbon::WEDNESDAY)->format('d M Y');
         
-        $currentMonth = $today->month;
-        $currentYear = $today->year;
+        // Sync bills for current month (idempotent - create missing, don't duplicate)
+        WeeklyPayment::syncMonthlyBills($currentMonth, $currentYear);
         
-        // Generate tagihan jika belum ada
-        $this->generateMonthlyBills($currentMonth, $currentYear);
-        
-        $payments = WeeklyPayment::where('month', $currentMonth)
+        $payments = WeeklyPayment::with(['student', 'transaction'])
+            ->where('month', $currentMonth)
             ->where('year', $currentYear)
             ->get();
         
-        // Perbaikan: filter berdasarkan minggu aktif yang sudah lewat
+        // Get current week unpaid payments
         $currentWeekUnpaid = $payments
             ->where('week_number', $currentWeek)
             ->where('status', 'unpaid')
             ->count();
+        
+        // Get weekly payment amount from settings
+        $weeklyPaymentAmount = WeeklyPayment::getWeeklyPaymentAmount();
         
         // --- DATA KEUANGAN RILL ---
         $transactions = Transaction::orderBy('date', 'desc')->get();
@@ -159,23 +170,39 @@ class BendaharaController extends Controller
     // API for payment processing
     public function getTransactions()
     {
-        $transactions = Transaction::with(['student', 'creator'])
-            ->orderBy('date', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get();
-        
-        $totalIncome = (float) $transactions->where('type', 'income')->sum('amount');
-        $totalExpense = (float) $transactions->where('type', 'expense')->sum('amount');
-        $balance = $totalIncome - $totalExpense;
-        
-        return response()->json([
-            'transactions' => $transactions,
-            'summary' => [
-                'totalIncome' => $totalIncome,
-                'totalExpense' => $totalExpense,
-                'balance' => $balance
-            ]
-        ]);
+        try {
+            Log::info('getTransactions called');
+            
+            $transactions = Transaction::with(['student', 'creator'])
+                ->orderBy('date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            Log::info('Transactions fetched: ' . $transactions->count());
+            
+            $totalIncome = (float) $transactions->where('type', 'income')->sum('amount');
+            $totalExpense = (float) $transactions->where('type', 'expense')->sum('amount');
+            $balance = $totalIncome - $totalExpense;
+            
+            $incomeTransactions = $transactions->where('type', 'income');
+            Log::info('Income transactions: ' . $incomeTransactions->count());
+            Log::info('Payment amount from settings: ' . WeeklyPayment::getWeeklyPaymentAmount());
+            
+            return response()->json([
+                'transactions' => $transactions,
+                'summary' => [
+                    'totalIncome' => $totalIncome,
+                    'totalExpense' => $totalExpense,
+                    'balance' => $balance
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in getTransactions: ' . $e->getMessage());
+            return response()->json([
+                'error' => $e->getMessage(),
+                'message' => 'Failed to fetch transactions'
+            ], 500);
+        }
     }
 
     public function deleteTransaction($id)
@@ -188,13 +215,7 @@ class BendaharaController extends Controller
         ]);
     }
 
-    // Daftar Siswa
-    public function studentList()
-    {
-        $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name')->get();
-        return view('bendahara.student-list', compact('students'));
-    }
-
+    
     // Pembayaran Mingguan
     public function weeklyPayments(Request $request)
     {
@@ -210,8 +231,8 @@ class BendaharaController extends Controller
         $nextMonth = ($month == 12) ? 1 : $month + 1;
         $nextYear = ($month == 12) ? $year + 1 : $year;
         
-        // Always generate bills for the selected month (safe idempotent)
-        $this->generateMonthlyBills($month, $year);
+        // Sync bills for the selected month (idempotent - create missing, don't duplicate)
+        WeeklyPayment::syncMonthlyBills($month, $year);
         
         $payments = WeeklyPayment::with(['student', 'transaction'])
             ->where('month', $month)
@@ -222,26 +243,42 @@ class BendaharaController extends Controller
         
         $paymentsByStudent = $payments->groupBy('student_id');
         
+        // Get weeks in the selected month (bukan bulan sekarang)
+        $weeksInMonth = WeeklyPayment::getWeeksInMonth($month, $year);
+        $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($month, $year);
+        
+        // Calculate current week ONLY jika viewing current month
         $today = Carbon::now();
+        $isCurrentMonth = ($today->month === $month && $today->year === $year);
         $isWednesday = $today->dayOfWeek === 3;
         
-        // Perbaikan perhitungan minggu aktif
-        $startOfMonth = $today->copy()->startOfMonth();
-        $firstWednesday = $startOfMonth->copy()->next(Carbon::WEDNESDAY);
+        $currentWeek = 1;
+        $nextWednesday = null;
+        $currentWeekUnpaid = 0;
         
-        if ($today->lt($firstWednesday)) {
-            $currentWeek = 1;
-        } else {
-            $daysSinceFirstWednesday = $today->diffInDays($firstWednesday);
-            $currentWeek = min(4, intval($daysSinceFirstWednesday / 7) + 1);
+        if ($isCurrentMonth) {
+            if (!empty($wednesdayDates)) {
+                $firstWednesday = $wednesdayDates[0];
+                
+                if ($today->lt($firstWednesday)) {
+                    $currentWeek = 1;
+                } else {
+                    // Temukan minggu mana kita berada berdasarkan array Rabu
+                    foreach ($wednesdayDates as $index => $wednesday) {
+                        if ($today->gte($wednesday)) {
+                            $currentWeek = $index + 1;
+                        }
+                    }
+                }
+            }
+            
+            $nextWednesday = $today->copy()->next(Carbon::WEDNESDAY)->format('d M Y');
+            
+            $currentWeekUnpaid = $payments
+                ->where('week_number', $currentWeek)
+                ->where('status', 'unpaid')
+                ->count();
         }
-        
-        $nextWednesday = $today->copy()->next(Carbon::WEDNESDAY)->format('d M Y');
-        
-        $currentWeekUnpaid = $payments
-            ->where('week_number', $currentWeek)
-            ->where('status', 'unpaid')
-            ->count();
         
         $totalStudents = User::where('role', 'siswa')->where('is_active', true)->count();
         $totalBills = $payments->count();
@@ -251,57 +288,33 @@ class BendaharaController extends Controller
         $paidAmount = $payments->where('status', 'paid')->sum('amount');
         $unpaidAmount = $payments->where('status', 'unpaid')->sum('amount');
         
+        // Get weekly payment amount to display in Blade
+        $weeklyPaymentAmount = WeeklyPayment::getWeeklyPaymentAmount();
+        
         return view('bendahara.weekly-payments', compact(
             'paymentsByStudent',
             'totalStudents',
             'totalBills',
             'paidBills',
             'unpaidBills',
-            'totalAmount',
             'paidAmount',
             'unpaidAmount',
             'isWednesday',
+            'isCurrentMonth',
             'currentWeek',
             'nextWednesday',
             'currentWeekUnpaid',
             'month',
             'year',
+            'weeksInMonth',
+            'wednesdayDates',
+            'weeklyPaymentAmount',
             'currentMonthName',
             'prevMonth',
             'prevYear',
             'nextMonth',
             'nextYear'
         ));
-    }
-
-    private function generateMonthlyBills($month, $year)
-    {
-        $existingCount = WeeklyPayment::where('month', $month)->where('year', $year)->count();
-        if ($existingCount > 0) {
-            return 0;
-        }
-        
-        $students = User::where('role', 'siswa')->where('is_active', true)->get();
-        $generatedCount = 0;
-        
-        foreach ($students as $student) {
-            for ($week = 1; $week <= 4; $week++) {
-                WeeklyPayment::create([
-                    'student_id' => $student->id,
-                    'week_number' => $week,
-                    'month' => $month,
-                    'year' => $year,
-                    'amount' => 5000,
-                    'status' => 'unpaid',
-                    'payment_date' => null,
-                    'transaction_id' => null,
-                    'created_by' => auth()->id() ?? 1,
-                ]);
-                $generatedCount++;
-            }
-        }
-        
-        return $generatedCount;
     }
 
     public function processWeeklyPayment(Request $request)
@@ -326,18 +339,25 @@ class BendaharaController extends Controller
         ]);
     }
 
+    /**
+     * Process arrears - melunasi semua tunggakan siswa di bulan & tahun tertentu
+     */
     public function processArrears(Request $request)
     {
         $request->validate([
             'student_id' => 'required|exists:users,id',
-            'transaction_id' => 'required|exists:transactions,id'
+            'transaction_id' => 'required|exists:transactions,id',
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2020|max:2030'
         ]);
 
         try {
             $transaction = Transaction::findOrFail($request->transaction_id);
             
-            // Get all unpaid payments for this student
+            // Get all unpaid payments for this student in the specified month/year ONLY
             $unpaidPayments = WeeklyPayment::where('student_id', $request->student_id)
+                                        ->where('month', $request->month)
+                                        ->where('year', $request->year)
                                         ->where('status', 'unpaid')
                                         ->get();
             
@@ -345,13 +365,14 @@ class BendaharaController extends Controller
                 $payment->update([
                     'status' => 'paid',
                     'transaction_id' => $transaction->id,
-                    'paid_at' => now()
+                    'payment_date' => $transaction->date,
                 ]);
             }
             
             return response()->json([
                 'success' => true,
-                'message' => 'Tunggakan berhasil dilunasi!'
+                'message' => 'Tunggakan berhasil dilunasi!',
+                'count' => $unpaidPayments->count()
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -376,7 +397,7 @@ class BendaharaController extends Controller
         $nextMonth = ($month == 12) ? 1 : $month + 1;
         $nextYear = ($month == 12) ? $year + 1 : $year;
         
-        // Generate bills for selected month
+        // Sync bills for selected month (idempotent)
         $this->generateMonthlyBills($month, $year);
         
         $payments = WeeklyPayment::with(['student', 'transaction'])
@@ -387,6 +408,9 @@ class BendaharaController extends Controller
             ->get();
         
         $paymentsByStudent = $payments->groupBy('student_id');
+        
+        $weeksInMonth = WeeklyPayment::getWeeksInMonth($month, $year);
+        $weeklyPaymentAmount = WeeklyPayment::getWeeklyPaymentAmount();
         
         $totalStudents = User::where('role', 'siswa')->where('is_active', true)->count();
         $totalBills = $payments->count();
@@ -405,6 +429,8 @@ class BendaharaController extends Controller
             'totalAmount',
             'paidAmount',
             'unpaidAmount',
+            'weeksInMonth',
+            'weeklyPaymentAmount',
             'month',
             'year',
             'currentMonthName',
@@ -420,10 +446,19 @@ class BendaharaController extends Controller
     {
         $request->validate([
             'student_id' => 'required|exists:users,id',
-            'week_number' => 'required|integer|min:1|max:4',
+            'week_number' => 'required|integer|min:1',  // Dinamis: jumlah minggu bisa berbeda per bulan
             'month' => 'required|integer|min:1|max:12',
             'year' => 'required|integer|min:2020|max:2030'
         ]);
+
+        // Validasi tambahan: week_number tidak boleh melebihi jumlah minggu di bulan tersebut
+        $weeksInMonth = WeeklyPayment::getWeeksInMonth($request->month, $request->year);
+        if ($request->week_number > $weeksInMonth) {
+            return response()->json([
+                'success' => false,
+                'message' => "Minggu ke-{$request->week_number} tidak ada di bulan tersebut (hanya {$weeksInMonth} minggu)"
+            ], 422);
+        }
 
         $payment = WeeklyPayment::where('student_id', $request->student_id)
             ->where('week_number', $request->week_number)
@@ -438,9 +473,10 @@ class BendaharaController extends Controller
             ], 404);
         }
 
-        // Find latest transaction that can be used
+        // Find latest transaction that can be used (gunakan amount dari settings)
+        $amountPerWeek = WeeklyPayment::getWeeklyPaymentAmount();
         $transaction = Transaction::where('type', 'income')
-            ->where('amount', 5000)
+            ->where('amount', $amountPerWeek)
             ->whereNull('weekly_payment_id')
             ->orderBy('created_at', 'desc')
             ->first();
@@ -541,6 +577,122 @@ class BendaharaController extends Controller
             'payments', 'paymentsByStudent', 'totalPaid', 'totalBills',
             'month', 'year', 'monthName'
         ));
+    }
+
+    /**
+     * Laporan Pembayaran - Halaman utama
+     */
+    public function laporanPembayaran()
+    {
+        $months = [];
+        $now = Carbon::now();
+        for ($i = 0; $i < 12; $i++) {
+            $date = $now->copy()->subMonths($i);
+            $months[] = $date->month;
+        }
+        $years = [$now->year - 1, $now->year];
+
+        return view('bendahara.laporan-pembayaran', compact('months', 'years'));
+    }
+
+    /**
+     * Laporan Pembayaran - Cetak
+     */
+    public function laporanCetak(Request $request)
+    {
+        $request->validate([
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2020'
+        ]);
+
+        $month = $request->month;
+        $year = $request->year;
+
+        // Sync bills untuk memastikan data lengkap
+        WeeklyPayment::syncMonthlyBills($month, $year);
+
+        $payments = WeeklyPayment::with('student')
+            ->where('month', $month)
+            ->where('year', $year)
+            ->orderBy('student_id')
+            ->orderBy('week_number')
+            ->get();
+
+        $paymentsByStudent = $payments->groupBy('student_id');
+
+        $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
+
+        return view('bendahara.laporan-pembayaran-cetak', compact('paymentsByStudent', 'month', 'year', 'monthName'));
+    }
+
+    /**
+     * Laporan Pembayaran - PDF Export
+     */
+    public function laporanPdf(Request $request)
+    {
+        $request->validate([
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2020|max:2030',
+            'type' => 'required|in:keuangan,pembayaran'
+        ]);
+
+        $month = $request->month;
+        $year = $request->year;
+        $type = $request->type;
+
+        if ($type === 'keuangan') {
+            // PDF Laporan Keuangan
+            $transactions = Transaction::with(['student', 'creator'])
+                ->whereMonth('date', $month)
+                ->whereYear('date', $year)
+                ->orderBy('date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $income = $transactions->where('type', 'income')->sum('amount');
+            $expense = $transactions->where('type', 'expense')->sum('amount');
+            $balance = $income - $expense;
+            
+            $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
+
+            $pdf = Pdf::loadView('bendahara.laporan-keuangan-cetak', compact(
+                'transactions', 'income', 'expense', 'balance', 
+                'month', 'year', 'monthName'
+            ));
+            $pdf->setPaper('a4', 'portrait');
+            
+            return response($pdf->output())
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="laporan-keuangan-' . $monthName . '.pdf"');
+        } else {
+            // PDF Laporan Pembayaran Siswa
+            $payments = WeeklyPayment::with(['student', 'transaction'])
+                ->where('month', $month)
+                ->where('year', $year)
+                ->orderBy('student_id')
+                ->orderBy('week_number')
+                ->get();
+
+            $paymentsByStudent = $payments->groupBy('student_id');
+
+            $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
+
+            $pdf = Pdf::loadView('bendahara.laporan-pembayaran-cetak', compact('paymentsByStudent', 'month', 'year', 'monthName'));
+            $pdf->setPaper('a4', 'portrait');
+            
+            return response($pdf->output())
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="laporan-pembayaran-' . $monthName . '.pdf"');
+        }
+    }
+
+    /**
+     * Generate monthly bills - menggunakan syncMonthlyBills yang idempotent
+     */
+    private function generateMonthlyBills($month, $year)
+    {
+        // Gunakan syncMonthlyBills yang idempotent
+        return WeeklyPayment::syncMonthlyBills($month, $year);
     }
 }
 

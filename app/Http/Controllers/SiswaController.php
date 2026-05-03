@@ -106,6 +106,89 @@ class SiswaController extends Controller
         ));
     }
 
+    public function absensi($month = null, $year = null)
+    {
+        $student = auth()->user();
+        
+        // Get requested month/year or default to current
+        $month = $month ?? now()->month;
+        $year = $year ?? now()->year;
+        
+        // Create Carbon date for navigation
+        $currentDate = \Carbon\Carbon::create($year, $month, 1);
+        $prevMonth = $currentDate->copy()->subMonth();
+        $nextMonth = $currentDate->copy()->addMonth();
+        
+        // Get attendance history for specified month
+        $attendances = Attendance::where('student_id', $student->id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->orderBy('date', 'desc')
+            ->get();
+        
+        // Calculate attendance statistics
+        $totalHadir = $attendances->where('status', 'hadir')->count();
+        $totalSakit = $attendances->where('status', 'sakit')->count();
+        $totalIzin = $attendances->where('status', 'izin')->count();
+        $totalAlpha = $attendances->where('status', 'alpha')->count();
+        
+        return view('siswa.absensi', compact(
+            'attendances',
+            'totalHadir',
+            'totalSakit',
+            'totalIzin',
+            'totalAlpha',
+            'currentDate',
+            'prevMonth',
+            'nextMonth'
+        ));
+    }
+
+    public function pembayaran($month = null, $year = null)
+    {
+        $student = auth()->user();
+        
+        // Get requested month/year or default to current
+        $month = $month ?? now()->month;
+        $year = $year ?? now()->year;
+        
+        // Create Carbon date for navigation
+        $currentDate = \Carbon\Carbon::create($year, $month, 1);
+        $prevMonth = $currentDate->copy()->subMonth();
+        $nextMonth = $currentDate->copy()->addMonth();
+        
+        // Get weekly payment status for specified month
+        $weeklyPayments = WeeklyPayment::where('student_id', $student->id)
+                                ->where('month', $month)
+                                ->where('year', $year)
+                                ->orderBy('week_number')
+                                ->get();
+        
+        // Calculate payment statistics
+        $totalWeeks = 4;
+        $paidWeeks = $weeklyPayments->where('status', 'paid')->count();
+        $kasSudahBayar = $weeklyPayments->where('status', 'paid')->sum('amount');
+        
+        // Get payment history for specified month
+        $paymentHistory = Transaction::where('student_id', $student->id)
+            ->where('type', 'income')
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->orderBy('date', 'desc')
+            ->get();
+        
+        return view('siswa.pembayaran', compact(
+            'weeklyPayments',
+            'totalWeeks',
+            'paidWeeks',
+            'kasSudahBayar',
+            'paymentHistory',
+            'currentDate',
+            'prevMonth',
+            'nextMonth'
+        ));
+    }
+
     public function getMyStatus()
     {
         $student = auth()->user();
@@ -157,25 +240,5 @@ class SiswaController extends Controller
         ];
         
         return $statusTexts[$status] ?? 'Hadir';
-    }
-
-    // Method untuk riwayat absensi lengkap
-    public function riwayatAbsensi(Request $request)
-    {
-        $student = auth()->user();
-        
-        // Query riwayat absensi siswa yang login
-        $query = Attendance::where('student_id', $student->id);
-        
-        // Filter berdasarkan bulan jika ada
-        if ($request->has('month') && $request->has('year')) {
-            $query->whereMonth('date', $request->month)
-                  ->whereYear('date', $request->year);
-        }
-        
-        // Ambil data dengan urutan terbaru
-        $attendances = $query->orderBy('date', 'desc')->get();
-        
-        return view('siswa.riwayat-absensi', compact('attendances'));
     }
 }

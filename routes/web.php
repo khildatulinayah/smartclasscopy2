@@ -71,6 +71,9 @@ Route::get('/kas', [BendaharaController::class, 'simpleCash'])->name('kas'); // 
         
         // Laporan Routes
         Route::get('/laporan', [BendaharaController::class, 'laporan'])->name('laporan');
+        Route::get('/laporan/pembayaran', [BendaharaController::class, 'laporanPembayaran'])->name('laporan.pembayaran');
+        Route::post('/laporan/pembayaran/cetak', [BendaharaController::class, 'laporanCetak'])->name('laporan.pembayaran.cetak');
+        Route::get('/laporan/pdf/{month}/{year}/{type}', [BendaharaController::class, 'laporanPdf'])->name('laporan.pdf');
         Route::get('/laporan/keuangan/cetak/{month}/{year?}', [BendaharaController::class, 'cetakKeuangan'])->name('cetak.keuangan');
         Route::get('/laporan/pembayaran-siswa/cetak/{month}/{year?}', [BendaharaController::class, 'cetakPembayaranSiswa'])->name('cetak.pembayaran.siswa');
     });
@@ -90,6 +93,10 @@ Route::get('/kas', [BendaharaController::class, 'simpleCash'])->name('kas'); // 
     // Siswa routes
     Route::middleware('role:siswa')->prefix('siswa')->name('siswa.')->group(function () {
         Route::get('/dashboard', [SiswaController::class, 'dashboard'])->name('dashboard');
+        Route::get('/absensi', [SiswaController::class, 'absensi'])->name('absensi');
+        Route::get('/absensi/{month?}/{year?}', [SiswaController::class, 'absensi'])->name('absensi.month');
+        Route::get('/pembayaran', [SiswaController::class, 'pembayaran'])->name('pembayaran');
+        Route::get('/pembayaran/{month?}/{year?}', [SiswaController::class, 'pembayaran'])->name('pembayaran.month');
         Route::get('/api/status-saya', [SiswaController::class, 'getMyStatus'])->name('api.status_saya');
     });
 });

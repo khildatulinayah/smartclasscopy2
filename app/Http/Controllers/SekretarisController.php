@@ -148,58 +148,8 @@ class SekretarisController extends Controller
             ->with('success', 'Keterangan libur dihapus!');
     }
 
-    public function quickUpdateAttendance(Request $request)
-    {
-        $request->validate([
-            'student_id' => 'required|exists:users,id',
-            'status' => 'required|in:belum_absen,hadir,sakit,izin,alpha'
-        ]);
-
-        $today = now()->toDateString();
-        
-        $attendance = Attendance::updateOrCreate(
-            [
-                'student_id' => $request->student_id,
-                'date' => $today
-            ],
-            [
-                'status' => $request->status,
-                'attendance_time' => $request->status === 'hadir' ? now()->format('H:i:s') : null,
-                'created_by' => auth()->id()
-            ]
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Status absensi berhasil diperbarui',
-            'attendance' => $attendance
-        ]);
-    }
-
-    public function getTodayAttendance()
-    {
-        $today = now()->toDateString();
-        $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name')->get();
-        
-        $attendances = Attendance::where('date', $today)->get()->keyBy('student_id');
-        
-        $data = [];
-        foreach ($students as $student) {
-            $attendance = $attendances->get($student->id);
-            $data[] = [
-                'id' => $student->id,
-                'name' => $student->name,
-                'status' => $attendance ? $attendance->status : 'belum_absen',
-                'attendance_time' => $attendance ? $attendance->attendance_time : null
-            ];
-        }
-        
-        return response()->json([
-            'success' => true,
-            'data' => $data
-        ]);
-    }
-
+    
+    
 // Attendance Tracker (Simple Version)
     public function simpleTracker()
     {
@@ -317,13 +267,7 @@ class SekretarisController extends Controller
         return response()->json($data);
     }
 
-    // Daftar Siswa
-    public function studentList()
-    {
-        $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name')->get();
-        return view('sekretaris.student-list', compact('students'));
-    }
-
+    
     // Laporan Absensi
     public function laporanAbsensi(Request $request)
     {

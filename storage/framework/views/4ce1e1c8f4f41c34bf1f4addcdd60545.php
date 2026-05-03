@@ -223,11 +223,14 @@ async function loadTransactions() {
     try {
         const res = await fetch(`<?php echo e(route('bendahara.api.transactions')); ?>?t=${Date.now()}`);
         const data = await res.json();
+        console.log('API Response:', data);
+        console.log('Summary data:', data.summary);
+        
         transactions = data.transactions;
         updateSummary(data.summary);
         renderTransactions();
     } catch (e) {
-        console.error(e);
+        console.error('Error loading transactions:', e);
     } finally {
         hideLoading();
     }
@@ -283,8 +286,8 @@ function createTransactionCard(t) {
                     <div class="text-2xl font-bold ${isIncome ? 'text-green-600' : 'text-red-600'} leading-tight">
                         ${isIncome ? '+' : '-'} Rp ${Number(t.amount).toLocaleString('id-ID')}
                     </div>
-                    <button class="delete-btn mt-1 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-sm font-semibold transition-all ml-auto border border-red-200 invisible hover-visible opacity-0 group-hover:opacity-100 group-hover:translate-y-0">
-                        Hapus
+                    <button class="delete-btn mt-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition-all ml-auto border border-red-600 shadow-sm hover:shadow-md" data-id="${t.id}" title="Hapus transaksi">
+                        🗑️ Hapus
                     </button>
                 </div>
             </div>
@@ -293,9 +296,27 @@ function createTransactionCard(t) {
 }
 
 function updateSummary(s) {
+    console.log('Updating summary with data:', s);
+    
+    // Map ID to correct property names
+    const idToProperty = {
+        'total-income': 'totalIncome',
+        'total-expense': 'totalExpense',
+        'balance': 'balance'
+    };
+    
     ['total-income', 'total-expense', 'balance'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.textContent = `Rp ${Number(s[id.replace('-', '')]).toLocaleString('id-ID')}`;
+        const propName = idToProperty[id];
+        console.log(`Processing ${id}:`, {element: el, propName, value: s[propName]});
+        
+        if (el && s[propName] !== undefined) {
+            const value = Number(s[propName]) || 0;
+            console.log(`Setting ${id} to:`, value);
+            el.textContent = `Rp ${value.toLocaleString('id-ID')}`;
+        } else {
+            console.warn(`Element not found or value undefined for ${id}:`, {element: el, value: s[propName]});
+        }
     });
 }
 

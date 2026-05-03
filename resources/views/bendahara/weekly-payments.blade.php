@@ -4,12 +4,133 @@
 @section('title', 'Tracking Pembayaran Mingguan')
 
 @section('content')
-<div class="dashboard-layout">
-   
-@include('components.bendahara-sidebar')
+<style>
+/* Override Tailwind CSS for sidebar specifically */
+aside.sidebar { 
+    width: 280px !important; 
+    background: white !important; 
+    border-right: 1px solid #e2e8f0 !important; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    position: relative !important; 
+}
+.sidebar-header { 
+    padding: 24px 20px !important; 
+    border-bottom: 1px solid #e2e8f0 !important; 
+}
+.logo { 
+    display: flex !important; 
+    align-items: center !important; 
+    gap: 12px !important; 
+}
+.logo-img { 
+    width: 40px !important; 
+    height: 40px !important; 
+    border-radius: 8px !important; 
+    object-fit: cover !important; 
+}
+.logo-text { 
+    font-size: 20px !important; 
+    font-weight: 700 !important; 
+    color: #1e293b !important; 
+}
+.sidebar-nav { 
+    flex: 1 !important; 
+    padding: 16px 0 !important; 
+}
+.nav-item { 
+    display: flex !important; 
+    align-items: center !important; 
+    gap: 12px !important; 
+    padding: 12px 20px !important; 
+    color: #64748b !important; 
+    text-decoration: none !important; 
+    transition: all 0.2s ease !important; 
+    border-radius: 0 8px 8px 0 !important; 
+    margin: 0 12px !important; 
+}
+.nav-item:hover { 
+    background: #f8fafc !important; 
+    color: #3b82f6 !important; 
+}
+.nav-item.active { 
+    background: #eff6ff !important; 
+    color: #3b82f6 !important; 
+    font-weight: 600 !important; 
+}
+.nav-icon { 
+    width: 20px !important; 
+    height: 20px !important; 
+    flex-shrink: 0 !important; 
+}
+.sidebar-footer { 
+    padding: 16px 20px !important; 
+    border-top: 1px solid #e2e8f0 !important; 
+}
+.user-profile-mini { 
+    display: flex !important; 
+    align-items: center !important; 
+    gap: 10px !important; 
+    margin-bottom: 12px !important; 
+}
+.user-avatar-mini { 
+    width: 32px !important; 
+    height: 32px !important; 
+    border-radius: 6px !important; 
+    object-fit: cover !important; 
+}
+.user-name-mini { 
+    font-size: 13px !important; 
+    font-weight: 600 !important; 
+    color: #1e293b !important; 
+}
+.user-role-mini { 
+    font-size: 11px !important; 
+    color: #64748b !important; 
+}
+.logout-form { 
+    display: block !important; 
+}
+.logout-btn { 
+    width: 100% !important; 
+    display: flex !important; 
+    align-items: center !important; 
+    justify-content: center !important; 
+    gap: 8px !important; 
+    background: #fee2e2 !important; 
+    color: #dc2626 !important; 
+    border: none !important; 
+    padding: 8px 12px !important; 
+    border-radius: 8px !important; 
+    font-size: 13px !important; 
+    font-weight: 600 !important; 
+    cursor: pointer !important; 
+    transition: all 0.2s ease !important; 
+}
+.logout-btn:hover { 
+    background: #fecaca !important; 
+}
+.logout-icon { 
+    width: 16px !important; 
+    height: 16px !important; 
+}
+@media (max-width: 768px) { 
+    aside.sidebar { 
+        width: 100% !important; 
+        position: absolute !important; 
+        z-index: 50 !important; 
+        transform: translateX(-100%) !important; 
+    } 
+}
+</style>
 
-    <div class="main-area">
-        <main class="main-content">
+<div class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    @include('components.bendahara-sidebar')
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <main class="flex-1 overflow-y-auto p-8">
             <!-- Header -->
             <div class="mb-8">
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">Pembayaran Mingguan</h1>
@@ -29,6 +150,69 @@
         </a>
     </div>
     
+    <!-- Info Panel -->
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-blue-800">Data Pembayaran: {{ $currentMonthName }}</h3>
+                <p class="text-sm text-blue-600">
+                    {{ $weeksInMonth }} minggu pembayaran • 
+                    {{ $totalBills }} tagihan untuk {{ $totalStudents }} siswa
+                </p>
+            </div>
+            <div class="text-right">
+                <div class="text-sm text-blue-600">Nominal per Minggu:</div>
+                <div class="text-xl font-bold text-blue-800">Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}</div>
+            </div>
+        </div>
+        @if(isset($wednesdayDates) && count($wednesdayDates) > 0)
+            <div class="mt-3 pt-3 border-t border-blue-200">
+                <div class="text-sm text-blue-600">Jadwal pembayaran:</div>
+                <div class="flex flex-wrap gap-2 mt-1">
+                    @foreach($wednesdayDates as $index => $date)
+                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                            Minggu {{ $index + 1 }}: {{ $date->locale('id')->translatedFormat('d M') }}
+                        </span>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+    </div>
+
+    {{-- Banner Dinamis Hari Rabu --}}
+    @if(isset($isCurrentMonth) && $isCurrentMonth)
+        @if(isset($isWednesday) && $isWednesday)
+            <div class="bg-red-500 text-white p-6 mb-6 rounded-xl text-center border-4 border-red-600 shadow-2xl">
+                <h2 class="text-2xl font-bold mb-2 animate-pulse">🚨 HARI RABU - PEMBAYARAN KAS!</h2>
+                <p class="text-lg">Prioritaskan <strong>{{ $currentWeekUnpaid }}</strong> siswa untuk Minggu ke-{{ $currentWeek }}</p>
+            </div>
+        @else
+            <div class="bg-yellow-400 text-black p-6 mb-6 rounded-xl text-center border-4 border-yellow-500 shadow-xl">
+                <h2 class="text-xl font-bold mb-2">⏳ Selanjutnya: Hari Rabu</h2>
+                <p class="text-lg">Rabu, {{ $nextWednesday ?? 'Minggu ini' }} | {{ $currentWeekUnpaid ?? 0 }} belum bayar minggu ini</p>
+            </div>
+        @endif
+    @endif
+
+    <!-- Info Panel untuk Petunjuk Pembayaran -->
+    @if($totalBills > 0 && $paidBills === 0)
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-yellow-800">⚠️ Belum Ada Transaksi Kas</h3>
+                    <p class="text-sm text-yellow-700">
+                        Anda perlu membuat transaksi pemasukan sebelum dapat mencatat pembayaran mingguan.
+                    </p>
+                </div>
+                <div class="text-right">
+                    <a href="{{ route('bendahara.kas') }}" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium">
+                        Buat Transaksi Kas
+                    </a>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Statistics Cards -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -132,117 +316,89 @@
         </div>
     </div>
     
-    {{-- Banner Dinamis Hari Rabu --}}
-    @if(isset($isWednesday) && $isWednesday)
-        <div class="bg-red-500 text-white rounded-xl shadow-lg p-6 mb-8 text-center">
-            <div class="flex items-center justify-center mb-2">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                </svg>
-                <h2 class="text-xl font-bold">HARI RABU - PEMBAYARAN KAS!</h2>
-            </div>
-            <p class="text-lg">Prioritaskan <strong>{{ $currentWeekUnpaid }}</strong> siswa untuk Minggu ke-{{ $currentWeek }}</p>
-        </div>
-    @else
-        <div class="bg-yellow-100 border border-yellow-200 rounded-xl shadow-md p-6 mb-8 text-center">
-            <div class="flex items-center justify-center mb-2">
-                <svg class="w-6 h-6 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <h2 class="text-lg font-semibold text-yellow-800">Selanjutnya: Hari Rabu</h2>
-            </div>
-            <p class="text-gray-700">Rabu, {{ $nextWednesday ?? 'Minggu ini' }} | {{ $currentWeekUnpaid ?? 0 }} belum bayar minggu ini</p>
-        </div>
-    @endif
-    
-    <!-- Tabel Pembayaran -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Daftar Pembayaran Siswa</h2>
-        </div>
-        
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Minggu 1</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Minggu 2</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Minggu 3</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Minggu 4</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Tagihan</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Bayar</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Tunggakan</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($paymentsByStudent as $studentId => $payments)
+    <!-- Daftar Pembayaran per Siswa -->
+    <div class="space-y-4">
+        @foreach($paymentsByStudent as $studentId => $payments)
+            @php
+                $totalPaid = $payments->where('status', 'paid')->sum('amount');
+                $totalBill = $payments->sum('amount');
+                $totalArrears = $totalBill - $totalPaid;
+                $paidCount = $payments->where('status', 'paid')->count();
+                // Dynamic status based on actual weeks in month (not hardcoded 4)
+                $status = $paidCount === $weeksInMonth ? 'Lunas' : ($paidCount > 0 ? 'Tunggakan' : 'Belum Lunas');
+                $statusColor = $paidCount === $weeksInMonth ? 'green' : ($paidCount > 0 ? 'yellow' : 'red');
+            @endphp
+            
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">{{ $payments->first()->student->name }}</h3>
+                    <div class="text-right">
+                        <div class="text-lg font-bold text-gray-800">Rp {{ number_format($totalBill, 0, ',', '.') }}</div>
+                        <div class="text-sm text-gray-500">Total Tagihan</div>
+                    </div>
+                </div>
+                
+                <!-- Grid untuk minggu-minggu -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
+                    @for($week = 1; $week <= $weeksInMonth; $week++)
                         @php
-                            $totalPaid = $payments->where('status', 'paid')->sum('amount');
-                            $totalBill = $payments->sum('amount');
-                            $totalArrears = $totalBill - $totalPaid;
-                            $paidCount = $payments->where('status', 'paid')->count();
-                            $status = $paidCount === 4 ? 'Lunas' : ($paidCount > 0 ? 'Tunggakan' : 'Belum Lunas');
-                            $statusColor = $paidCount === 4 ? 'green' : ($paidCount > 0 ? 'yellow' : 'red');
+                            $payment = $payments->where('week_number', $week)->first();
+                            $isPaid = $payment && $payment->status === 'paid';
+                            $weekDate = $wednesdayDates[$week - 1] ?? null;
+                            $dateLabel = $weekDate ? $weekDate->format('d M') : '';
+                            // Highlight current week only if viewing current month AND it's Wednesday
+                            $highlightClass = (isset($isCurrentMonth) && $isCurrentMonth && isset($isWednesday) && $isWednesday && $week == $currentWeek) ? 'ring-4 ring-red-400 bg-yellow-50' : '';
                         @endphp
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $payments->first()->student->name }}</div>
-                            </td>
-                            @for($week = 1; $week <= 4; $week++)
-                                @php
-                                    $payment = $payments->where('week_number', $week)->first();
-                                    $isPaid = $payment && $payment->status === 'paid';
-                                    $highlightClass = (isset($isWednesday) && $isWednesday && $week == $currentWeek) ? 'ring-2 ring-red-400 bg-red-50' : '';
-                                @endphp
-                                <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <div class="inline-flex items-center justify-center w-16 h-8 rounded {{ $isPaid ? 'bg-green-100' : 'bg-red-100' }} {{ $highlightClass }}">
-                                        @if($isPaid)
-                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        @else
-                                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                        @endif
-                                    </div>
-                                </td>
-                            @endfor
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
-                                Rp {{ number_format($totalBill, 0, ',', '.') }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
-                                Rp {{ number_format($totalPaid, 0, ',', '.') }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
-                                Rp {{ number_format($totalArrears, 0, ',', '.') }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                    @if($statusColor === 'green') bg-green-100 text-green-800
-                                    @elseif($statusColor === 'yellow') bg-yellow-100 text-yellow-800
-                                    @else bg-red-100 text-red-800 @endif">
-                                    {{ $status }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                @if($totalArrears > 0)
-                                    <button onclick="showArrearsModal({{ $studentId }}, '{{ $payments->first()->student->name }}', {{ $totalArrears }}, '{{ $payments->where('status', 'unpaid')->pluck('week_number')->implode(',') }}')" 
-                                            class="text-red-600 hover:text-red-900 font-medium">
-                                        Lihat Tunggakan
-                                    </button>
+                        <div class="text-center p-4 border-2 rounded-lg {{ $isPaid ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300' }} {{ $highlightClass }}">
+                            <div class="font-bold text-sm mb-1">Minggu {{ $week }}</div>
+                            @if($dateLabel)
+                                <div class="text-xs text-gray-600 mb-2">Rabu, {{ $dateLabel }}</div>
+                            @endif
+                            <div class="font-bold mb-2">
+                                @if($isPaid)
+                                    <span class="text-green-700">✓ Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
                                 @else
-                                    <span class="text-gray-400">Lunas</span>
+                                    <span class="text-red-700">✗ Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
                                 @endif
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                            </div>
+                            @if(!$isPaid)
+                                <button onclick="console.log('Button clicked!'); showPaymentModal('{{ $payment->id ?? 'new-'.$studentId.'-'.$week.'-'.$month.'-'.$year }}', '{{ $payments->first()->student->name }}', {{ $week }}, {{ $studentId }})" 
+                                        class="inline-flex items-center justify-center w-16 h-8 rounded bg-blue-500 hover:bg-blue-600 {{ $highlightClass }} transition-colors text-white text-xs font-bold"
+                                        title="Bayar Minggu {{ $week }} ({{ $wednesdayDates[$week-1]->format('d M') ?? 'Tgl tidak diketahui' }})">
+                                    Bayar
+                                </button>
+                            @endif
+                        </div>
+                    @endfor
+                </div>
+                
+                <!-- Total dan Status per siswa -->
+                <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-600">
+                            Total: <span class="font-bold">Rp {{ number_format($totalBill, 0, ',', '.') }}</span>
+                        </span>
+                        <span class="text-sm text-gray-600">
+                            Lunas: <span class="font-bold text-green-700">{{ $paidCount }}/{{ $weeksInMonth }}</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full 
+                            @if($statusColor === 'green') bg-green-100 text-green-800
+                            @elseif($statusColor === 'yellow') bg-yellow-100 text-yellow-800
+                            @else bg-red-100 text-red-800 @endif">
+                            {{ $status }}
+                        </span>
+                        @if($totalArrears > 0)
+                            <button onclick="showArrearsModal({{ $studentId }}, '{{ $payments->first()->student->name }}', {{ $totalArrears }}, '{{ $payments->where('status', 'unpaid')->pluck('week_number')->implode(',') }}')" 
+                                    class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600 transition-colors">
+                                Lunasi Tunggakan
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endforeach
     </div>
     
     <!-- Action Buttons -->
@@ -260,6 +416,8 @@
             Kembali ke Dashboard
         </a>
     </div>
+</div>
+</main>
 </div>
 
 <!-- Modal Daftar Tunggakan -->
@@ -337,6 +495,57 @@
     </div>
 </div>
 
+<!-- Modal Pembayaran -->
+<div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Catat Pembayaran</h3>
+        </div>
+        
+        <form id="paymentForm" class="p-6 space-y-4">
+            <input type="hidden" id="payment_id" name="payment_id">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nama Siswa:</label>
+                <div id="student_name" class="px-3 py-2 bg-gray-100 rounded-lg text-sm font-semibold"></div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Minggu Ke:</label>
+                <div id="week_number" class="px-3 py-2 bg-gray-100 rounded-lg text-sm font-semibold"></div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah:</label>
+                <div class="px-3 py-2 bg-green-100 rounded-lg text-sm font-bold text-green-700">Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}</div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Pembayaran:</label>
+                <input type="date" id="payment_date" name="payment_date" 
+                       class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" required>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan:</label>
+                <input type="text" id="description" name="description" 
+                       placeholder="Pembayaran kas mingguan" 
+                       class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full">
+            </div>
+            
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    Simpan Pembayaran
+                </button>
+                <button type="button" onclick="closePaymentModal()" 
+                        class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium">
+                    Batal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Modal Pelunasan Tunggakan -->
 <div id="arrearsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
     <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
@@ -346,6 +555,8 @@
         
         <form id="arrearsForm" class="p-6 space-y-4">
             <input type="hidden" id="arrears_student_id" name="student_id">
+            <input type="hidden" id="arrears_month" name="month">
+            <input type="hidden" id="arrears_year" name="year">
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Nama Siswa:</label>
@@ -390,19 +601,79 @@
 
 <script>
 function processPayment(paymentId) {
+    // Parse paymentId - bisa existing ID atau new-studentId-weekNumber-month-year
+    if (paymentId.startsWith('new-')) {
+        // Format: new-studentId-weekNumber-month-year
+        const parts = paymentId.split('-');
+        const studentId = parts[1];
+        const weekNumber = parts[2];
+        const month = parts[3];
+        const year = parts[4];
+        
+        // Find the payment record first
+        fetch(`/bendahara/api/find-payment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            },
+            body: JSON.stringify({
+                student_id: studentId,
+                week_number: weekNumber,
+                month: month,
+                year: year
+            })
+        })
+        .then(response => response.json())
+        .then(paymentData => {
+            if (!paymentData.success) {
+                alert(paymentData.message);
+                return;
+            }
+            
+            // Use the actual payment ID
+            processPaymentWithTransaction(paymentData.payment.id);
+        })
+        .catch(error => {
+            console.error('Error finding payment:', error);
+            alert('Gagal menemukan data pembayaran');
+        });
+    } else {
+        // Existing payment ID
+        processPaymentWithTransaction(paymentId);
+    }
+}
+
+function processPaymentWithTransaction(paymentId) {
+    console.log('processPaymentWithTransaction called with paymentId:', paymentId);
+    console.log('Fetching transactions from /bendahara/api/transactions');
+    
     // Cek apakah ada transaksi yang tersedia
     fetch('/bendahara/api/transactions')
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.json();
+        })
         .then(transactions => {
+            console.log('Transactions received:', transactions);
+            console.log('Payment amount from settings:', {{ $weeklyPaymentAmount }});
+            
             // Cari transaksi income yang belum digunakan
+            const paymentAmount = {{ $weeklyPaymentAmount }};
             const availableTransaction = transactions.find(t => 
                 t.type === 'income' && 
-                t.amount === 5000 && 
+                t.amount === paymentAmount && 
                 !t.weekly_payment_id
             );
             
+            console.log('Available transaction found:', availableTransaction);
+            
             if (!availableTransaction) {
-                alert('Tidak ada transaksi pembayaran yang tersedia. Silahkan input transaksi kas terlebih dahulu.');
+                console.log('No available transaction found. Available transactions:', transactions.filter(t => t.type === 'income'));
+                alert('Tidak ada transaksi pembayaran yang tersedia.\n\nLangkah yang harus dilakukan:\n1. Klik menu "Kas" di sidebar\n2. Klik "Tambah Transaksi"\n3. Pilih tipe "Pemasukan"\n4. Masukkan nominal Rp ' + paymentAmount + '\n5. Simpan transaksi\n6. Kembali ke halaman ini dan coba lagi');
                 return;
             }
             
@@ -433,37 +704,67 @@ function processPayment(paymentId) {
             });
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Gagal mengambil data transaksi');
+            console.error('Error fetching transactions:', error);
+            console.error('Error details:', error.message);
+            alert('Gagal mengambil data transaksi: ' + error.message);
         });
 }
 </script>
 
 <script>
-// Simple modal functions
+// Payment Modal Functions
 function showPaymentModal(paymentId, studentName, week, studentId) {
-    console.log('Opening modal for:', paymentId, studentName, week, studentId);
+    console.log('Opening payment modal for:', {paymentId, studentName, week, studentId});
+    console.log('Parameters:', paymentId, studentName, week, studentId);
+    
+    // Check if modal exists
+    const modal = document.getElementById('paymentModal');
+    console.log('Modal element:', modal);
+    
+    if (!modal) {
+        console.error('Payment modal not found!');
+        alert('Modal tidak ditemukan!');
+        return;
+    }
     
     // Set form values
-    document.getElementById('payment_id').value = paymentId;
-    document.getElementById('payment_id').dataset.studentId = studentId;
-    document.getElementById('student_name').textContent = studentName;
-    document.getElementById('week_number').textContent = week;
+    const paymentIdElement = document.getElementById('payment_id');
+    const studentNameElement = document.getElementById('student_name');
+    const weekNumberElement = document.getElementById('week_number');
+    const paymentDateElement = document.getElementById('payment_date');
+    const descriptionElement = document.getElementById('description');
+    
+    console.log('Form elements:', {
+        paymentIdElement,
+        studentNameElement,
+        weekNumberElement,
+        paymentDateElement,
+        descriptionElement
+    });
+    
+    if (paymentIdElement) paymentIdElement.value = paymentId;
+    if (studentNameElement) studentNameElement.textContent = studentName;
+    if (weekNumberElement) weekNumberElement.textContent = week;
     
     // Set current date and default description
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('payment_date').value = today;
-    document.getElementById('description').value = `Pembayaran kas Minggu ${week} - ${studentName}`;
+    if (paymentDateElement) paymentDateElement.value = today;
+    if (descriptionElement) descriptionElement.value = `Pembayaran kas Minggu ${week} - ${studentName}`;
+    
+    console.log('Form values set, showing modal...');
     
     // Show modal
-    const modal = document.getElementById('paymentModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        console.log('Modal should be visible now');
-    } else {
-        console.error('Modal not found!');
-        alert('Modal tidak ditemukan!');
-    }
+    modal.classList.remove('hidden');
+    console.log('Modal classes after remove:', modal.className);
+    
+    // Check if modal is visible
+    setTimeout(() => {
+        const isVisible = !modal.classList.contains('hidden');
+        console.log('Modal visibility check:', isVisible);
+        if (!isVisible) {
+            console.error('Modal still hidden after removeClass!');
+        }
+    }, 100);
 }
 
 function closePaymentModal() {
@@ -474,11 +775,11 @@ function closePaymentModal() {
     }
 }
 
-// Form submission with simplified approach
-document.getElementById('paymentForm').addEventListener('submit', function(e) {
+// Handle payment form submission
+document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
     
-    console.log('Form submission started');
+    console.log('Payment form submission started');
     
     const paymentId = document.getElementById('payment_id').value;
     const paymentDate = document.getElementById('payment_date').value;
@@ -495,7 +796,7 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
     submitBtn.textContent = 'MEMPROSES...';
     submitBtn.disabled = true;
     
-    // Create transaction
+    // Create transaction first, then process payment
     fetch('/bendahara/kas/store', {
         method: 'POST',
         headers: {
@@ -506,7 +807,7 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
         body: JSON.stringify({
             student_id: studentId,
             type: 'income',
-            amount: 5000,
+            amount: {{ $weeklyPaymentAmount }},
             date: paymentDate,
             description: description
         })
@@ -519,7 +820,7 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
         console.log('Transaction response:', data);
         
         if (data.success && data.transaction) {
-            // Process payment
+            // Process payment with the created transaction
             return fetch('/bendahara/process-payment', {
                 method: 'POST',
                 headers: {
@@ -557,15 +858,26 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
     })
     .finally(() => {
         // Reset button
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
+        if (submitBtn && originalText) {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
     });
 });
 
 // Close modal when clicking outside
-document.getElementById('paymentModal').addEventListener('click', function(e) {
+document.getElementById('paymentModal')?.addEventListener('click', function(e) {
     if (e.target === this) {
         closePaymentModal();
+    }
+});
+
+// Close modal with ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePaymentModal();
+        closeArrearsModal();
+        closeArrearsList();
     }
 });
 
@@ -601,6 +913,14 @@ function showArrearsModal(studentId, studentName, totalArrears, weeks) {
     document.getElementById('arrears_student_id').value = studentId;
     document.getElementById('arrears_student_name').textContent = studentName;
     document.getElementById('arrears_total').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalArrears);
+    
+    // Set month and year from URL or current date
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentMonth = parseInt(urlParams.get('month')) || new Date().getMonth() + 1;
+    const currentYear = parseInt(urlParams.get('year')) || new Date().getFullYear();
+    
+    document.getElementById('arrears_month').value = currentMonth;
+    document.getElementById('arrears_year').value = currentYear;
     
     // Format weeks
     const weeksArray = weeks.split(',').map(w => 'Minggu ' + w.trim()).join(', ');
@@ -649,6 +969,12 @@ document.getElementById('arrearsForm')?.addEventListener('submit', function(e) {
         submitBtn.disabled = true;
     }
     
+    // Get month and year from hidden fields
+    const currentMonth = parseInt(document.getElementById('arrears_month')?.value) || new Date().getMonth() + 1;
+    const currentYear = parseInt(document.getElementById('arrears_year')?.value) || new Date().getFullYear();
+    
+    console.log('Using month/year from form:', {currentMonth, currentYear});
+    
     // Create transaction
     fetch('/bendahara/kas/store', {
         method: 'POST',
@@ -683,7 +1009,9 @@ document.getElementById('arrearsForm')?.addEventListener('submit', function(e) {
                 },
                 body: JSON.stringify({
                     student_id: studentId,
-                    transaction_id: data.transaction.id
+                    transaction_id: data.transaction.id,
+                    month: currentMonth,
+                    year: currentYear
                 })
             });
         } else {

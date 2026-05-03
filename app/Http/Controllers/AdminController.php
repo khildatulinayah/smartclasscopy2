@@ -226,21 +226,16 @@ class AdminController extends Controller
 
     public function reports(Request $request)
     {
+        // Redirect to monitor pages since reports views don't exist
         $type = $request->get('type', 'attendance');
         
         if ($type === 'attendance') {
-            $attendances = Attendance::with('user')
-                ->orderBy('date', 'desc')
-                ->paginate(50);
-            return view('admin.reports.attendance', compact('attendances'));
+            return redirect()->route('admin.monitor.absensi');
         } elseif ($type === 'financial') {
-            $transactions = Transaction::with('user')
-                ->orderBy('date', 'desc')
-                ->paginate(50);
-            return view('admin.reports.financial', compact('transactions'));
+            return redirect()->route('admin.monitor.kas');
         }
         
-        // Default view showing all report types
-        return view('admin.reports.index');
+        // Default redirect to attendance monitoring
+        return redirect()->route('admin.monitor.absensi');
     }
 }

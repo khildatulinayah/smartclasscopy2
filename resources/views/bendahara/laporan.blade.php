@@ -50,12 +50,20 @@
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
-                            <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v.5"></path>
-                            </svg>
-                            Cetak Laporan Kas
-                        </button>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button type="button" onclick="cetakKeuangan()" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
+                                <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v.5"></path>
+                                </svg>
+                                Cetak
+                            </button>
+                            <button type="button" onclick="downloadKeuanganPDF()" class="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
+                                <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                PDF
+                            </button>
+                        </div>
                     </form>
                 </div>
 
@@ -91,27 +99,130 @@
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
-                            <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v.5"></path>
-                            </svg>
-                            Cetak Laporan Siswa
-                        </button>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button type="button" onclick="cetakPembayaran()" class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
+                                <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v.5"></path>
+                                </svg>
+                                Cetak
+                            </button>
+                            <button type="button" onclick="downloadPembayaranPDF()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
+                                <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                PDF
+                            </button>
+                        </div>
                     </form>
                 </div>
             </section>
 
-            <!-- How to use info -->
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-8 text-center">
-                <div class="max-w-2xl mx-auto">
-                    <svg class="w-16 h-16 mx-auto mb-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-3">Cara Menggunakan</h3>
-                    <p class="text-lg text-gray-700 leading-relaxed mb-6">
-                        Pilih bulan dan tahun dari dropdown, lalu klik tombol cetak. Laporan akan terbuka di tab baru 
-                        dengan format siap cetak (printer-friendly). Semua data otomatis dihitung dan dirangkum.
-                    </p>
+            <!-- Features & How to use -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                <!-- Features Card -->
+                <div class="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-100 rounded-2xl p-8">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">Fitur Laporan</h3>
+                            <p class="text-gray-600">Laporan lengkap dan profesional</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-emerald-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <div>
+                                <div class="font-semibold text-gray-800">Format Cetak</div>
+                                <div class="text-sm text-gray-600">Printer-friendly dengan layout profesional</div>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-emerald-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <div>
+                                <div class="font-semibold text-gray-800">Preview PDF</div>
+                                <div class="text-sm text-gray-600">Tampilkan di browser, lalu download</div>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-emerald-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <div>
+                                <div class="font-semibold text-gray-800">Data Lengkap</div>
+                                <div class="text-sm text-gray-600">Ringkasan dan detail transaksi</div>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-emerald-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <div>
+                                <div class="font-semibold text-gray-800">Formal & Resmi</div>
+                                <div class="text-sm text-gray-600">Format laporan standar institusi</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- How to use Card -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-8">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">Cara Penggunaan</h3>
+                            <p class="text-gray-600">Langkah mudah membuat laporan</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex gap-4">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-blue-600 font-bold text-sm">1</span>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-800">Pilih Periode</div>
+                                <div class="text-sm text-gray-600">Pilih bulan dan tahun yang diinginkan</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-blue-600 font-bold text-sm">2</span>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-800">Pilih Format</div>
+                                <div class="text-sm text-gray-600">Cetak (HTML) untuk printer, PDF untuk preview & download</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-blue-600 font-bold text-sm">3</span>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-800">Generate Laporan</div>
+                                <div class="text-sm text-gray-600">Laporan otomatis terbuka di tab baru</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-blue-600 font-bold text-sm">4</span>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-800">Preview & Download</div>
+                                <div class="text-sm text-gray-600">PDF muncul di browser, lalu download</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -119,23 +230,47 @@
 </div>
 
 <script>
-document.getElementById('keuangan-form').addEventListener('submit', function(e) {
-    e.preventDefault();
+// Keuangan Functions
+function cetakKeuangan() {
     const month = document.getElementById('keuangan-month').value;
     const year = document.getElementById('keuangan-year').value;
     if (month && year) {
         window.open(`{{ route('bendahara.cetak.keuangan', ['month' => ':month', 'year' => ':year']) }}`.replace(':month', month).replace(':year', year), '_blank');
+    } else {
+        alert('Silakan pilih bulan dan tahun terlebih dahulu');
     }
-});
+}
 
-document.getElementById('pembayaran-form').addEventListener('submit', function(e) {
-    e.preventDefault();
+function downloadKeuanganPDF() {
+    const month = document.getElementById('keuangan-month').value;
+    const year = document.getElementById('keuangan-year').value;
+    if (month && year) {
+        window.open(`{{ route('bendahara.laporan.pdf', ['month' => ':month', 'year' => ':year', 'type' => 'keuangan']) }}`.replace(':month', month).replace(':year', year), '_blank');
+    } else {
+        alert('Silakan pilih bulan dan tahun terlebih dahulu');
+    }
+}
+
+// Pembayaran Functions
+function cetakPembayaran() {
     const month = document.getElementById('pembayaran-month').value;
     const year = document.getElementById('pembayaran-year').value;
     if (month && year) {
         window.open(`{{ route('bendahara.cetak.pembayaran.siswa', ['month' => ':month', 'year' => ':year']) }}`.replace(':month', month).replace(':year', year), '_blank');
+    } else {
+        alert('Silakan pilih bulan dan tahun terlebih dahulu');
     }
-});
+}
+
+function downloadPembayaranPDF() {
+    const month = document.getElementById('pembayaran-month').value;
+    const year = document.getElementById('pembayaran-year').value;
+    if (month && year) {
+        window.open(`{{ route('bendahara.laporan.pdf', ['month' => ':month', 'year' => ':year', 'type' => 'pembayaran']) }}`.replace(':month', month).replace(':year', year), '_blank');
+    } else {
+        alert('Silakan pilih bulan dan tahun terlebih dahulu');
+    }
+}
 </script>
 
 {{-- Dashboard Styles --}}
