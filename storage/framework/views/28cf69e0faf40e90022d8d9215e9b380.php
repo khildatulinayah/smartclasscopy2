@@ -1,153 +1,34 @@
 <?php use Carbon\Carbon; ?>
 
-<?php $__env->startSection('title', 'Tracking Pembayaran Mingguan'); ?>
+<?php $__env->startSection('title', 'Pembayaran Mingguan'); ?>
 
 <?php $__env->startSection('content'); ?>
-<style>
-/* Override Tailwind CSS for sidebar specifically */
-aside.sidebar { 
-    width: 280px !important; 
-    background: white !important; 
-    border-right: 1px solid #e2e8f0 !important; 
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important; 
-    display: flex !important; 
-    flex-direction: column !important; 
-    position: relative !important; 
-}
-.sidebar-header { 
-    padding: 24px 20px !important; 
-    border-bottom: 1px solid #e2e8f0 !important; 
-}
-.logo { 
-    display: flex !important; 
-    align-items: center !important; 
-    gap: 12px !important; 
-}
-.logo-img { 
-    width: 40px !important; 
-    height: 40px !important; 
-    border-radius: 8px !important; 
-    object-fit: cover !important; 
-}
-.logo-text { 
-    font-size: 20px !important; 
-    font-weight: 700 !important; 
-    color: #1e293b !important; 
-}
-.sidebar-nav { 
-    flex: 1 !important; 
-    padding: 16px 0 !important; 
-}
-.nav-item { 
-    display: flex !important; 
-    align-items: center !important; 
-    gap: 12px !important; 
-    padding: 12px 20px !important; 
-    color: #64748b !important; 
-    text-decoration: none !important; 
-    transition: all 0.2s ease !important; 
-    border-radius: 0 8px 8px 0 !important; 
-    margin: 0 12px !important; 
-}
-.nav-item:hover { 
-    background: #f8fafc !important; 
-    color: #3b82f6 !important; 
-}
-.nav-item.active { 
-    background: #eff6ff !important; 
-    color: #3b82f6 !important; 
-    font-weight: 600 !important; 
-}
-.nav-icon { 
-    width: 20px !important; 
-    height: 20px !important; 
-    flex-shrink: 0 !important; 
-}
-.sidebar-footer { 
-    padding: 16px 20px !important; 
-    border-top: 1px solid #e2e8f0 !important; 
-}
-.user-profile-mini { 
-    display: flex !important; 
-    align-items: center !important; 
-    gap: 10px !important; 
-    margin-bottom: 12px !important; 
-}
-.user-avatar-mini { 
-    width: 32px !important; 
-    height: 32px !important; 
-    border-radius: 6px !important; 
-    object-fit: cover !important; 
-}
-.user-name-mini { 
-    font-size: 13px !important; 
-    font-weight: 600 !important; 
-    color: #1e293b !important; 
-}
-.user-role-mini { 
-    font-size: 11px !important; 
-    color: #64748b !important; 
-}
-.logout-form { 
-    display: block !important; 
-}
-.logout-btn { 
-    width: 100% !important; 
-    display: flex !important; 
-    align-items: center !important; 
-    justify-content: center !important; 
-    gap: 8px !important; 
-    background: #fee2e2 !important; 
-    color: #dc2626 !important; 
-    border: none !important; 
-    padding: 8px 12px !important; 
-    border-radius: 8px !important; 
-    font-size: 13px !important; 
-    font-weight: 600 !important; 
-    cursor: pointer !important; 
-    transition: all 0.2s ease !important; 
-}
-.logout-btn:hover { 
-    background: #fecaca !important; 
-}
-.logout-icon { 
-    width: 16px !important; 
-    height: 16px !important; 
-}
-@media (max-width: 768px) { 
-    aside.sidebar { 
-        width: 100% !important; 
-        position: absolute !important; 
-        z-index: 50 !important; 
-        transform: translateX(-100%) !important; 
-    } 
-}
-</style>
-
-<div class="flex h-screen bg-gray-50">
-    <!-- Sidebar -->
+<div class="dashboard-layout">
     <?php echo $__env->make('components.bendahara-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-    <div class="flex-1 flex flex-col overflow-hidden">
-        <main class="flex-1 overflow-y-auto p-8">
-            <!-- Header -->
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Pembayaran Mingguan</h1>
-                <p class="text-gray-600">Kelola dan pantau pembayaran kas siswa per minggu</p>
+    <div class="main-area">
+        <main class="main-content">
+            <section class="greeting-section">
+                <div class="greeting-card">
+                    <h1 class="greeting-title">Pembayaran Mingguan</h1>
+                    <p class="greeting-subtitle">Kelola dan pantau pembayaran kas siswa per minggu</p>
+                </div>
+            </section>
+
+            <!-- Month Navigation -->
+            <div class="flex items-center justify-center mb-8 space-x-4">
+                <a href="?month=<?php echo e($prevMonth); ?>&year=<?php echo e($prevYear); ?>" class="nav-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Bulan Sebelumnya
+                </a>
+                <div class="bg-blue-500 text-white px-8 py-4 rounded-xl shadow-lg">
+                    <div class="text-xl font-bold"><?php echo e($currentMonthName); ?></div>
+                </div>
+                <a href="?month=<?php echo e($nextMonth); ?>&year=<?php echo e($nextYear); ?>" class="nav-btn">
+                    Bulan Selanjutnya
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
             </div>
-    
-    <!-- Month Navigation -->
-    <div class="flex items-center justify-center mb-8 space-x-4">
-        <a href="?month=<?php echo e($prevMonth); ?>&year=<?php echo e($prevYear); ?>" class="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium">
-            ← Bulan Sebelumnya
-        </a>
-        <div class="bg-blue-500 text-white px-8 py-4 rounded-xl shadow-lg">
-            <div class="text-xl font-bold"><?php echo e($currentMonthName); ?></div>
-        </div>
-        <a href="?month=<?php echo e($nextMonth); ?>&year=<?php echo e($nextYear); ?>" class="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium">
-            Bulan Selanjutnya →
-        </a>
-    </div>
     
     <!-- Info Panel -->
     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
@@ -1064,8 +945,76 @@ document.getElementById('arrearsModal')?.addEventListener('click', function(e) {
     }
 });
 </script>
+<?php $__env->stopSection(); ?>
+
+<!-- Dashboard CSS -->
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+.dashboard-layout { display: flex; height: 100vh; background: #f8fafc; font-family: 'Inter', sans-serif; }
+.sidebar { width: 280px; background: white; border-right: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+.sidebar-header { padding: 24px 20px; border-bottom: 1px solid #e2e8f0; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+.logo-text { font-size: 20px; font-weight: 700; color: #1e293b; }
+.sidebar-nav { flex: 1; padding: 16px 0; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #64748b; text-decoration: none; transition: all 0.2s ease; border-radius: 0 8px 8px 0; margin: 0 12px; }
+.nav-item:hover { background: #f8fafc; color: #3b82f6; }
+.nav-item.active { background: #eff6ff; color: #3b82f6; font-weight: 600; }
+.nav-icon { width: 20px; height: 20px; }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid #e2e8f0; }
+.user-profile-mini { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.user-avatar-mini { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; }
+.user-name-mini { font-size: 13px; font-weight: 600; color: #1e293b; }
+.user-role-mini { font-size: 11px; color: #64748b; }
+.logout-form { display: block; }
+.logout-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: #fee2e2; color: #dc2626; border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.logout-btn:hover { background: #fecaca; }
+.logout-icon { width: 16px; height: 16px; }
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.main-content { flex: 1; padding: 32px; overflow-y: auto; }
+.greeting-section { margin-bottom: 32px; }
+.greeting-card { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+.greeting-title { font-size: 32px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+.greeting-subtitle { font-size: 16px; color: #64748b; }
+.stats-section, .feature-cards { margin-bottom: 32px; }
+.stats-grid, .feature-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+.stat-card, .feature-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+.feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+.feature-icon, .stat-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; }
+.feature-icon svg, .stat-icon svg { width: 32px; height: 32px; }
+.feature-icon.green { background: #dcfce7; color: #10b981; }
+.feature-icon.orange { background: #fed7aa; color: #f97316; }
+.feature-icon.blue { background: #dbeafe; color: #3b82f6; }
+.stat-icon.balance { background: #dbeafe; color: #3b82f6; }
+.stat-icon.income { background: #dcfce7; color: #10b981; }
+.stat-icon.expense { background: #fee2e2; color: #ef4444; }
+.stat-icon.payment { background: #e0e7ff; color: #6366f1; }
+.stat-icon.remaining { background: #fef3c7; color: #f59e0b; }
+.stat-title { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 8px; }
+.stat-value { font-size: 28px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+.stat-description { font-size: 14px; color: #64748b; }
+.tables-section { margin-bottom: 32px; }
+.table-card { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; overflow: hidden; }
+.table-header { padding: 24px; border-bottom: 1px solid #e2e8f0; }
+.table-title { font-size: 20px; font-weight: 600; color: #1e293b; }
+.table-container { padding: 24px; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { background: #f8fafc; color: #475569; padding: 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; }
+.data-table td { padding: 16px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+.data-table tr:hover td { background: #f8fafc; }
+.status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.status-badge.success { background: #dcfce7; color: #166534; }
+.status-badge.danger { background: #fee2e2; color: #dc2626; }
+.status-badge.warning { background: #fef3c7; color: #92400e; }
+.nav-btn { display: flex; align-items: center; gap: 8px; background: #3b82f6; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s ease; }
+.nav-btn:hover { background: #2563eb; transform: translateY(-1px); }
+.action-btn { display: inline-flex; align-items: center; gap: 4px; background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.action-btn:hover { background: #059669; transform: translateY(-1px); }
+@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .sidebar { width: 260px; } .main-content { padding: 20px; } .stats-grid { grid-template-columns: 1fr; } .tables-section { grid-template-columns: 1fr; } }
+</style>
+
         </main>
     </div>
 </div>
-<?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/weekly-payments.blade.php ENDPATH**/ ?>

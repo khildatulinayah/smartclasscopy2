@@ -1,18 +1,17 @@
 
 
+<?php $__env->startSection('title', 'Cetak Laporan Keuangan'); ?>
+
 <?php $__env->startSection('content'); ?>
 <div class="dashboard-layout">
     <?php echo $__env->make('components.bendahara-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="main-area">
         <main class="main-content">
-            <!-- Header -->
-            <section class="mb-8">
-                <div class="flex items-center gap-4 mb-4">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Cetak Laporan Keuangan</h1>
-                        <p class="text-lg text-gray-600">Pilih periode untuk mencetak laporan riwayat kas dan pembayaran siswa</p>
-                    </div>
+            <section class="greeting-section">
+                <div class="greeting-card">
+                    <h1 class="greeting-title">Cetak Laporan Keuangan</h1>
+                    <p class="greeting-subtitle">Pilih periode untuk mencetak laporan riwayat kas dan pembayaran siswa</p>
                 </div>
             </section>
 
@@ -270,33 +269,81 @@ function downloadPembayaranPDF() {
     } else {
         alert('Silakan pilih bulan dan tahun terlebih dahulu');
     }
-}
 </script>
+<?php $__env->stopSection(); ?>
 
-
+<!-- Dashboard CSS -->
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-.dashboard-layout { display: flex; height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); font-family: 'Inter', sans-serif; }
-.sidebar { width: 280px; background: #ffffff; border-right: 1px solid #e5e7eb; box-shadow: 4px 0 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
-/* Sidebar styles same as before */
-.sidebar-header { padding: 2rem 1.5rem; border-bottom: 1px solid #f3f4f6; }
-.logo { display: flex; align-items: center; gap: 0.75rem; }
-.logo-img { width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; object-fit: cover; }
-.logo-text { font-size: 1.25rem; font-weight: 800; background: linear-gradient(135deg, #3b82f6, #1d4ed8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.sidebar-nav { flex: 1; padding: 1rem 0; }
-.nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1.25rem; color: #6b7280; text-decoration: none; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 0 1rem 1rem 0; margin: 0 0.75rem; position: relative; overflow: hidden; }
-.nav-item:hover { background: #f8fafc; color: #3b82f6; transform: translateX(2px); }
-.nav-item.active { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); color: #1d4ed8; font-weight: 600; }
-.nav-icon { width: 1.25rem; height: 1.25rem; flex-shrink: 0; }
-.sidebar-section-header { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: #9ca3af; text-transform: uppercase; }
-.sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid #f3f4f6; }
+.dashboard-layout { display: flex; height: 100vh; background: #f8fafc; font-family: 'Inter', sans-serif; }
+.sidebar { width: 280px; background: white; border-right: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+.sidebar-header { padding: 24px 20px; border-bottom: 1px solid #e2e8f0; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+.logo-text { font-size: 20px; font-weight: 700; color: #1e293b; }
+.sidebar-nav { flex: 1; padding: 16px 0; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #64748b; text-decoration: none; transition: all 0.2s ease; border-radius: 0 8px 8px 0; margin: 0 12px; }
+.nav-item:hover { background: #f8fafc; color: #3b82f6; }
+.nav-item.active { background: #eff6ff; color: #3b82f6; font-weight: 600; }
+.nav-icon { width: 20px; height: 20px; }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid #e2e8f0; }
+.user-profile-mini { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.user-avatar-mini { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; }
+.user-name-mini { font-size: 13px; font-weight: 600; color: #1e293b; }
+.user-role-mini { font-size: 11px; color: #64748b; }
+.logout-form { display: block; }
+.logout-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: #fee2e2; color: #dc2626; border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.logout-btn:hover { background: #fecaca; }
+.logout-icon { width: 16px; height: 16px; }
 .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.main-content { flex: 1; padding: 2rem; overflow-y: auto; scroll-behavior: smooth; }
+.main-content { flex: 1; padding: 32px; overflow-y: auto; }
+.greeting-section { margin-bottom: 32px; }
+.greeting-card { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+.greeting-title { font-size: 32px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+.greeting-subtitle { font-size: 16px; color: #64748b; }
+.stats-section, .feature-cards { margin-bottom: 32px; }
+.stats-grid, .feature-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+.stat-card, .feature-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+.feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+.feature-icon, .stat-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; }
+.feature-icon svg, .stat-icon svg { width: 32px; height: 32px; }
+.feature-icon.green { background: #dcfce7; color: #10b981; }
+.feature-icon.orange { background: #fed7aa; color: #f97316; }
+.feature-icon.blue { background: #dbeafe; color: #3b82f6; }
+.stat-icon.balance { background: #dbeafe; color: #3b82f6; }
+.stat-icon.income { background: #dcfce7; color: #10b981; }
+.stat-icon.expense { background: #fee2e2; color: #ef4444; }
+.stat-icon.payment { background: #e0e7ff; color: #6366f1; }
+.stat-icon.remaining { background: #fef3c7; color: #f59e0b; }
+.stat-title { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 8px; }
+.stat-value { font-size: 28px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+.stat-description { font-size: 14px; color: #64748b; }
+.tables-section { margin-bottom: 32px; }
+.table-card { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; overflow: hidden; }
+.table-header { padding: 24px; border-bottom: 1px solid #e2e8f0; }
+.table-title { font-size: 20px; font-weight: 600; color: #1e293b; }
+.table-container { padding: 24px; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { background: #f8fafc; color: #475569; padding: 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; }
+.data-table td { padding: 16px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+.data-table tr:hover td { background: #f8fafc; }
+.status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.status-badge.success { background: #dcfce7; color: #166534; }
+.status-badge.danger { background: #fee2e2; color: #dc2626; }
+.status-badge.warning { background: #fef3c7; color: #92400e; }
+.nav-btn { display: flex; align-items: center; gap: 8px; background: #3b82f6; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s ease; }
+.nav-btn:hover { background: #2563eb; transform: translateY(-1px); }
+.action-btn { display: inline-flex; align-items: center; gap: 4px; background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.action-btn:hover { background: #059669; transform: translateY(-1px); }
 .report-card { backdrop-filter: blur(10px); }
 .form-select { @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-200 focus:border-blue-400 transition-all duration-300 bg-white shadow-sm hover:shadow-md; background-image: linear-gradient(45deg, transparent 50%, #e5e7eb 0), linear-gradient(135deg, #e5e7eb 50%, transparent 0); background-position: calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px); background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; appearance: none; }
 .main-content h1, .main-content h2 { font-weight: 800; }
-@media (max-width: 1024px) { .grid-cols-2 { grid-template-columns: 1fr; } }
+@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .sidebar { width: 260px; } .main-content { padding: 20px; } .stats-grid { grid-template-columns: 1fr; } .tables-section { grid-template-columns: 1fr; } }
 </style>
-<?php $__env->stopSection(); ?>
+
+        </main>
+    </div>
+</div>
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/laporan.blade.php ENDPATH**/ ?>
