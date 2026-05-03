@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Laporan Keuangan - {{ $monthName }} {{ $year }}</title>
+    <title>Laporan Pembayaran Siswa - {{ $monthName }} {{ $year }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; line-height: 1.4; color: #000; background: white; font-size: 12px; }
@@ -28,26 +28,32 @@
         .summary-card { flex: 1; background: #f9f9f9; border: 1px solid #000; padding: 15px; text-align: center; }
         .summary-label { font-size: 11px; font-weight: 600; margin-bottom: 5px; }
         .summary-value { font-size: 16px; font-weight: bold; }
-        .summary-income .summary-value { color: #000; }
-        .summary-expense .summary-value { color: #000; }
-        .summary-balance .summary-value { color: #000; }
+        .summary-arrears .summary-value { color: #dc2626; }
         
-        /* Tabel Transaksi */
+        /* Tabel Pembayaran Global */
         .table-container { margin: 25px 0; }
         table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
         th { background: #f0f0f0; border: 1px solid #000; padding: 10px 8px; text-align: left; font-weight: 600; font-size: 11px; }
         td { border: 1px solid #000; padding: 8px; font-size: 11px; }
         .text-right { text-align: right; }
-        .amount { font-weight: 600; font-family: 'Courier New', monospace; }
-        .income { color: #000; }
-        .expense { color: #000; }
+        .text-center { text-align: center; }
+        .font-mono { font-family: 'Courier New', monospace; }
+        .text-muted { color: #999; font-style: italic; }
+        .status-paid { color: #166534; font-weight: 600; }
+        .status-unpaid { color: #dc2626; font-weight: 600; }
         .status-badge { padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 600; }
-        .status-income { background: #d4edda; color: #155724; }
-        .status-expense { background: #f8d7da; color: #721c24; }
+        .status-lunas { background: #d4edda; color: #155724; }
+        .status-belum { background: #f8d7da; color: #721c24; }
         
         /* Total Row */
         .total-row { background: #f0f0f0; font-weight: 600; }
         .total-row td { padding: 10px 8px; font-size: 12px; }
+        
+        /* Student Group */
+        .student-section { margin: 30px 0; page-break-inside: avoid; }
+        .student-header { background: #f0f0f0; border: 1px solid #000; padding: 12px 15px; margin-bottom: 0; }
+        .student-name { font-size: 14px; font-weight: bold; margin-bottom: 3px; }
+        .student-info { font-size: 10px; color: #666; }
         
         /* Footer */
         .footer { margin-top: 40px; }
@@ -93,7 +99,7 @@
             <div class="school-info">
                 <div class="school-name">SMARTCLASS</div>
                 <div class="school-address">Sistem Manajemen Kelas Digital</div>
-                <div class="school-contact">Laporan Keuangan Resmi</div>
+                <div class="school-contact">Laporan Pembayaran Siswa Resmi</div>
             </div>
             <div class="school-logo">
                 <img src="{{ asset('images/logo.png') }}" alt="Logo SMARTCLASS" class="logo" onerror="this.style.display='none'">
@@ -102,68 +108,96 @@
 
         <!-- Judul Laporan -->
         <div class="report-title">
-            <h1>Laporan Keuangan Kelas</h1>
+            <h1>Laporan Pembayaran Siswa Mingguan</h1>
             <div class="report-period">Periode: {{ $monthName }} {{ $year }}</div>
             <div class="report-info">Dicetak pada: {{ now()->locale('id')->translatedFormat('d F Y, H:i') }} | Bendahara Kelas</div>
         </div>
 
-        @if($transactions->count() > 0)
+        @if($paymentsByStudent->count() > 0)
+            <!-- Calculate Summary -->
+            @php
+                $totalStudents = $paymentsByStudent->count();
+                $totalArrears = $totalBills - $totalPaid;
+                // Get max week number from all payments
+                $maxWeek = 0;
+                foreach($paymentsByStudent as $studentPayments) {
+                    foreach($studentPayments as $payment) {
+                        if($payment->week_number > $maxWeek) {
+                            $maxWeek = $payment->week_number;
+                        }
+                    }
+                }
+            @endphp
+
             <div class="summary">
-                <div class="summary-card summary-income">
-                    <div class="summary-label">Total Pemasukan</div>
-                    <div class="summary-value">Rp {{ number_format($income, 0, ',', '.') }}</div>
+                <div class="summary-card">
+                    <div class="summary-label">Total Tagihan</div>
+                    <div class="summary-value">Rp {{ number_format($totalBills, 0, ',', '.') }}</div>
                 </div>
-                <div class="summary-card summary-expense">
-                    <div class="summary-label">Total Pengeluaran</div>
-                    <div class="summary-value">Rp {{ number_format($expense, 0, ',', '.') }}</div>
+                <div class="summary-card">
+                    <div class="summary-label">Sudah Dibayar</div>
+                    <div class="summary-value">Rp {{ number_format($totalPaid, 0, ',', '.') }}</div>
                 </div>
-                <div class="summary-card summary-balance">
-                    <div class="summary-label">Saldo Akhir</div>
-                    <div class="summary-value">Rp {{ number_format($balance, 0, ',', '.') }}</div>
+                <div class="summary-card summary-arrears">
+                    <div class="summary-label">Tunggakan</div>
+                    <div class="summary-value">Rp {{ number_format($totalArrears, 0, ',', '.') }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Jumlah Siswa</div>
+                    <div class="summary-value">{{ $totalStudents }}</div>
                 </div>
             </div>
 
+            <!-- Tabel Pembayaran Horizontal -->
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th width="12%">Tanggal</th>
-                            <th width="35%">Keterangan</th>
-                            <th width="20%">Siswa</th>
-                            <th width="13%">Jenis</th>
-                            <th width="20%" class="text-right">Nominal</th>
+                            <th width="5%" class="text-center">No</th>
+                            <th width="25%">Nama Siswa</th>
+                            @for($week = 1; $week <= $maxWeek; $week++)
+                                <th width="12%" class="text-center">Minggu {{ $week }}</th>
+                            @endfor
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($transactions as $t)
+                        @php $rowNumber = 1; @endphp
+                        @foreach($paymentsByStudent as $studentId => $studentPayments)
+                            @php 
+                                $student = $studentPayments->first()->student;
+                                // Create array of payments indexed by week number
+                                $paymentsByWeek = [];
+                                foreach($studentPayments as $payment) {
+                                    $paymentsByWeek[$payment->week_number] = $payment;
+                                }
+                            @endphp
                             <tr>
-                                <td>{{ \Carbon\Carbon::parse($t->date)->locale('id')->isoFormat('D MMM YYYY') }}</td>
-                                <td>{{ $t->description }}</td>
-                                <td>{{ $t->student->name ?? '-' }}</td>
-                                <td>
-                                    <span class="status-badge {{ $t->type == 'income' ? 'status-income' : 'status-expense' }}">
-                                        {{ $t->type == 'income' ? 'MASUK' : 'KELUAR' }}
-                                    </span>
-                                </td>
-                                <td class="text-right amount {{ $t->type == 'income' ? 'income' : 'expense' }}">
-                                    {{ $t->type == 'income' ? '+' : '-' }} Rp {{ number_format($t->amount, 0, ',', '.') }}
-                                </td>
+                                <td class="text-center">{{ $rowNumber }}</td>
+                                <td>{{ $student ? $student->name : 'Unknown Student' }}</td>
+                                @for($week = 1; $week <= $maxWeek; $week++)
+                                    <td class="text-center">
+                                        @if(isset($paymentsByWeek[$week]))
+                                            @if($paymentsByWeek[$week]->status == 'paid')
+                                                <span class="status-badge status-lunas">Lunas</span>
+                                            @else
+                                                <span class="status-badge status-belum">Belum</span>
+                                            @endif
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                @endfor
                             </tr>
+                            @php $rowNumber++; @endphp
                         @endforeach
-                        <tr class="total-row">
-                            <td colspan="4" class="text-right">TOTAL:</td>
-                            <td class="text-right">
-                                {{ $income >= $expense ? '+' : '-' }} Rp {{ number_format(abs($balance), 0, ',', '.') }}
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
         @else
             <div class="no-data">
-                <div class="no-data-icon">📊</div>
-                <h2>Belum ada transaksi</h2>
-                <p>Transaksi keuangan untuk {{ $monthName }} {{ $year }} belum ada.</p>
+                <div class="no-data-icon">📋</div>
+                <h2>Belum ada data pembayaran</h2>
+                <p>Data pembayaran siswa untuk {{ $monthName }} {{ $year }} belum tersedia.</p>
             </div>
         @endif
 
@@ -172,8 +206,8 @@
                 <div class="signature-box">
                     <div class="signature-title">Mengetahui,</div>
                     <div class="signature-line"></div>
-                    <div class="signature-name">{{ auth()->user()->name }}</div>
-                    <div class="signature-role">{{ ucfirst(auth()->user()->role) }}</div>
+                    <div class="signature-name">{{ auth()->user() ? auth()->user()->name : 'System' }}</div>
+                    <div class="signature-role">{{ auth()->user() ? ucfirst(auth()->user()->role) : 'Administrator' }}</div>
                 </div>
                 <div class="signature-box" style="visibility: hidden;">
                     <div class="signature-title">Menyetujui,</div>
@@ -184,7 +218,7 @@
             </div>
             
             <div class="footer-info">
-                <p><strong>Dicetak oleh:</strong> {{ auth()->user()->name }} ({{ ucfirst(auth()->user()->role) }})</p>
+                <p><strong>Dicetak oleh:</strong> {{ auth()->user() ? auth()->user()->name : 'System' }} ({{ auth()->user() ? ucfirst(auth()->user()->role) : 'Administrator' }})</p>
                 <p>{{ now()->locale('id')->translatedFormat('d F Y, H:i:s') }}</p>
                 <p>SMARTCLASS - Sistem Manajemen Kelas Digital</p>
             </div>

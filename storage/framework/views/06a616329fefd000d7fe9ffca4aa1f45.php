@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Laporan Keuangan - {{ $monthName }} {{ $year }}</title>
+    <title>Laporan Keuangan - <?php echo e($monthName); ?> <?php echo e($year); ?></title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; line-height: 1.4; color: #000; background: white; font-size: 12px; }
@@ -96,30 +96,30 @@
                 <div class="school-contact">Laporan Keuangan Resmi</div>
             </div>
             <div class="school-logo">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo SMARTCLASS" class="logo" onerror="this.style.display='none'">
+                <img src="<?php echo e(asset('images/logo.png')); ?>" alt="Logo SMARTCLASS" class="logo" onerror="this.style.display='none'">
             </div>
         </div>
 
         <!-- Judul Laporan -->
         <div class="report-title">
             <h1>Laporan Keuangan Kelas</h1>
-            <div class="report-period">Periode: {{ $monthName }} {{ $year }}</div>
-            <div class="report-info">Dicetak pada: {{ now()->locale('id')->translatedFormat('d F Y, H:i') }} | Bendahara Kelas</div>
+            <div class="report-period">Periode: <?php echo e($monthName); ?> <?php echo e($year); ?></div>
+            <div class="report-info">Dicetak pada: <?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i')); ?> | Bendahara Kelas</div>
         </div>
 
-        @if($transactions->count() > 0)
+        <?php if($transactions->count() > 0): ?>
             <div class="summary">
                 <div class="summary-card summary-income">
                     <div class="summary-label">Total Pemasukan</div>
-                    <div class="summary-value">Rp {{ number_format($income, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp <?php echo e(number_format($income, 0, ',', '.')); ?></div>
                 </div>
                 <div class="summary-card summary-expense">
                     <div class="summary-label">Total Pengeluaran</div>
-                    <div class="summary-value">Rp {{ number_format($expense, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp <?php echo e(number_format($expense, 0, ',', '.')); ?></div>
                 </div>
                 <div class="summary-card summary-balance">
                     <div class="summary-label">Saldo Akhir</div>
-                    <div class="summary-value">Rp {{ number_format($balance, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp <?php echo e(number_format($balance, 0, ',', '.')); ?></div>
                 </div>
             </div>
 
@@ -135,45 +135,48 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($transactions as $t)
+                        <?php $__currentLoopData = $transactions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <tr>
-                                <td>{{ \Carbon\Carbon::parse($t->date)->locale('id')->isoFormat('D MMM YYYY') }}</td>
-                                <td>{{ $t->description }}</td>
-                                <td>{{ $t->student->name ?? '-' }}</td>
+                                <td><?php echo e(\Carbon\Carbon::parse($t->date)->locale('id')->isoFormat('D MMM YYYY')); ?></td>
+                                <td><?php echo e($t->description); ?></td>
+                                <td><?php echo e($t->student->name ?? '-'); ?></td>
                                 <td>
-                                    <span class="status-badge {{ $t->type == 'income' ? 'status-income' : 'status-expense' }}">
-                                        {{ $t->type == 'income' ? 'MASUK' : 'KELUAR' }}
+                                    <span class="status-badge <?php echo e($t->type == 'income' ? 'status-income' : 'status-expense'); ?>">
+                                        <?php echo e($t->type == 'income' ? 'MASUK' : 'KELUAR'); ?>
+
                                     </span>
                                 </td>
-                                <td class="text-right amount {{ $t->type == 'income' ? 'income' : 'expense' }}">
-                                    {{ $t->type == 'income' ? '+' : '-' }} Rp {{ number_format($t->amount, 0, ',', '.') }}
+                                <td class="text-right amount <?php echo e($t->type == 'income' ? 'income' : 'expense'); ?>">
+                                    <?php echo e($t->type == 'income' ? '+' : '-'); ?> Rp <?php echo e(number_format($t->amount, 0, ',', '.')); ?>
+
                                 </td>
                             </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         <tr class="total-row">
                             <td colspan="4" class="text-right">TOTAL:</td>
                             <td class="text-right">
-                                {{ $income >= $expense ? '+' : '-' }} Rp {{ number_format(abs($balance), 0, ',', '.') }}
+                                <?php echo e($income >= $expense ? '+' : '-'); ?> Rp <?php echo e(number_format(abs($balance), 0, ',', '.')); ?>
+
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        @else
+        <?php else: ?>
             <div class="no-data">
                 <div class="no-data-icon">📊</div>
                 <h2>Belum ada transaksi</h2>
-                <p>Transaksi keuangan untuk {{ $monthName }} {{ $year }} belum ada.</p>
+                <p>Transaksi keuangan untuk <?php echo e($monthName); ?> <?php echo e($year); ?> belum ada.</p>
             </div>
-        @endif
+        <?php endif; ?>
 
         <div class="footer">
             <div class="signature-section">
                 <div class="signature-box">
                     <div class="signature-title">Mengetahui,</div>
                     <div class="signature-line"></div>
-                    <div class="signature-name">{{ auth()->user()->name }}</div>
-                    <div class="signature-role">{{ ucfirst(auth()->user()->role) }}</div>
+                    <div class="signature-name"><?php echo e(auth()->user()->name); ?></div>
+                    <div class="signature-role"><?php echo e(ucfirst(auth()->user()->role)); ?></div>
                 </div>
                 <div class="signature-box" style="visibility: hidden;">
                     <div class="signature-title">Menyetujui,</div>
@@ -184,11 +187,12 @@
             </div>
             
             <div class="footer-info">
-                <p><strong>Dicetak oleh:</strong> {{ auth()->user()->name }} ({{ ucfirst(auth()->user()->role) }})</p>
-                <p>{{ now()->locale('id')->translatedFormat('d F Y, H:i:s') }}</p>
+                <p><strong>Dicetak oleh:</strong> <?php echo e(auth()->user()->name); ?> (<?php echo e(ucfirst(auth()->user()->role)); ?>)</p>
+                <p><?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i:s')); ?></p>
                 <p>SMARTCLASS - Sistem Manajemen Kelas Digital</p>
             </div>
         </div>
     </div>
 </body>
 </html>
+<?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/laporan-keuangan-cetak.blade.php ENDPATH**/ ?>

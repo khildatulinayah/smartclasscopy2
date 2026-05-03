@@ -141,8 +141,6 @@
                                 <th>Hari</th>
                                 <th>Status</th>
                                 <th>Keterangan</th>
-                                <th>Jam Masuk</th>
-                                <th>Jam Keluar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -172,12 +170,10 @@
                                         </span>
                                     </td>
                                     <td>{{ $attendance->description ?? ($attendance->holiday_note ?? '-') }}</td>
-                                    <td>{{ $attendance->check_in ?? '-' }}</td>
-                                    <td>{{ $attendance->check_out ?? '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="no-data">Belum ada data absensi</td>
+                                    <td colspan="4" class="no-data">Belum ada data absensi</td>
                                 </tr>
                             @endforelse
                         </tbody>

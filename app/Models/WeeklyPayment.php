@@ -137,7 +137,7 @@ class WeeklyPayment extends Model
                         'status' => 'unpaid',
                         'payment_date' => null,
                         'transaction_id' => null,
-                        'created_by' => auth()->id() ?? 1,
+                        'created_by' => auth()->check() ? auth()->id() : 1,
                     ]);
                     $generatedCount++;
                 }
@@ -160,7 +160,7 @@ class WeeklyPayment extends Model
                             'status' => 'unpaid',
                             'payment_date' => null,
                             'transaction_id' => null,
-                            'created_by' => auth()->id() ?? 1,
+                            'created_by' => auth()->check() ? auth()->id() : 1,
                         ]);
                         $generatedCount++;
                     }

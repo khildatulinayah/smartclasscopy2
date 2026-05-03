@@ -1,9 +1,7 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="dashboard-layout">
     <!-- Sidebar -->
-    @include('components.admin-sidebar')
+    <?php echo $__env->make('components.admin-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="main-area">
         <main class="main-content">
@@ -26,8 +24,8 @@
                             </div>
                             <div class="stat-title">Total Pemasukan</div>
                         </div>
-                        <div class="stat-value">Rp {{ number_format($totalIncome, 0, ',', '.') }}</div>
-                        <div class="stat-description">{{ $monthName }}</div>
+                        <div class="stat-value">Rp <?php echo e(number_format($totalIncome, 0, ',', '.')); ?></div>
+                        <div class="stat-description"><?php echo e($monthName); ?></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-header">
@@ -38,8 +36,8 @@
                             </div>
                             <div class="stat-title">Total Pengeluaran</div>
                         </div>
-                        <div class="stat-value">Rp {{ number_format($totalExpense, 0, ',', '.') }}</div>
-                        <div class="stat-description">{{ $monthName }}</div>
+                        <div class="stat-value">Rp <?php echo e(number_format($totalExpense, 0, ',', '.')); ?></div>
+                        <div class="stat-description"><?php echo e($monthName); ?></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-header">
@@ -50,7 +48,7 @@
                             </div>
                             <div class="stat-title">Saldo Kas</div>
                         </div>
-                        <div class="stat-value">Rp {{ number_format($balance, 0, ',', '.') }}</div>
+                        <div class="stat-value">Rp <?php echo e(number_format($balance, 0, ',', '.')); ?></div>
                         <div class="stat-description">Saat ini</div>
                     </div>
                 </div>
@@ -62,14 +60,14 @@
                     <div class="table-title-section">
                         <h2 class="table-title">Pembayaran Mingguan</h2>
                         <div class="month-navigation">
-                            <a href="{{ route('admin.monitor.kas', ['month' => $prevDate->month, 'year' => $prevDate->year]) }}" class="nav-btn">
+                            <a href="<?php echo e(route('admin.monitor.kas', ['month' => $prevDate->month, 'year' => $prevDate->year])); ?>" class="nav-btn">
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                                 </svg>
                                 Prev
                             </a>
-                            <span class="current-month">{{ $monthName }}</span>
-                            <a href="{{ route('admin.monitor.kas', ['month' => $nextDate->month, 'year' => $nextDate->year]) }}" class="nav-btn">
+                            <span class="current-month"><?php echo e($monthName); ?></span>
+                            <a href="<?php echo e(route('admin.monitor.kas', ['month' => $nextDate->month, 'year' => $nextDate->year])); ?>" class="nav-btn">
                                 Next
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -94,40 +92,41 @@
                         <thead>
                             <tr>
                                 <th>Siswa</th>
-                                @foreach($wednesdayDates as $index => $date)
-                                    <th>{{ $date->format('d M') }}<br><small style="font-weight: normal; text-transform: none;">Rabu</small><br><small style="font-weight: normal; text-transform: none; color: #3b82f6;">Minggu {{ $index + 1 }}</small></th>
-                                @endforeach
+                                <?php $__currentLoopData = $wednesdayDates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $date): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <th><?php echo e($date->format('d M')); ?><br><small style="font-weight: normal; text-transform: none;">Rabu</small><br><small style="font-weight: normal; text-transform: none; color: #3b82f6;">Minggu <?php echo e($index + 1); ?></small></th>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($weeklyPayments->groupBy('student_id') as $studentId => $studentPayments)
-                            @php
+                            <?php $__currentLoopData = $weeklyPayments->groupBy('student_id'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $studentPayments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php
                                 $student = $studentPayments->first()->student;
                                 $totalWeeks = count($wednesdayDates);
-                            @endphp
-                            <tr data-name="{{ strtolower($student->name) }}">
-                                <td class="font-semibold">{{ $student->name }}</td>
-                                @foreach($wednesdayDates as $index => $date)
-                                    @php
+                            ?>
+                            <tr data-name="<?php echo e(strtolower($student->name)); ?>">
+                                <td class="font-semibold"><?php echo e($student->name); ?></td>
+                                <?php $__currentLoopData = $wednesdayDates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $date): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <?php
                                         $weekNumber = $index + 1;
                                         $payment = $studentPayments->where('week_number', $weekNumber)->first();
                                         $status = $payment ? $payment->status : 'unpaid';
                                         $amount = $payment ? $payment->amount : 5000;
-                                    @endphp
+                                    ?>
                                     <td>
-                                        <span class="status-badge {{ $status == 'paid' ? 'success' : 'warning' }}">
-                                            {{ $status == 'paid' ? '✓' : '○' }} Rp {{ number_format($amount, 0, ',', '.') }}
+                                        <span class="status-badge <?php echo e($status == 'paid' ? 'success' : 'warning'); ?>">
+                                            <?php echo e($status == 'paid' ? '✓' : '○'); ?> Rp <?php echo e(number_format($amount, 0, ',', '.')); ?>
+
                                         </span>
                                     </td>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 <td>
-                                    <span class="status-badge {{ $studentPayments->where('status', 'paid')->count() == $totalWeeks ? 'success' : 'warning' }}">
-                                        {{ $studentPayments->where('status', 'paid')->count() }}/{{ $totalWeeks }} Lunas
+                                    <span class="status-badge <?php echo e($studentPayments->where('status', 'paid')->count() == $totalWeeks ? 'success' : 'warning'); ?>">
+                                        <?php echo e($studentPayments->where('status', 'paid')->count()); ?>/<?php echo e($totalWeeks); ?> Lunas
                                     </span>
                                 </td>
                             </tr>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
                     </table>
                 </div>
@@ -139,14 +138,14 @@
                     <div class="table-title-section">
                         <h2 class="table-title">Transaksi Terbaru</h2>
                         <div class="month-navigation">
-                            <a href="{{ route('admin.monitor.kas', ['month' => $prevDate->month, 'year' => $prevDate->year]) }}" class="nav-btn">
+                            <a href="<?php echo e(route('admin.monitor.kas', ['month' => $prevDate->month, 'year' => $prevDate->year])); ?>" class="nav-btn">
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                                 </svg>
                                 Prev
                             </a>
-                            <span class="current-month">{{ $monthName }}</span>
-                            <a href="{{ route('admin.monitor.kas', ['month' => $nextDate->month, 'year' => $nextDate->year]) }}" class="nav-btn">
+                            <span class="current-month"><?php echo e($monthName); ?></span>
+                            <a href="<?php echo e(route('admin.monitor.kas', ['month' => $nextDate->month, 'year' => $nextDate->year])); ?>" class="nav-btn">
                                 Next
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -178,19 +177,20 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($transactions as $transaction)
-                            <tr data-description="{{ strtolower($transaction->description) }}" data-type="{{ strtolower($transaction->type) }}">
-                                <td>{{ $transaction->date->format('d M Y') }}</td>
-                                <td>{{ $transaction->student->name ?? '-' }}</td>
+                            <?php $__currentLoopData = $transactions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $transaction): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <tr data-description="<?php echo e(strtolower($transaction->description)); ?>" data-type="<?php echo e(strtolower($transaction->type)); ?>">
+                                <td><?php echo e($transaction->date->format('d M Y')); ?></td>
+                                <td><?php echo e($transaction->student->name ?? '-'); ?></td>
                                 <td>
-                                    <span class="status-badge {{ $transaction->type == 'income' ? 'success' : 'warning' }}">
-                                        {{ $transaction->type == 'income' ? 'Pemasukan' : 'Pengeluaran' }}
+                                    <span class="status-badge <?php echo e($transaction->type == 'income' ? 'success' : 'warning'); ?>">
+                                        <?php echo e($transaction->type == 'income' ? 'Pemasukan' : 'Pengeluaran'); ?>
+
                                     </span>
                                 </td>
-                                <td class="font-semibold">Rp {{ number_format($transaction->amount, 0, ',', '.') }}</td>
-                                <td>{{ $transaction->description }}</td>
+                                <td class="font-semibold">Rp <?php echo e(number_format($transaction->amount, 0, ',', '.')); ?></td>
+                                <td><?php echo e($transaction->description); ?></td>
                             </tr>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
                     </table>
                 </div>
@@ -718,4 +718,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/admin/monitor_kas.blade.php ENDPATH**/ ?>

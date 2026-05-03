@@ -22,6 +22,19 @@
                         </a>
                         <div class="current-date">
                             <h2><?php echo e(\Carbon\Carbon::parse($selectedDate)->locale('id')->format('l, d F Y')); ?></h2>
+                            <form method="GET" action="<?php echo e(route('admin.monitor.absensi')); ?>" class="date-picker-form">
+                                <input type="date" 
+                                       name="date" 
+                                       id="datePicker" 
+                                       value="<?php echo e($selectedDate); ?>" 
+                                       class="date-picker-input"
+                                       max="<?php echo e(now()->format('Y-m-d')); ?>">
+                                <button type="submit" class="date-picker-btn">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                            </form>
                         </div>
                         <a href="<?php echo e(route('admin.monitor.absensi')); ?>?date=<?php echo e($nextDate); ?>" class="date-nav-btn">
                             Selanjutnya
@@ -121,7 +134,31 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if($attendances->count() > 0): ?>
+                            <?php if($isHoliday): ?>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 40px; color: #64748b;">
+                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 48px; height: 48px; color: #f59e0b;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <div style="font-size: 16px; font-weight: 600;">Hari Libur</div>
+                                            <div style="font-size: 14px;"><?php echo e($holiday->note ?? 'Hari libur nasional'); ?></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php elseif($isWeekend): ?>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 40px; color: #64748b;">
+                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 48px; height: 48px; color: #6b7280;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                            </svg>
+                                            <div style="font-size: 16px; font-weight: 600;">Akhir Pekan</div>
+                                            <div style="font-size: 14px;"><?php echo e(\Carbon\Carbon::parse($selectedDate)->locale('id')->format('l')); ?> - Tidak ada jadwal absensi</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php elseif($attendances->count() > 0): ?>
                                 <?php $__currentLoopData = $attendances; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $attendance): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <tr data-name="<?php echo e(strtolower($attendance->student->name)); ?>" data-status="<?php echo e(strtolower($attendance->status)); ?>">
                                     <td><?php echo e($index + 1); ?></td>
@@ -344,7 +381,7 @@
 
 .stats-grid { 
     display: grid; 
-    grid-template-columns: repeat(2, 1fr); 
+    grid-template-columns: repeat(4, 1fr); 
     gap: 24px; 
 }
 
@@ -586,11 +623,65 @@
     align-items: center; 
 }
 
+.current-date { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 12px; 
+}
+
 .current-date h2 { 
     font-size: 24px; 
     font-weight: 700; 
     color: #1e293b; 
     margin: 0; 
+}
+
+.date-picker-form { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    background: white; 
+    border: 1px solid #e2e8f0; 
+    border-radius: 8px; 
+    padding: 4px; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+}
+
+.date-picker-input { 
+    border: none; 
+    outline: none; 
+    padding: 8px 12px; 
+    font-size: 14px; 
+    color: #1e293b; 
+    background: transparent; 
+    min-width: 150px; 
+}
+
+.date-picker-input::-webkit-calendar-picker-indicator { 
+    display: none; 
+}
+
+.date-picker-btn { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    background: #3b82f6; 
+    color: white; 
+    border: none; 
+    border-radius: 6px; 
+    padding: 8px; 
+    cursor: pointer; 
+    transition: all 0.2s ease; 
+}
+
+.date-picker-btn:hover { 
+    background: #2563eb; 
+}
+
+.date-picker-btn svg { 
+    width: 16px; 
+    height: 16px; 
 }
 
 .date-nav-btn { 
@@ -621,11 +712,15 @@
 /* Responsive */
 @media (max-width: 1200px) { 
     .stats-grid { 
-        grid-template-columns: 1fr; 
+        grid-template-columns: repeat(2, 1fr); 
     } 
 }
 
 @media (max-width: 768px) { 
+    .stats-grid { 
+        grid-template-columns: 1fr; 
+        gap: 16px; 
+    } 
     .sidebar { 
         width: 260px; 
     } 
@@ -635,6 +730,19 @@
     .date-nav-header { 
         flex-direction: column; 
         gap: 12px; 
+    } 
+    .date-picker-form { 
+        flex-direction: column; 
+        gap: 8px; 
+        width: 100%; 
+    } 
+    .date-picker-input { 
+        width: 100%; 
+        min-width: auto; 
+    } 
+    .date-picker-btn { 
+        width: 100%; 
+        justify-content: center; 
     } 
     .table-header { 
         flex-direction: column; 
@@ -682,6 +790,70 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (statusFilter) {
         statusFilter.addEventListener('change', filterTable);
+    }
+    
+    // Date picker functionality
+    const datePicker = document.getElementById('datePicker');
+    const datePickerForm = document.querySelector('.date-picker-form');
+    
+    if (datePicker && datePickerForm) {
+        // Show native date picker on click
+        datePicker.addEventListener('click', function() {
+            this.showPicker();
+        });
+        
+        // Handle form submission
+        datePickerForm.addEventListener('submit', function(e) {
+            // Form will submit normally, no need for extra handling
+        });
+        
+        // Handle date change for immediate navigation
+        datePicker.addEventListener('change', function() {
+            // Auto-submit when date changes
+            this.form.submit();
+        });
+        
+        // Add keyboard navigation
+        datePicker.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                this.form.submit();
+            }
+        });
+    }
+    
+    // Add today button functionality
+    const todayBtn = document.createElement('button');
+    todayBtn.type = 'button';
+    todayBtn.innerHTML = 'Hari Ini';
+    todayBtn.className = 'today-btn';
+    todayBtn.style.cssText = `
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        margin-left: 8px;
+        transition: all 0.2s ease;
+    `;
+    
+    todayBtn.addEventListener('click', function() {
+        const today = new Date().toISOString().split('T')[0];
+        window.location.href = `<?php echo e(route('admin.monitor.absensi')); ?>?date=${today}`;
+    });
+    
+    todayBtn.addEventListener('mouseenter', function() {
+        this.style.background = '#059669';
+    });
+    
+    todayBtn.addEventListener('mouseleave', function() {
+        this.style.background = '#10b981';
+    });
+    
+    // Add today button next to date picker form
+    if (datePickerForm) {
+        datePickerForm.parentNode.appendChild(todayBtn);
     }
 });
 </script>

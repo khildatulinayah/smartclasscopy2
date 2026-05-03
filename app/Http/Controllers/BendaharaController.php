@@ -665,24 +665,69 @@ class BendaharaController extends Controller
                 ->header('Content-Type', 'application/pdf')
                 ->header('Content-Disposition', 'inline; filename="laporan-keuangan-' . $monthName . '.pdf"');
         } else {
-            // PDF Laporan Pembayaran Siswa
-            $payments = WeeklyPayment::with(['student', 'transaction'])
-                ->where('month', $month)
-                ->where('year', $year)
-                ->orderBy('student_id')
-                ->orderBy('week_number')
-                ->get();
+            try {
+                // Sync bills untuk memastikan data lengkap
+                WeeklyPayment::syncMonthlyBills($month, $year);
+                
+                // PDF Laporan Pembayaran Siswa
+                $payments = WeeklyPayment::with(['student', 'transaction'])
+                    ->where('month', $month)
+                    ->where('year', $year)
+                    ->orderBy('student_id')
+                    ->orderBy('week_number')
+                    ->get();
+                    
+                // Debug: Check if students are loaded
+                foreach($payments as $payment) {
+                    if (!$payment->student) {
+                        Log::warning('Payment without student: ' . $payment->id);
+                    }
+                }
 
-            $paymentsByStudent = $payments->groupBy('student_id');
+                $paymentsByStudent = $payments->groupBy('student_id');
+                $totalPaid = $payments->where('status', 'paid')->sum('amount');
+                $totalBills = $payments->sum('amount');
 
-            $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
+                $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
 
-            $pdf = Pdf::loadView('bendahara.laporan-pembayaran-cetak', compact('paymentsByStudent', 'month', 'year', 'monthName'));
-            $pdf->setPaper('a4', 'portrait');
-            
-            return response($pdf->output())
-                ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'inline; filename="laporan-pembayaran-' . $monthName . '.pdf"');
+                // Debug: Log the data
+                Log::info('PDF Pembayaran Data:', [
+                    'month' => $month,
+                    'year' => $year,
+                    'payments_count' => $payments->count(),
+                    'students_count' => $paymentsByStudent->count(),
+                    'totalPaid' => $totalPaid,
+                    'totalBills' => $totalBills
+                ]);
+
+                $pdf = Pdf::loadView('bendahara.laporan-pembayaran-cetak', compact(
+                    'payments', 'paymentsByStudent', 'totalPaid', 'totalBills', 'month', 'year', 'monthName'
+                ));
+                
+                // Configure DomPDF
+                $pdf->setPaper('a4', 'portrait');
+                $pdf->setOptions([
+                    'defaultFont' => 'Arial',
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    'isFontSubsettingEnabled' => true,
+                    'dpi' => 150
+                ]);
+                
+                return response($pdf->output())
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'inline; filename="laporan-pembayaran-' . $monthName . '.pdf"');
+                    
+            } catch (\Exception $e) {
+                Log::error('PDF Generation Error: ' . $e->getMessage());
+                Log::error('Stack Trace: ' . $e->getTraceAsString());
+                
+                return response()->json([
+                    'error' => 'PDF generation failed',
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ], 500);
+            }
         }
     }
 

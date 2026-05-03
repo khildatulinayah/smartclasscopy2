@@ -139,8 +139,6 @@
                                 <th>Hari</th>
                                 <th>Status</th>
                                 <th>Keterangan</th>
-                                <th>Jam Masuk</th>
-                                <th>Jam Keluar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -171,12 +169,10 @@
                                         </span>
                                     </td>
                                     <td><?php echo e($attendance->description ?? ($attendance->holiday_note ?? '-')); ?></td>
-                                    <td><?php echo e($attendance->check_in ?? '-'); ?></td>
-                                    <td><?php echo e($attendance->check_out ?? '-'); ?></td>
                                 </tr>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr>
-                                    <td colspan="6" class="no-data">Belum ada data absensi</td>
+                                    <td colspan="4" class="no-data">Belum ada data absensi</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

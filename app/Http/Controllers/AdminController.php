@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Attendance;
 use App\Models\Transaction;
 use App\Models\WeeklyPayment;
+use App\Models\Holiday;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -151,22 +152,28 @@ class AdminController extends Controller
         return view('admin.students', compact('students'));
     }
 
-    public function monitorKas()
+    public function monitorKas(Request $request)
     {
-        // Get weekly payments data for monitoring (read-only)
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
+        // Get selected month/year or default to current
+        $month = $request->get('month', now()->month);
+        $year = $request->get('year', now()->year);
         
+        // Calculate prev and next month
+        $currentDate = \Carbon\Carbon::createFromDate($year, $month, 1);
+        $prevDate = $currentDate->copy()->subMonth();
+        $nextDate = $currentDate->copy()->addMonth();
+        
+        // Get weekly payments data for monitoring (read-only)
         $weeklyPayments = WeeklyPayment::with('student')
-            ->where('month', $currentMonth)
-            ->where('year', $currentYear)
+            ->where('month', $month)
+            ->where('year', $year)
             ->orderBy('week_number')
             ->get();
             
         // Get transactions for monitoring
         $transactions = Transaction::with('student')
-            ->whereMonth('date', $currentMonth)
-            ->whereYear('date', $currentYear)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
             ->orderBy('date', 'desc')
             ->get();
             
@@ -177,6 +184,12 @@ class AdminController extends Controller
         $totalPaid = $weeklyPayments->where('status', 'paid')->sum('amount');
         $totalUnpaid = $weeklyPayments->where('status', 'unpaid')->sum('amount');
         
+        // Format month name for display
+        $monthName = $currentDate->format('F Y');
+        
+        // Get Wednesday dates for the month
+        $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($month, $year);
+        
         return view('admin.monitor_kas', compact(
             'weeklyPayments',
             'transactions',
@@ -184,7 +197,13 @@ class AdminController extends Controller
             'totalExpense',
             'balance',
             'totalPaid',
-            'totalUnpaid'
+            'totalUnpaid',
+            'month',
+            'year',
+            'monthName',
+            'prevDate',
+            'nextDate',
+            'wednesdayDates'
         ));
     }
     
@@ -194,18 +213,35 @@ class AdminController extends Controller
         $selectedDate = $request->get('date', now()->format('Y-m-d'));
         $date = \Carbon\Carbon::parse($selectedDate);
         
+        // Check if the selected date is a holiday
+        $holiday = Holiday::where('date', $date->format('Y-m-d'))->first();
+        $isHoliday = $holiday !== null;
+        
+        // Check if the selected date is weekend
+        $isWeekend = $date->isWeekend();
+        
         // Get attendance data for specific date
         $attendances = Attendance::with('student')
             ->whereDate('date', $date->format('Y-m-d'))
             ->orderBy('student_id')
             ->get();
             
-        // Calculate statistics for the selected date
-        $totalHadir = $attendances->where('status', 'hadir')->count();
-        $totalSakit = $attendances->where('status', 'sakit')->count();
-        $totalIzin = $attendances->where('status', 'izin')->count();
-        $totalAlpha = $attendances->where('status', 'alpha')->count();
-        $totalStudents = $attendances->pluck('student_id')->unique()->count();
+        // If it's a holiday or weekend and no attendance data, don't show "belum absen"
+        if (($isHoliday || $isWeekend) && $attendances->isEmpty()) {
+            $attendances = collect(); // Empty collection
+            $totalHadir = 0;
+            $totalSakit = 0;
+            $totalIzin = 0;
+            $totalAlpha = 0;
+            $totalStudents = 0;
+        } else {
+            // Calculate statistics for the selected date
+            $totalHadir = $attendances->where('status', 'hadir')->count();
+            $totalSakit = $attendances->where('status', 'sakit')->count();
+            $totalIzin = $attendances->where('status', 'izin')->count();
+            $totalAlpha = $attendances->where('status', 'alpha')->count();
+            $totalStudents = $attendances->pluck('student_id')->unique()->count();
+        }
         
         // Calculate prev and next dates
         $prevDate = $date->copy()->subDay()->format('Y-m-d');
@@ -220,7 +256,10 @@ class AdminController extends Controller
             'totalSakit',
             'totalIzin',
             'totalAlpha',
-            'totalStudents'
+            'totalStudents',
+            'isHoliday',
+            'isWeekend',
+            'holiday'
         ));
     }
 

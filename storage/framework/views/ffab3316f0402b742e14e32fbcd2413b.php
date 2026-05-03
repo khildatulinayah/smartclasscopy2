@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Laporan Pembayaran Siswa - {{ $monthName }} {{ $year }}</title>
+    <title>Laporan Pembayaran Siswa - <?php echo e($monthName); ?> <?php echo e($year); ?></title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; line-height: 1.4; color: #000; background: white; font-size: 12px; }
@@ -104,34 +104,34 @@
                 <div class="school-contact">Laporan Pembayaran Siswa Resmi</div>
             </div>
             <div class="school-logo">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo SMARTCLASS" class="logo" onerror="this.style.display='none'">
+                <img src="<?php echo e(asset('images/logo.png')); ?>" alt="Logo SMARTCLASS" class="logo" onerror="this.style.display='none'">
             </div>
         </div>
 
         <!-- Judul Laporan -->
         <div class="report-title">
             <h1>Laporan Pembayaran Siswa Mingguan</h1>
-            <div class="report-period">Periode: {{ $monthName }} {{ $year }}</div>
-            <div class="report-info">Dicetak pada: {{ now()->locale('id')->translatedFormat('d F Y, H:i') }} | Bendahara Kelas</div>
+            <div class="report-period">Periode: <?php echo e($monthName); ?> <?php echo e($year); ?></div>
+            <div class="report-info">Dicetak pada: <?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i')); ?> | Bendahara Kelas</div>
         </div>
 
-        @if($payments->count() > 0)
+        <?php if($payments->count() > 0): ?>
             <div class="summary">
                 <div class="summary-card">
                     <div class="summary-label">Total Tagihan</div>
-                    <div class="summary-value">Rp {{ number_format($totalBills, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp <?php echo e(number_format($totalBills, 0, ',', '.')); ?></div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-label">Sudah Dibayar</div>
-                    <div class="summary-value">Rp {{ number_format($totalPaid, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp <?php echo e(number_format($totalPaid, 0, ',', '.')); ?></div>
                 </div>
                 <div class="summary-card summary-arrears">
                     <div class="summary-label">Tunggakan</div>
-                    <div class="summary-value">Rp {{ number_format($totalBills - $totalPaid, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp <?php echo e(number_format($totalBills - $totalPaid, 0, ',', '.')); ?></div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-label">Jumlah Siswa</div>
-                    <div class="summary-value">{{ $paymentsByStudent->count() }}</div>
+                    <div class="summary-value"><?php echo e($paymentsByStudent->count()); ?></div>
                 </div>
             </div>
 
@@ -142,7 +142,7 @@
                         <tr>
                             <th width="5%" class="text-center">No</th>
                             <th width="25%">Nama Siswa</th>
-                            @php
+                            <?php
                                 // Get max week number from all payments
                                 $maxWeek = 0;
                                 foreach($paymentsByStudent as $studentPayments) {
@@ -152,60 +152,60 @@
                                         }
                                     }
                                 }
-                            @endphp
-                            @for($week = 1; $week <= $maxWeek; $week++)
-                                <th width="12%" class="text-center">Minggu {{ $week }}</th>
-                            @endfor
+                            ?>
+                            <?php for($week = 1; $week <= $maxWeek; $week++): ?>
+                                <th width="12%" class="text-center">Minggu <?php echo e($week); ?></th>
+                            <?php endfor; ?>
                         </tr>
                     </thead>
                     <tbody>
-                        @php $rowNumber = 1; @endphp
-                        @foreach($paymentsByStudent as $studentId => $studentPayments)
-                            @php 
+                        <?php $rowNumber = 1; ?>
+                        <?php $__currentLoopData = $paymentsByStudent; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $studentPayments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php 
                                 $student = $studentPayments->first()->student;
                                 // Create array of payments indexed by week number
                                 $paymentsByWeek = [];
                                 foreach($studentPayments as $payment) {
                                     $paymentsByWeek[$payment->week_number] = $payment;
                                 }
-                            @endphp
+                            ?>
                             <tr>
-                                <td class="text-center">{{ $rowNumber }}</td>
-                                <td>{{ $student ? $student->name : 'Unknown Student' }}</td>
-                                @for($week = 1; $week <= $maxWeek; $week++)
+                                <td class="text-center"><?php echo e($rowNumber); ?></td>
+                                <td><?php echo e($student->name); ?></td>
+                                <?php for($week = 1; $week <= $maxWeek; $week++): ?>
                                     <td class="text-center">
-                                        @if(isset($paymentsByWeek[$week]))
-                                            @if($paymentsByWeek[$week]->status == 'paid')
+                                        <?php if(isset($paymentsByWeek[$week])): ?>
+                                            <?php if($paymentsByWeek[$week]->status == 'paid'): ?>
                                                 <span class="status-badge status-lunas">Lunas</span>
-                                            @else
+                                            <?php else: ?>
                                                 <span class="status-badge status-belum">Belum</span>
-                                            @endif
-                                        @else
+                                            <?php endif; ?>
+                                        <?php else: ?>
                                             <span class="text-muted">-</span>
-                                        @endif
+                                        <?php endif; ?>
                                     </td>
-                                @endfor
+                                <?php endfor; ?>
                             </tr>
-                            @php $rowNumber++; @endphp
-                        @endforeach
+                            <?php $rowNumber++; ?>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
-        @else
+        <?php else: ?>
             <div class="no-data">
                 <div class="no-data-icon">📋</div>
                 <h2>Belum ada data pembayaran</h2>
-                <p>Data pembayaran siswa untuk {{ $monthName }} {{ $year }} belum tersedia.</p>
+                <p>Data pembayaran siswa untuk <?php echo e($monthName); ?> <?php echo e($year); ?> belum tersedia.</p>
             </div>
-        @endif
+        <?php endif; ?>
 
         <div class="footer">
             <div class="signature-section">
                 <div class="signature-box">
                     <div class="signature-title">Mengetahui,</div>
                     <div class="signature-line"></div>
-                    <div class="signature-name">{{ auth()->user() ? auth()->user()->name : 'System' }}</div>
-                    <div class="signature-role">{{ auth()->user() ? ucfirst(auth()->user()->role) : 'Administrator' }}</div>
+                    <div class="signature-name"><?php echo e(auth()->user()->name); ?></div>
+                    <div class="signature-role"><?php echo e(ucfirst(auth()->user()->role)); ?></div>
                 </div>
                 <div class="signature-box" style="visibility: hidden;">
                     <div class="signature-title">Menyetujui,</div>
@@ -216,11 +216,12 @@
             </div>
             
             <div class="footer-info">
-                <p><strong>Dicetak oleh:</strong> {{ auth()->user() ? auth()->user()->name : 'System' }} ({{ auth()->user() ? ucfirst(auth()->user()->role) : 'Administrator' }})</p>
-                <p>{{ now()->locale('id')->translatedFormat('d F Y, H:i:s') }}</p>
+                <p><strong>Dicetak oleh:</strong> <?php echo e(auth()->user()->name); ?> (<?php echo e(ucfirst(auth()->user()->role)); ?>)</p>
+                <p><?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i:s')); ?></p>
                 <p>SMARTCLASS - Sistem Manajemen Kelas Digital</p>
             </div>
         </div>
     </div>
 </body>
 </html>
+<?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/laporan-pembayaran-siswa-cetak.blade.php ENDPATH**/ ?>

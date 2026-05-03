@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Laporan Pembayaran Siswa - {{ $monthName }} {{ $year }}</title>
+    <title>Laporan Pembayaran Siswa - <?php echo e($monthName); ?> <?php echo e($year); ?></title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; line-height: 1.4; color: #000; background: white; font-size: 12px; }
@@ -30,18 +30,11 @@
         .summary-value { font-size: 16px; font-weight: bold; }
         .summary-arrears .summary-value { color: #dc2626; }
         
-        /* Students Section */
-        .students-section { margin: 30px 0; }
-        .student-group { margin-bottom: 30px; page-break-inside: avoid; }
-        .student-header { background: #f0f0f0; border: 1px solid #000; border-bottom: none; padding: 12px 15px; }
-        .student-name { font-size: 14px; font-weight: bold; margin-bottom: 3px; }
-        .student-info { font-size: 10px; color: #666; }
-        
-        /* Tabel Pembayaran */
-        .table-container { margin: 0; }
-        table { width: 100%; border-collapse: collapse; border: 1px solid #000; border-top: none; }
-        th { background: #f0f0f0; border: 1px solid #000; padding: 8px 10px; text-align: left; font-weight: 600; font-size: 11px; }
-        td { border: 1px solid #000; padding: 8px 10px; font-size: 11px; }
+        /* Tabel Pembayaran Global */
+        .table-container { margin: 25px 0; }
+        table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
+        th { background: #f0f0f0; border: 1px solid #000; padding: 10px 8px; text-align: left; font-weight: 600; font-size: 11px; }
+        td { border: 1px solid #000; padding: 8px; font-size: 11px; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .font-mono { font-family: 'Courier New', monospace; }
@@ -54,7 +47,13 @@
         
         /* Total Row */
         .total-row { background: #f0f0f0; font-weight: 600; }
-        .total-row td { padding: 10px; font-size: 12px; }
+        .total-row td { padding: 10px 8px; font-size: 12px; }
+        
+        /* Student Group */
+        .student-section { margin: 30px 0; page-break-inside: avoid; }
+        .student-header { background: #f0f0f0; border: 1px solid #000; padding: 12px 15px; margin-bottom: 0; }
+        .student-name { font-size: 14px; font-weight: bold; margin-bottom: 3px; }
+        .student-info { font-size: 10px; color: #666; }
         
         /* Footer */
         .footer { margin-top: 40px; }
@@ -82,8 +81,7 @@
             .summary { gap: 10px; margin: 20px 0; }
             .summary-card { padding: 10px; }
             .summary-value { font-size: 14px; }
-            .student-header { padding: 8px 10px; }
-            th, td { padding: 6px 8px; font-size: 9px; }
+            th, td { padding: 6px 5px; font-size: 9px; }
             .signature-section { margin-top: 30px; }
             .footer-info { font-size: 9px; }
         }
@@ -104,34 +102,49 @@
                 <div class="school-contact">Laporan Pembayaran Siswa Resmi</div>
             </div>
             <div class="school-logo">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo SMARTCLASS" class="logo" onerror="this.style.display='none'">
+                <img src="<?php echo e(asset('images/logo.png')); ?>" alt="Logo SMARTCLASS" class="logo" onerror="this.style.display='none'">
             </div>
         </div>
 
         <!-- Judul Laporan -->
         <div class="report-title">
             <h1>Laporan Pembayaran Siswa Mingguan</h1>
-            <div class="report-period">Periode: {{ $monthName }} {{ $year }}</div>
-            <div class="report-info">Dicetak pada: {{ now()->locale('id')->translatedFormat('d F Y, H:i') }} | Bendahara Kelas</div>
+            <div class="report-period">Periode: <?php echo e($monthName); ?> <?php echo e($year); ?></div>
+            <div class="report-info">Dicetak pada: <?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i')); ?> | Bendahara Kelas</div>
         </div>
 
-        @if($payments->count() > 0)
+        <?php if($paymentsByStudent->count() > 0): ?>
+            <!-- Calculate Summary -->
+            <?php
+                $totalStudents = $paymentsByStudent->count();
+                $totalArrears = $totalBills - $totalPaid;
+                // Get max week number from all payments
+                $maxWeek = 0;
+                foreach($paymentsByStudent as $studentPayments) {
+                    foreach($studentPayments as $payment) {
+                        if($payment->week_number > $maxWeek) {
+                            $maxWeek = $payment->week_number;
+                        }
+                    }
+                }
+            ?>
+
             <div class="summary">
                 <div class="summary-card">
                     <div class="summary-label">Total Tagihan</div>
-                    <div class="summary-value">Rp {{ number_format($totalBills, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp <?php echo e(number_format($totalBills, 0, ',', '.')); ?></div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-label">Sudah Dibayar</div>
-                    <div class="summary-value">Rp {{ number_format($totalPaid, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp <?php echo e(number_format($totalPaid, 0, ',', '.')); ?></div>
                 </div>
                 <div class="summary-card summary-arrears">
                     <div class="summary-label">Tunggakan</div>
-                    <div class="summary-value">Rp {{ number_format($totalBills - $totalPaid, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp <?php echo e(number_format($totalArrears, 0, ',', '.')); ?></div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-label">Jumlah Siswa</div>
-                    <div class="summary-value">{{ $paymentsByStudent->count() }}</div>
+                    <div class="summary-value"><?php echo e($totalStudents); ?></div>
                 </div>
             </div>
 
@@ -142,70 +155,59 @@
                         <tr>
                             <th width="5%" class="text-center">No</th>
                             <th width="25%">Nama Siswa</th>
-                            @php
-                                // Get max week number from all payments
-                                $maxWeek = 0;
-                                foreach($paymentsByStudent as $studentPayments) {
-                                    foreach($studentPayments as $payment) {
-                                        if($payment->week_number > $maxWeek) {
-                                            $maxWeek = $payment->week_number;
-                                        }
-                                    }
-                                }
-                            @endphp
-                            @for($week = 1; $week <= $maxWeek; $week++)
-                                <th width="12%" class="text-center">Minggu {{ $week }}</th>
-                            @endfor
+                            <?php for($week = 1; $week <= $maxWeek; $week++): ?>
+                                <th width="12%" class="text-center">Minggu <?php echo e($week); ?></th>
+                            <?php endfor; ?>
                         </tr>
                     </thead>
                     <tbody>
-                        @php $rowNumber = 1; @endphp
-                        @foreach($paymentsByStudent as $studentId => $studentPayments)
-                            @php 
+                        <?php $rowNumber = 1; ?>
+                        <?php $__currentLoopData = $paymentsByStudent; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $studentPayments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php 
                                 $student = $studentPayments->first()->student;
                                 // Create array of payments indexed by week number
                                 $paymentsByWeek = [];
                                 foreach($studentPayments as $payment) {
                                     $paymentsByWeek[$payment->week_number] = $payment;
                                 }
-                            @endphp
+                            ?>
                             <tr>
-                                <td class="text-center">{{ $rowNumber }}</td>
-                                <td>{{ $student ? $student->name : 'Unknown Student' }}</td>
-                                @for($week = 1; $week <= $maxWeek; $week++)
+                                <td class="text-center"><?php echo e($rowNumber); ?></td>
+                                <td><?php echo e($student ? $student->name : 'Unknown Student'); ?></td>
+                                <?php for($week = 1; $week <= $maxWeek; $week++): ?>
                                     <td class="text-center">
-                                        @if(isset($paymentsByWeek[$week]))
-                                            @if($paymentsByWeek[$week]->status == 'paid')
+                                        <?php if(isset($paymentsByWeek[$week])): ?>
+                                            <?php if($paymentsByWeek[$week]->status == 'paid'): ?>
                                                 <span class="status-badge status-lunas">Lunas</span>
-                                            @else
+                                            <?php else: ?>
                                                 <span class="status-badge status-belum">Belum</span>
-                                            @endif
-                                        @else
+                                            <?php endif; ?>
+                                        <?php else: ?>
                                             <span class="text-muted">-</span>
-                                        @endif
+                                        <?php endif; ?>
                                     </td>
-                                @endfor
+                                <?php endfor; ?>
                             </tr>
-                            @php $rowNumber++; @endphp
-                        @endforeach
+                            <?php $rowNumber++; ?>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
-        @else
+        <?php else: ?>
             <div class="no-data">
                 <div class="no-data-icon">📋</div>
                 <h2>Belum ada data pembayaran</h2>
-                <p>Data pembayaran siswa untuk {{ $monthName }} {{ $year }} belum tersedia.</p>
+                <p>Data pembayaran siswa untuk <?php echo e($monthName); ?> <?php echo e($year); ?> belum tersedia.</p>
             </div>
-        @endif
+        <?php endif; ?>
 
         <div class="footer">
             <div class="signature-section">
                 <div class="signature-box">
                     <div class="signature-title">Mengetahui,</div>
                     <div class="signature-line"></div>
-                    <div class="signature-name">{{ auth()->user() ? auth()->user()->name : 'System' }}</div>
-                    <div class="signature-role">{{ auth()->user() ? ucfirst(auth()->user()->role) : 'Administrator' }}</div>
+                    <div class="signature-name"><?php echo e(auth()->user() ? auth()->user()->name : 'System'); ?></div>
+                    <div class="signature-role"><?php echo e(auth()->user() ? ucfirst(auth()->user()->role) : 'Administrator'); ?></div>
                 </div>
                 <div class="signature-box" style="visibility: hidden;">
                     <div class="signature-title">Menyetujui,</div>
@@ -216,11 +218,12 @@
             </div>
             
             <div class="footer-info">
-                <p><strong>Dicetak oleh:</strong> {{ auth()->user() ? auth()->user()->name : 'System' }} ({{ auth()->user() ? ucfirst(auth()->user()->role) : 'Administrator' }})</p>
-                <p>{{ now()->locale('id')->translatedFormat('d F Y, H:i:s') }}</p>
+                <p><strong>Dicetak oleh:</strong> <?php echo e(auth()->user() ? auth()->user()->name : 'System'); ?> (<?php echo e(auth()->user() ? ucfirst(auth()->user()->role) : 'Administrator'); ?>)</p>
+                <p><?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i:s')); ?></p>
                 <p>SMARTCLASS - Sistem Manajemen Kelas Digital</p>
             </div>
         </div>
     </div>
 </body>
 </html>
+<?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/laporan-pembayaran-cetak.blade.php ENDPATH**/ ?>
