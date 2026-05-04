@@ -206,8 +206,8 @@
                 <div class="signature-box">
                     <div class="signature-title">Mengetahui,</div>
                     <div class="signature-line"></div>
-                    <div class="signature-name"><?php echo e(auth()->user() ? auth()->user()->name : 'System'); ?></div>
-                    <div class="signature-role"><?php echo e(auth()->user() ? ucfirst(auth()->user()->role) : 'Administrator'); ?></div>
+                    <div class="signature-name"><?php echo e($userName ?? 'System'); ?></div>
+                    <div class="signature-role"><?php echo e($userRole ?? 'Administrator'); ?></div>
                 </div>
                 <div class="signature-box" style="visibility: hidden;">
                     <div class="signature-title">Menyetujui,</div>
@@ -218,7 +218,7 @@
             </div>
             
             <div class="footer-info">
-                <p><strong>Dicetak oleh:</strong> <?php echo e(auth()->user() ? auth()->user()->name : 'System'); ?> (<?php echo e(auth()->user() ? ucfirst(auth()->user()->role) : 'Administrator'); ?>)</p>
+                <p><strong>Dicetak oleh:</strong> <?php echo e($userName ?? 'System'); ?> (<?php echo e($userRole ?? 'Administrator'); ?>)</p>
                 <p><?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i:s')); ?></p>
                 <p>SMARTCLASS - Sistem Manajemen Kelas Digital</p>
             </div>

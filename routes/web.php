@@ -72,7 +72,8 @@ Route::get('/kas', [BendaharaController::class, 'simpleCash'])->name('kas'); // 
         // Laporan Routes
         Route::get('/laporan', [BendaharaController::class, 'laporan'])->name('laporan');
         Route::get('/laporan/pembayaran', [BendaharaController::class, 'laporanPembayaran'])->name('laporan.pembayaran');
-        Route::get('/laporan/pdf/{month}/{year}/{type}', [BendaharaController::class, 'laporanPdf'])->name('laporan.pdf');
+        Route::get('/laporan/pdf/keuangan/{month}/{year}', [BendaharaController::class, 'laporanKeuanganPdf'])->name('laporan.pdf.keuangan');
+        Route::get('/laporan/pdf/pembayaran/{month}/{year}', [BendaharaController::class, 'laporanPembayaranPdf'])->name('laporan.pdf.pembayaran');
         Route::get('/laporan/keuangan/cetak/{month}/{year?}', [BendaharaController::class, 'cetakKeuangan'])->name('cetak.keuangan');
         Route::get('/laporan/pembayaran-siswa/cetak/{month}/{year?}', [BendaharaController::class, 'cetakPembayaranSiswa'])->name('cetak.pembayaran.siswa');
     });

@@ -181,26 +181,26 @@
                                                     <div class="font-medium">{{ $student->name }}</div>
                                                 </td>
                                                 <td>
-                                                    <div class="flex flex-wrap gap-1 justify-center">
+                                                    <div class="flex flex gap-1 justify-center items-center status-container">
                                                         <label class="cursor-pointer status-toggle">
                                                             <input type="radio" name="status[{{ $student->id }}]" value="belum_absen" {{ $status == 'belum_absen' ? 'checked' : '' }} class="peer sr-only">
-                                                            <span class="status-badge secondary peer-checked:!bg-gray-600 peer-checked:!text-white peer-checked:!border-gray-600 transition-all">Belum</span>
+                                                            <span class="status-badge secondary peer-checked:!bg-gray-600 peer-checked:!text-white peer-checked:!border-gray-600">Belum</span>
                                                         </label>
                                                         <label class="cursor-pointer status-toggle">
                                                             <input type="radio" name="status[{{ $student->id }}]" value="hadir" {{ $status == 'hadir' ? 'checked' : '' }} class="peer sr-only">
-                                                            <span class="status-badge success peer-checked:!bg-green-600 peer-checked:!text-white peer-checked:!border-green-600 transition-all">Hadir</span>
+                                                            <span class="status-badge success peer-checked:!bg-green-600 peer-checked:!text-white peer-checked:!border-green-600">Hadir</span>
                                                         </label>
                                                         <label class="cursor-pointer status-toggle">
                                                             <input type="radio" name="status[{{ $student->id }}]" value="sakit" {{ $status == 'sakit' ? 'checked' : '' }} class="peer sr-only">
-                                                            <span class="status-badge warning peer-checked:!bg-yellow-500 peer-checked:!text-white peer-checked:!border-yellow-500 transition-all">Sakit</span>
+                                                            <span class="status-badge warning peer-checked:!bg-yellow-500 peer-checked:!text-white peer-checked:!border-yellow-500">Sakit</span>
                                                         </label>
                                                         <label class="cursor-pointer status-toggle">
                                                             <input type="radio" name="status[{{ $student->id }}]" value="izin" {{ $status == 'izin' ? 'checked' : '' }} class="peer sr-only">
-                                                            <span class="status-badge info peer-checked:!bg-blue-600 peer-checked:!text-white peer-checked:!border-blue-600 transition-all">Izin</span>
+                                                            <span class="status-badge info peer-checked:!bg-blue-600 peer-checked:!text-white peer-checked:!border-blue-600">Izin</span>
                                                         </label>
                                                         <label class="cursor-pointer status-toggle">
                                                             <input type="radio" name="status[{{ $student->id }}]" value="alpha" {{ $status == 'alpha' ? 'checked' : '' }} class="peer sr-only">
-                                                            <span class="status-badge danger peer-checked:!bg-red-600 peer-checked:!text-white peer-checked:!border-red-600 transition-all">Alpha</span>
+                                                            <span class="status-badge danger peer-checked:!bg-red-600 peer-checked:!text-white peer-checked:!border-red-600">Alpha</span>
                                                         </label>
                                                     </div>
                                                 </td>
@@ -292,14 +292,15 @@
 .data-table td { padding: 20px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
 .data-table tbody tr:nth-child(even) { background: #fafbfc; }
 .data-table tbody tr:hover { background: #eff6ff; }
-.status-badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid; white-space: nowrap; transition: all 0.2s ease; }
+.status-badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid; white-space: nowrap; transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
 .status-badge.success { background: #dcfce7; color: #166534; border-color: #22c55e; }
 .status-badge.warning { background: #fef3c7; color: #92400e; border-color: #eab308; }
 .status-badge.info { background: #dbeafe; color: #1e40af; border-color: #3b82f6; }
 .status-badge.danger { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
 .status-badge.secondary { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
-.status-toggle { display: inline-flex; }
+.status-toggle { display: inline-flex; align-items: center; height: 32px; }
 .status-toggle input:checked + .status-badge { box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+.status-container { min-height: 32px; display: flex; align-items: center; }
 .progress-container { margin: 16px 0; }
 .progress-bar { width: 100%; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 4px; transition: width 0.3s ease; }

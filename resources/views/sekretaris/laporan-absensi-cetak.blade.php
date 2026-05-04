@@ -14,7 +14,7 @@
         .school-info { flex: 1; }
         .school-name { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
         .report-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-        .period-info { display: flex; gap: 20px; margin-bottom: 10px; }
+        .period-info { display: flex; gap: 20px; margin-bottom: 10px; font-size: 10px; }
         .period-item { display: flex; align-items: center; gap: 5px; }
         .period-label { font-weight: bold; }
         .logo-right { width: 100px; height: 100px; }
@@ -53,19 +53,23 @@
         .signature-name { font-weight: bold; }
         
         /* Holiday information */
-        .holiday-info { margin: 20px 0; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; }
-        .holiday-info h4 { margin-bottom: 5px; color: #856404; }
+        .holiday-info { margin: 20px 0; padding: 8px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; font-size: 9px; }
+        .holiday-info h4 { margin-bottom: 3px; color: #856404; font-size: 10px; }
+        .holiday-info div { margin-bottom: 2px; }
         
         @media print { 
             body { -webkit-print-color-adjust: exact; font-size: 9px; } 
             .container { padding: 15px 10px; }
             .attendance-table { font-size: 9px; }
             .attendance-table th, .attendance-table td { padding: 3px 2px; font-size: 9px; line-height: 1.2; }
-            .attendance-table th.day-col, .attendance-table td.day-col { width: 20px; min-width: 20px; max-width: 20px; font-size: 8px; padding: 2px 1px; }
+            .attendance-table th.day-col, .attendance-table td.day-col { width: 20px; min-width: 20px; max-width: 20px; font-size: 7px; padding: 2px 1px; }
             .attendance-table th:nth-child(2), .attendance-table td:nth-child(2) { width: 170px; font-size: 9px; }
             .school-name { font-size: 18px; }
             .report-title { font-size: 16px; }
             .logo-right { width: 80px; height: 80px; }
+            .holiday-info { font-size: 8px; padding: 6px; }
+            .holiday-info h4 { font-size: 9px; }
+            .period-info { font-size: 9px; }
         }
         @page { 
             margin: 1cm; 
@@ -169,7 +173,7 @@
                                     $statusClass = '';
                                     
                                     if ($isWeekend) {
-                                        $status = '';
+                                        $status = '-';
                                         $statusClass = 'weekend';
                                     } elseif ($isHoliday) {
                                         $status = 'L';
@@ -270,7 +274,8 @@
                 <div><strong>I</strong> = Izin</div>
                 <div><strong>A</strong> = Alpa</div>
                 <div><strong>L</strong> = Libur</div>
-                <div><strong>Kosong</strong> = Weekend/Belum Absen</div>
+                <div><strong>-</strong> = Weekend (Sabtu/Minggu)</div>
+                <div><strong>Kosong</strong> = Belum Absen</div>
             </div>
         </div>
 

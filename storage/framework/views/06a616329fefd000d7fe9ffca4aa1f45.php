@@ -2,39 +2,35 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Laporan Keuangan - <?php echo e($monthName); ?> <?php echo e($year); ?></title>
+    <title>Laporan Keuangan - <?php echo e($monthName); ?></title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; line-height: 1.4; color: #000; background: white; font-size: 12px; }
-        .container { max-width: 100%; margin: 0 auto; padding: 20px; }
+        body { font-family: 'Arial', sans-serif; line-height: 1.3; color: #333; background: white; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
         
-        /* Header Sekolah */
-        .header-school { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
-        .school-info { text-align: left; flex: 1; }
-        .school-logo { text-align: right; flex: 0 0 100px; }
-        .logo { width: 80px; height: 80px; }
-        .school-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-        .school-address { font-size: 11px; margin-bottom: 3px; }
-        .school-contact { font-size: 11px; }
-        
-        /* Judul Laporan */
-        .report-title { text-align: center; margin: 30px 0; }
-        .report-title h1 { font-size: 20px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; }
-        .report-period { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
-        .report-info { font-size: 11px; color: #666; }
+        /* Header Styles */
+        .header { margin-bottom: 30px; }
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .school-info { flex: 1; }
+        .school-name { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        .report-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .period-info { display: flex; gap: 20px; margin-bottom: 10px; font-size: 10px; }
+        .period-item { display: flex; align-items: center; gap: 5px; }
+        .period-label { font-weight: bold; }
+        .logo-right { width: 100px; height: 100px; }
         
         /* Summary Cards */
         .summary { display: flex; justify-content: space-between; gap: 15px; margin: 25px 0; }
-        .summary-card { flex: 1; background: #f9f9f9; border: 1px solid #000; padding: 15px; text-align: center; }
+        .summary-card { flex: 1; background: #f9f9f9; border: 2px solid #000; padding: 15px; text-align: center; }
         .summary-label { font-size: 11px; font-weight: 600; margin-bottom: 5px; }
         .summary-value { font-size: 16px; font-weight: bold; }
         .summary-income .summary-value { color: #000; }
         .summary-expense .summary-value { color: #000; }
         .summary-balance .summary-value { color: #000; }
         
-        /* Tabel Transaksi */
+        /* Table Styles */
         .table-container { margin: 25px 0; }
-        table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
+        table { width: 100%; border-collapse: collapse; border: 2px solid #000; font-size: 11px; }
         th { background: #f0f0f0; border: 1px solid #000; padding: 10px 8px; text-align: left; font-weight: 600; font-size: 11px; }
         td { border: 1px solid #000; padding: 8px; font-size: 11px; }
         .text-right { text-align: right; }
@@ -49,62 +45,60 @@
         .total-row { background: #f0f0f0; font-weight: 600; }
         .total-row td { padding: 10px 8px; font-size: 12px; }
         
-        /* Footer */
-        .footer { margin-top: 40px; }
-        .signature-section { display: flex; justify-content: space-between; margin-top: 50px; }
-        .signature-box { text-align: center; width: 200px; }
-        .signature-line { height: 40px; border-bottom: 1px solid #000; margin-bottom: 5px; }
-        .signature-title { font-size: 11px; font-weight: 600; margin-bottom: 20px; }
-        .signature-name { font-size: 11px; font-weight: 600; }
-        .signature-role { font-size: 10px; }
-        
-        .footer-info { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px dashed #000; font-size: 10px; color: #666; }
+        /* Signature section */
+        .signature-section { margin-top: 50px; text-align: center; }
+        .signature-box { display: inline-block; width: 300px; margin: 0 auto; }
+        .signature-title { font-weight: bold; margin-bottom: 30px; }
+        .signature-line { border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px; }
+        .signature-name { font-weight: bold; }
         
         /* No Data */
-        .no-data { text-align: center; padding: 50px; color: #666; }
-        .no-data-icon { font-size: 48px; margin-bottom: 20px; }
-        .no-data h2 { font-size: 18px; margin-bottom: 10px; }
+        .no-data { text-align: center; padding: 60px; color: #6b7280; }
+        .no-data-icon { font-size: 4rem; margin-bottom: 20px; }
+        .no-data h2 { font-size: 24px; margin-bottom: 10px; }
         .no-data p { font-size: 12px; }
         
-        /* Print Styles */
-        @media print {
-            body { font-size: 10px; }
-            .container { padding: 10px; }
-            .header-school { margin-bottom: 20px; }
-            .report-title { margin: 20px 0; }
+        @media print { 
+            body { -webkit-print-color-adjust: exact; font-size: 9px; } 
+            .container { padding: 15px 10px; }
+            table { font-size: 9px; }
+            th, td { padding: 6px 5px; font-size: 9px; line-height: 1.2; }
             .summary { gap: 10px; margin: 20px 0; }
             .summary-card { padding: 10px; }
             .summary-value { font-size: 14px; }
-            th, td { padding: 6px 5px; font-size: 9px; }
+            .school-name { font-size: 18px; }
+            .report-title { font-size: 16px; }
+            .logo-right { width: 80px; height: 80px; }
             .signature-section { margin-top: 30px; }
-            .footer-info { font-size: 9px; }
         }
-        
         @page { 
             margin: 1cm; 
-            size: A4 portrait;
+            size: A4 landscape;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header Sekolah -->
-        <div class="header-school">
-            <div class="school-info">
-                <div class="school-name">SMARTCLASS</div>
-                <div class="school-address">Sistem Manajemen Kelas Digital</div>
-                <div class="school-contact">Laporan Keuangan Resmi</div>
+        <div class="header">
+            <div class="header-top">
+                <div class="school-info">
+                    <div class="school-name">SMARTCLASS</div>
+                    <div class="report-title">Laporan Keuangan Kelas</div>
+                    <div class="period-info">
+                        <div class="period-item">
+                            <span class="period-label">Bulan:</span>
+                            <span><?php echo e(\Carbon\Carbon::create($year, $month)->locale('id')->format('F')); ?></span>
+                        </div>
+                        <div class="period-item">
+                            <span class="period-label">Tahun:</span>
+                            <span><?php echo e($year); ?></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <img src="<?php echo e(asset('images/logo.png')); ?>" alt="Logo" class="logo-right" onerror="this.style.display='none'">
+                </div>
             </div>
-            <div class="school-logo">
-                <img src="<?php echo e(asset('images/logo.png')); ?>" alt="Logo SMARTCLASS" class="logo" onerror="this.style.display='none'">
-            </div>
-        </div>
-
-        <!-- Judul Laporan -->
-        <div class="report-title">
-            <h1>Laporan Keuangan Kelas</h1>
-            <div class="report-period">Periode: <?php echo e($monthName); ?> <?php echo e($year); ?></div>
-            <div class="report-info">Dicetak pada: <?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i')); ?> | Bendahara Kelas</div>
         </div>
 
         <?php if($transactions->count() > 0): ?>
@@ -170,26 +164,12 @@
             </div>
         <?php endif; ?>
 
-        <div class="footer">
-            <div class="signature-section">
-                <div class="signature-box">
-                    <div class="signature-title">Mengetahui,</div>
-                    <div class="signature-line"></div>
-                    <div class="signature-name"><?php echo e(auth()->user()->name); ?></div>
-                    <div class="signature-role"><?php echo e(ucfirst(auth()->user()->role)); ?></div>
-                </div>
-                <div class="signature-box" style="visibility: hidden;">
-                    <div class="signature-title">Menyetujui,</div>
-                    <div class="signature-line"></div>
-                    <div class="signature-name">________________</div>
-                    <div class="signature-role">________________</div>
-                </div>
-            </div>
-            
-            <div class="footer-info">
-                <p><strong>Dicetak oleh:</strong> <?php echo e(auth()->user()->name); ?> (<?php echo e(ucfirst(auth()->user()->role)); ?>)</p>
-                <p><?php echo e(now()->locale('id')->translatedFormat('d F Y, H:i:s')); ?></p>
-                <p>SMARTCLASS - Sistem Manajemen Kelas Digital</p>
+        <!-- Signature Section -->
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="signature-title">Mengetahui, Kepala Sekolah SMARTCLASS</div>
+                <div class="signature-line"></div>
+                <div class="signature-name"><?php echo e(auth()->user()->name); ?></div>
             </div>
         </div>
     </div>

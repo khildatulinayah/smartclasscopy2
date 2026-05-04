@@ -21,11 +21,11 @@ class BendaharaController extends Controller
         $currentMonth = $today->month;
         $currentYear = $today->year;
         
-        // Get weeks in current month (dynamic based on Wednesdays)
+        // Dapatkan jumlah minggu dalam bulan ini (dinamis berdasarkan hari Rabu)
         $weeksInMonth = WeeklyPayment::getWeeksInMonth($currentMonth, $currentYear);
         $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($currentMonth, $currentYear);
         
-        // Calculate current week based on actual Wednesdays
+        // Hitung minggu saat ini berdasarkan hari Rabu aktual
         $currentWeek = 1;
         if (!empty($wednesdayDates)) {
             $firstWednesday = $wednesdayDates[0];
@@ -41,7 +41,7 @@ class BendaharaController extends Controller
         
         $nextWednesday = $today->copy()->next(Carbon::WEDNESDAY)->format('d M Y');
         
-        // Sync bills for current month (idempotent - create missing, don't duplicate)
+        // Sinkronkan tagihan bulan ini (idempoten - buat yang hilang, jangan duplikasi)
         WeeklyPayment::syncMonthlyBills($currentMonth, $currentYear);
         
         $payments = WeeklyPayment::with(['student', 'transaction'])
@@ -49,22 +49,22 @@ class BendaharaController extends Controller
             ->where('year', $currentYear)
             ->get();
         
-        // Get current week unpaid payments
+        // Dapatkan pembayaran minggu ini yang belum dibayar
         $currentWeekUnpaid = $payments
             ->where('week_number', $currentWeek)
             ->where('status', 'unpaid')
             ->count();
         
-        // Get weekly payment amount from settings
+        // Dapatkan jumlah pembayaran mingguan dari pengaturan
         $weeklyPaymentAmount = WeeklyPayment::getWeeklyPaymentAmount();
         
-        // --- DATA KEUANGAN RILL ---
+        // --- DATA KEUANGAN RIIL ---
         $transactions = Transaction::orderBy('date', 'desc')->get();
         $totalIncomeAll = $transactions->where('type', 'income')->sum('amount');
         $totalExpenseAll = $transactions->where('type', 'expense')->sum('amount');
         $balance = $totalIncomeAll - $totalExpenseAll;
         
-        // Filter bulan ini
+        // Filter untuk bulan ini
         $monthlyTransactions = Transaction::whereMonth('date', $currentMonth)
             ->whereYear('date', $currentYear)
             ->get();
@@ -167,7 +167,7 @@ class BendaharaController extends Controller
         }
     }
 
-    // API for payment processing
+    // API untuk pemrosesan pembayaran
     public function getTransactions()
     {
         try {
@@ -225,13 +225,13 @@ class BendaharaController extends Controller
         $currentMonthDate = Carbon::create($year, $month);
         $currentMonthName = $currentMonthDate->locale('id')->translatedFormat('F Y');
         
-        // Prev/Next navigation
+        // Navigasi Bulan Sebelumnya/Selanjutnya
         $prevMonth = ($month == 1) ? 12 : $month - 1;
         $prevYear = ($month == 1) ? $year - 1 : $year;
         $nextMonth = ($month == 12) ? 1 : $month + 1;
         $nextYear = ($month == 12) ? $year + 1 : $year;
         
-        // Sync bills for the selected month (idempotent - create missing, don't duplicate)
+        // Sinkronkan tagihan untuk bulan yang dipilih (idempoten - buat yang hilang, jangan duplikasi)
         WeeklyPayment::syncMonthlyBills($month, $year);
         
         $payments = WeeklyPayment::with(['student', 'transaction'])
@@ -243,11 +243,11 @@ class BendaharaController extends Controller
         
         $paymentsByStudent = $payments->groupBy('student_id');
         
-        // Get weeks in the selected month (bukan bulan sekarang)
+        // Dapatkan jumlah minggu dalam bulan yang dipilih (bukan bulan sekarang)
         $weeksInMonth = WeeklyPayment::getWeeksInMonth($month, $year);
         $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($month, $year);
         
-        // Calculate current week ONLY jika viewing current month
+        // Hitung minggu saat ini HANYA jika melihat bulan sekarang
         $today = Carbon::now();
         $isCurrentMonth = ($today->month === $month && $today->year === $year);
         $isWednesday = $today->dayOfWeek === 3;
@@ -263,7 +263,7 @@ class BendaharaController extends Controller
                 if ($today->lt($firstWednesday)) {
                     $currentWeek = 1;
                 } else {
-                    // Temukan minggu mana kita berada berdasarkan array Rabu
+                    // Temukan minggu mana kita berada berdasarkan array hari Rabu
                     foreach ($wednesdayDates as $index => $wednesday) {
                         if ($today->gte($wednesday)) {
                             $currentWeek = $index + 1;
@@ -288,7 +288,7 @@ class BendaharaController extends Controller
         $paidAmount = $payments->where('status', 'paid')->sum('amount');
         $unpaidAmount = $payments->where('status', 'unpaid')->sum('amount');
         
-        // Get weekly payment amount to display in Blade
+        // Dapatkan jumlah pembayaran mingguan untuk ditampilkan di Blade
         $weeklyPaymentAmount = WeeklyPayment::getWeeklyPaymentAmount();
         
         return view('bendahara.weekly-payments', compact(
@@ -391,13 +391,13 @@ class BendaharaController extends Controller
         $currentMonthDate = Carbon::create($year, $month);
         $currentMonthName = $currentMonthDate->locale('id')->translatedFormat('F Y');
         
-        // Prev/Next navigation
+        // Navigasi Bulan Sebelumnya/Selanjutnya
         $prevMonth = ($month == 1) ? 12 : $month - 1;
         $prevYear = ($month == 1) ? $year - 1 : $year;
         $nextMonth = ($month == 12) ? 1 : $month + 1;
         $nextYear = ($month == 12) ? $year + 1 : $year;
         
-        // Sync bills for selected month (idempotent)
+        // Sinkronkan tagihan untuk bulan yang dipilih (idempoten)
         $this->generateMonthlyBills($month, $year);
         
         $payments = WeeklyPayment::with(['student', 'transaction'])
@@ -441,7 +441,7 @@ class BendaharaController extends Controller
         ));
     }
 
-    // API: Find payment by student, week, month, year
+    // API: Cari pembayaran berdasarkan siswa, minggu, bulan, tahun
     public function findPayment(Request $request)
     {
         $request->validate([
@@ -451,7 +451,7 @@ class BendaharaController extends Controller
             'year' => 'required|integer|min:2020|max:2030'
         ]);
 
-        // Validasi tambahan: week_number tidak boleh melebihi jumlah minggu di bulan tersebut
+        // Validasi tambahan: minggu tidak boleh melebihi jumlah minggu di bulan tersebut
         $weeksInMonth = WeeklyPayment::getWeeksInMonth($request->month, $request->year);
         if ($request->week_number > $weeksInMonth) {
             return response()->json([
@@ -473,7 +473,7 @@ class BendaharaController extends Controller
             ], 404);
         }
 
-        // Find latest transaction that can be used (gunakan amount dari settings)
+        // Cari transaksi terbaru yang bisa digunakan (gunakan jumlah dari pengaturan)
         $amountPerWeek = WeeklyPayment::getWeeklyPaymentAmount();
         $transaction = Transaction::where('type', 'income')
             ->where('amount', $amountPerWeek)
@@ -503,7 +503,7 @@ class BendaharaController extends Controller
         $currentYear = now()->year;
         $currentMonth = now()->month;
         
-        // Get available years from data (last 3 years)
+        // Dapatkan tahun yang tersedia dari data (3 tahun terakhir)
         $years = Transaction::selectRaw('YEAR(date) as year')
             ->union(WeeklyPayment::selectRaw('year'))
             ->distinct()
@@ -521,7 +521,7 @@ class BendaharaController extends Controller
     }
 
     /**
-     * Cetak laporan riwayat keluar masuk uang (Transaction)
+     * Cetak laporan riwayat masuk keluar uang (Transaction)
      */
     public function cetakKeuangan($month, $year = null)
     {
@@ -626,117 +626,143 @@ class BendaharaController extends Controller
     }
 
     /**
-     * Laporan Pembayaran - PDF Export
+     * PDF Laporan Keuangan - Method terpisah
      */
-    public function laporanPdf(Request $request)
+    public function laporanKeuanganPdf($month, $year = null)
     {
-        $request->validate([
-            'month' => 'required|integer|between:1,12',
-            'year' => 'required|integer|min:2020|max:2030',
-            'type' => 'required|in:keuangan,pembayaran'
+        $year = $year ?? now()->year;
+        
+        // PDF Laporan Keuangan
+        $transactions = Transaction::with(['student', 'creator'])
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $income = $transactions->where('type', 'income')->sum('amount');
+        $expense = $transactions->where('type', 'expense')->sum('amount');
+        $balance = $income - $expense;
+        
+        $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
+
+        $pdf = Pdf::loadView('bendahara.laporan-keuangan-cetak', compact(
+            'transactions', 'income', 'expense', 'balance', 
+            'month', 'year', 'monthName'
+        ));
+        $pdf->setPaper('a4', 'landscape'); // Landscape untuk format bendahara
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'Arial',
+            'isFontSubsettingEnabled' => true,
+            'dpi' => 150
         ]);
+        
+        return response($pdf->output())
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="laporan-keuangan-' . $monthName . '.pdf"')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
+    }
 
-        $month = $request->month;
-        $year = $request->year;
-        $type = $request->type;
-
-        if ($type === 'keuangan') {
-            // PDF Laporan Keuangan
-            $transactions = Transaction::with(['student', 'creator'])
-                ->whereMonth('date', $month)
-                ->whereYear('date', $year)
-                ->orderBy('date', 'desc')
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            $income = $transactions->where('type', 'income')->sum('amount');
-            $expense = $transactions->where('type', 'expense')->sum('amount');
-            $balance = $income - $expense;
+    /**
+     * PDF Laporan Pembayaran Siswa - Method terpisah
+     */
+    public function laporanPembayaranPdf($month, $year = null)
+    {
+        $year = $year ?? now()->year;
+        
+        try {
+            // Pastikan user terautentikasi untuk pembuatan PDF
+            if (!auth()->check()) {
+                // Coba dapatkan user default untuk pembuatan PDF
+                $defaultUser = \App\Models\User::where('role', 'bendahara')->first();
+                if ($defaultUser) {
+                    auth()->login($defaultUser);
+                }
+            }
             
+            // Sinkronkan tagihan untuk memastikan data lengkap
+            WeeklyPayment::syncMonthlyBills($month, $year);
+            
+            // PDF Laporan Pembayaran Siswa
+            $payments = WeeklyPayment::with(['student', 'transaction'])
+                ->where('month', $month)
+                ->where('year', $year)
+                ->orderBy('student_id')
+                ->orderBy('week_number')
+                ->get();
+                
+            // Debug: Periksa apakah siswa sudah dimuat
+            foreach($payments as $payment) {
+                if (!$payment->student) {
+                    Log::warning('Payment without student: ' . $payment->id);
+                }
+            }
+
+            $paymentsByStudent = $payments->groupBy('student_id');
+            $totalPaid = $payments->where('status', 'paid')->sum('amount');
+            $totalBills = $payments->sum('amount');
+
             $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
 
-            $pdf = Pdf::loadView('bendahara.laporan-keuangan-cetak', compact(
-                'transactions', 'income', 'expense', 'balance', 
-                'month', 'year', 'monthName'
+            // Dapatkan info user dengan aman
+            $userName = auth()->check() ? auth()->user()->name : 'System';
+            $userRole = auth()->check() ? ucfirst(auth()->user()->role) : 'Administrator';
+
+            // Debug: Log data
+            Log::info('PDF Pembayaran Data:', [
+                'month' => $month,
+                'year' => $year,
+                'payments_count' => $payments->count(),
+                'students_count' => $paymentsByStudent->count(),
+                'totalPaid' => $totalPaid,
+                'totalBills' => $totalBills,
+                'user_authenticated' => auth()->check(),
+                'user_name' => $userName
+            ]);
+
+            $pdf = Pdf::loadView('bendahara.laporan-pembayaran-siswa-cetak', compact(
+                'payments', 'paymentsByStudent', 'totalPaid', 'totalBills', 'month', 'year', 'monthName', 'userName', 'userRole'
             ));
-            $pdf->setPaper('a4', 'portrait');
+            
+            // Konfigurasi DomPDF
+            $pdf->setPaper('a4', 'landscape'); // Landscape untuk format bendahara
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => false,
+                'defaultFont' => 'Arial',
+                'isFontSubsettingEnabled' => true,
+                'dpi' => 150
+            ]);
             
             return response($pdf->output())
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'inline; filename="laporan-keuangan-' . $monthName . '.pdf"');
-        } else {
-            try {
-                // Sync bills untuk memastikan data lengkap
-                WeeklyPayment::syncMonthlyBills($month, $year);
+                ->header('Content-Disposition', 'inline; filename="laporan-pembayaran-' . $monthName . '.pdf"')
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
                 
-                // PDF Laporan Pembayaran Siswa
-                $payments = WeeklyPayment::with(['student', 'transaction'])
-                    ->where('month', $month)
-                    ->where('year', $year)
-                    ->orderBy('student_id')
-                    ->orderBy('week_number')
-                    ->get();
-                    
-                // Debug: Check if students are loaded
-                foreach($payments as $payment) {
-                    if (!$payment->student) {
-                        Log::warning('Payment without student: ' . $payment->id);
-                    }
-                }
-
-                $paymentsByStudent = $payments->groupBy('student_id');
-                $totalPaid = $payments->where('status', 'paid')->sum('amount');
-                $totalBills = $payments->sum('amount');
-
-                $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
-
-                // Debug: Log the data
-                Log::info('PDF Pembayaran Data:', [
-                    'month' => $month,
-                    'year' => $year,
-                    'payments_count' => $payments->count(),
-                    'students_count' => $paymentsByStudent->count(),
-                    'totalPaid' => $totalPaid,
-                    'totalBills' => $totalBills
-                ]);
-
-                $pdf = Pdf::loadView('bendahara.laporan-pembayaran-cetak', compact(
-                    'payments', 'paymentsByStudent', 'totalPaid', 'totalBills', 'month', 'year', 'monthName'
-                ));
-                
-                // Configure DomPDF
-                $pdf->setPaper('a4', 'portrait');
-                $pdf->setOptions([
-                    'defaultFont' => 'Arial',
-                    'isHtml5ParserEnabled' => true,
-                    'isRemoteEnabled' => true,
-                    'isFontSubsettingEnabled' => true,
-                    'dpi' => 150
-                ]);
-                
-                return response($pdf->output())
-                    ->header('Content-Type', 'application/pdf')
-                    ->header('Content-Disposition', 'inline; filename="laporan-pembayaran-' . $monthName . '.pdf"');
-                    
-            } catch (\Exception $e) {
-                Log::error('PDF Generation Error: ' . $e->getMessage());
-                Log::error('Stack Trace: ' . $e->getTraceAsString());
-                
-                return response()->json([
-                    'error' => 'PDF generation failed',
-                    'message' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ], 500);
-            }
+        } catch (\Exception $e) {
+            Log::error('PDF Generation Error: ' . $e->getMessage());
+            Log::error('Stack Trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'error' => 'PDF generation failed',
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
         }
     }
 
     /**
-     * Generate monthly bills - menggunakan syncMonthlyBills yang idempotent
+     * Buat tagihan bulanan - menggunakan syncMonthlyBills yang idempoten
      */
     private function generateMonthlyBills($month, $year)
     {
-        // Gunakan syncMonthlyBills yang idempotent
+        // Gunakan syncMonthlyBills yang idempoten
         return WeeklyPayment::syncMonthlyBills($month, $year);
     }
 }

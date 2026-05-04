@@ -337,16 +337,25 @@ class SekretarisController extends Controller
                                 ->orderBy('date')
                                 ->get();
         
-        // Get holidays
-        $holidays = Holiday::whereMonth('date', $month)
-                          ->whereYear('date', $year)
-                          ->get()
-                          ->mapWithKeys(function ($holiday) {
-                              return [$holiday->date->format('Y-m-d') => $holiday->note];
-                          });
+        // Get holidays (exclude weekends from holiday info display)
+        $allHolidays = Holiday::whereMonth('date', $month)
+                             ->whereYear('date', $year)
+                             ->get();
         
-        // Calculate statistics
-        $stats = $this->calculateAttendanceStats($students, $attendances, $holidays, $month, $year);
+        // Filter holidays to exclude weekends for display
+        $holidays = $allHolidays->filter(function ($holiday) {
+            $dayOfWeek = $holiday->date->dayOfWeek;
+            // 0 = Sunday, 6 = Saturday
+            return !in_array($dayOfWeek, [0, 6]);
+        })->mapWithKeys(function ($holiday) {
+            return [$holiday->date->format('Y-m-d') => $holiday->note];
+        });
+        
+        // Calculate statistics (use all holidays for calculation)
+        $allHolidaysForCalc = $allHolidays->mapWithKeys(function ($holiday) {
+            return [$holiday->date->format('Y-m-d') => $holiday->note];
+        });
+        $stats = $this->calculateAttendanceStats($students, $attendances, $allHolidaysForCalc, $month, $year);
         
         // Group attendances by student for easy display
         $attendancesByStudent = $attendances->groupBy('student_id');
@@ -387,16 +396,25 @@ class SekretarisController extends Controller
                                 ->orderBy('date')
                                 ->get();
         
-        // Get holidays
-        $holidays = Holiday::whereMonth('date', $month)
-                          ->whereYear('date', $year)
-                          ->get()
-                          ->mapWithKeys(function ($holiday) {
-                              return [$holiday->date->format('Y-m-d') => $holiday->note];
-                          });
+        // Get holidays (exclude weekends from holiday info display)
+        $allHolidays = Holiday::whereMonth('date', $month)
+                             ->whereYear('date', $year)
+                             ->get();
         
-        // Calculate statistics
-        $stats = $this->calculateAttendanceStats($students, $attendances, $holidays, $month, $year);
+        // Filter holidays to exclude weekends for display
+        $holidays = $allHolidays->filter(function ($holiday) {
+            $dayOfWeek = $holiday->date->dayOfWeek;
+            // 0 = Sunday, 6 = Saturday
+            return !in_array($dayOfWeek, [0, 6]);
+        })->mapWithKeys(function ($holiday) {
+            return [$holiday->date->format('Y-m-d') => $holiday->note];
+        });
+        
+        // Calculate statistics (use all holidays for calculation)
+        $allHolidaysForCalc = $allHolidays->mapWithKeys(function ($holiday) {
+            return [$holiday->date->format('Y-m-d') => $holiday->note];
+        });
+        $stats = $this->calculateAttendanceStats($students, $attendances, $allHolidaysForCalc, $month, $year);
         
         // Group attendances by student for easy display
         $attendancesByStudent = $attendances->groupBy('student_id');
