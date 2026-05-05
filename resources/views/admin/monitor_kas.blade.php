@@ -93,6 +93,7 @@
                     <table class="data-table" id="paymentsTable">
                         <thead>
                             <tr>
+                                <th>No</th>
                                 <th>Siswa</th>
                                 @foreach($wednesdayDates as $index => $date)
                                     <th>{{ $date->format('d M') }}<br><small style="font-weight: normal; text-transform: none;">Rabu</small><br><small style="font-weight: normal; text-transform: none; color: #3b82f6;">Minggu {{ $index + 1 }}</small></th>
@@ -105,8 +106,10 @@
                             @php
                                 $student = $studentPayments->first()->student;
                                 $totalWeeks = count($wednesdayDates);
+                                $index = $loop->index;
                             @endphp
                             <tr data-name="{{ strtolower($student->name) }}">
+                                <td>{{ $index + 1 }}</td>
                                 <td class="font-semibold">{{ $student->name }}</td>
                                 @foreach($wednesdayDates as $index => $date)
                                     @php
@@ -170,6 +173,7 @@
                     <table class="data-table" id="transactionsTable">
                         <thead>
                             <tr>
+                                <th>No</th>
                                 <th>Tanggal</th>
                                 <th>Siswa</th>
                                 <th>Jenis</th>
@@ -178,8 +182,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($transactions as $transaction)
+                            @foreach($transactions as $index => $transaction)
                             <tr data-description="{{ strtolower($transaction->description) }}" data-type="{{ strtolower($transaction->type) }}">
+                                <td>{{ $index + 1 }}</td>
                                 <td>{{ $transaction->date->format('d M Y') }}</td>
                                 <td>{{ $transaction->student->name ?? '-' }}</td>
                                 <td>

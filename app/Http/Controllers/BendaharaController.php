@@ -174,7 +174,8 @@ class BendaharaController extends Controller
                 'student_id' => 'nullable|exists:users,id',
                 'week_number' => 'nullable|integer|min:1|max:6',
                 'month' => 'nullable|integer|min:1|max:12',
-                'year' => 'nullable|integer|min:2020|max:2035'
+                'year' => 'nullable|integer|min:2020|max:2035',
+                'receipt' => 'required_if:type,expense|file|max:2048'
             ]);
 
             $amount = $request->amount;
@@ -212,16 +213,66 @@ class BendaharaController extends Controller
                 'created_by' => auth()->id()
             ]);
 
+            // Handle receipt upload for expense transactions
+            $receiptPath = null;
+            if ($request->type === 'expense' && $request->hasFile('receipt')) {
+                $receipt = $request->file('receipt');
+                
+                // Manual validation for file type
+                $allowedExtensions = ['jpg', 'jpeg', 'png'];
+                $extension = strtolower($receipt->getClientOriginalExtension());
+                
+                if (!in_array($extension, $allowedExtensions)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'File harus berupa gambar (JPG, JPEG, PNG)'
+                    ], 422);
+                }
+                
+                // Additional validation using getimagesize if available
+                if (function_exists('getimagesize')) {
+                    $imageInfo = @getimagesize($receipt->getPathname());
+                    if ($imageInfo === false) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'File harus berupa gambar yang valid'
+                        ], 422);
+                    }
+                }
+                
+                $receiptName = 'receipt_' . time() . '_' . uniqid() . '.' . $extension;
+                
+                // Create receipts directory if it doesn't exist
+                $receiptsDir = public_path('receipts');
+                if (!file_exists($receiptsDir)) {
+                    mkdir($receiptsDir, 0755, true);
+                }
+                
+                // Move uploaded file manually
+                try {
+                    $receipt->move($receiptsDir, $receiptName);
+                    $receiptPath = 'receipts/' . $receiptName;
+                    Log::info('Receipt uploaded:', ['path' => $receiptPath]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to move uploaded file: ' . $e->getMessage());
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Gagal menyimpan file: ' . $e->getMessage()
+                    ], 500);
+                }
+            }
+
             $transaction = Transaction::create([
                 'student_id' => $request->student_id,
                 'type' => $request->type,
                 'amount' => $amount,
                 'description' => $request->description,
                 'date' => $request->date,
-                'created_by' => auth()->id()
+                'created_by' => auth()->id(),
+                'receipt_path' => $receiptPath
             ]);
 
-            Log::info('Transaction created successfully:', ['transaction_id' => $transaction->id]);
+            Log::info('Transaction created successfully:', ['transaction_id' => $transaction->id, 'receipt_path' => $receiptPath]);
 
             return response()->json([
                 'success' => true,

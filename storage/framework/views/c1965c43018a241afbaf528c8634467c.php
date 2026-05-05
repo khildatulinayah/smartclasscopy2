@@ -91,6 +91,7 @@
                     <table class="data-table" id="paymentsTable">
                         <thead>
                             <tr>
+                                <th>No</th>
                                 <th>Siswa</th>
                                 <?php $__currentLoopData = $wednesdayDates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $date): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <th><?php echo e($date->format('d M')); ?><br><small style="font-weight: normal; text-transform: none;">Rabu</small><br><small style="font-weight: normal; text-transform: none; color: #3b82f6;">Minggu <?php echo e($index + 1); ?></small></th>
@@ -103,15 +104,17 @@
                             <?php
                                 $student = $studentPayments->first()->student;
                                 $totalWeeks = count($wednesdayDates);
+                                $index = $loop->index;
                             ?>
                             <tr data-name="<?php echo e(strtolower($student->name)); ?>">
+                                <td><?php echo e($index + 1); ?></td>
                                 <td class="font-semibold"><?php echo e($student->name); ?></td>
                                 <?php $__currentLoopData = $wednesdayDates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $date): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <?php
                                         $weekNumber = $index + 1;
                                         $payment = $studentPayments->where('week_number', $weekNumber)->first();
                                         $status = $payment ? $payment->status : 'unpaid';
-                                        $amount = $payment ? $payment->amount : 5000;
+                                        $amount = $payment ? $payment->amount : $currentKasNominal;
                                     ?>
                                     <td>
                                         <span class="status-badge <?php echo e($status == 'paid' ? 'success' : 'warning'); ?>">
@@ -169,6 +172,7 @@
                     <table class="data-table" id="transactionsTable">
                         <thead>
                             <tr>
+                                <th>No</th>
                                 <th>Tanggal</th>
                                 <th>Siswa</th>
                                 <th>Jenis</th>
@@ -177,8 +181,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <?php $__currentLoopData = $transactions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $transaction): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php $__currentLoopData = $transactions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $transaction): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <tr data-description="<?php echo e(strtolower($transaction->description)); ?>" data-type="<?php echo e(strtolower($transaction->type)); ?>">
+                                <td><?php echo e($index + 1); ?></td>
                                 <td><?php echo e($transaction->date->format('d M Y')); ?></td>
                                 <td><?php echo e($transaction->student->name ?? '-'); ?></td>
                                 <td>

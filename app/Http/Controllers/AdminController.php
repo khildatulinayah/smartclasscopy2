@@ -172,14 +172,20 @@ class AdminController extends Controller
         $weeklyPayments = WeeklyPayment::with('student')
             ->where('month', $month)
             ->where('year', $year)
+            ->join('users', 'users.id', '=', 'weekly_payments.student_id')
+            ->orderBy('users.name', 'asc')
             ->orderBy('week_number')
+            ->select('weekly_payments.*')
             ->get();
             
         // Get transactions for monitoring
         $transactions = Transaction::with('student')
             ->whereMonth('date', $month)
             ->whereYear('date', $year)
+            ->join('users', 'users.id', '=', 'transactions.student_id')
+            ->orderBy('users.name', 'asc')
             ->orderBy('date', 'desc')
+            ->select('transactions.*')
             ->get();
             
         // Calculate statistics
@@ -230,7 +236,9 @@ class AdminController extends Controller
         // Get attendance data for specific date
         $attendances = Attendance::with('student')
             ->whereDate('date', $date->format('Y-m-d'))
-            ->orderBy('student_id')
+            ->join('users', 'users.id', '=', 'attendances.student_id')
+            ->orderBy('users.name', 'asc')
+            ->select('attendances.*')
             ->get();
             
         // If it's a holiday or weekend and no attendance data, don't show "belum absen"

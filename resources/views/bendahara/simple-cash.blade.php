@@ -133,7 +133,7 @@
                 </button>
             </div>
             
-            <form id="transaction-form" onsubmit="saveTransaction(event)">
+            <form id="transaction-form" enctype="multipart/form-data" onsubmit="saveTransaction(event)">
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Transaksi</label>
                     <div class="grid grid-cols-2 gap-4">
@@ -182,6 +182,28 @@
                     <input type="date" id="date" name="date" required
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                            value="{{ now()->format('Y-m-d') }}">
+                </div>
+                
+                <!-- Bukti Transaksi (Hanya untuk uang keluar) -->
+                <div id="receipt-section" class="mb-6 hidden">
+                    <label for="receipt" class="block text-sm font-medium text-gray-700 mb-2">
+                        Bukti Transaksi <span class="text-red-500">*</span>
+                    </label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                        <input type="file" id="receipt" name="receipt" accept="image/*" class="hidden" onchange="handleReceiptUpload(event)">
+                        <div id="receipt-preview" class="mb-3">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-sm text-gray-600 mt-2">Klik untuk upload bukti transaksi</p>
+                            <p class="text-xs text-gray-500">Format: JPG, PNG, maksimal 2MB</p>
+                        </div>
+                        <button type="button" onclick="document.getElementById('receipt').click()" 
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition">
+                            📷 Pilih File
+                        </button>
+                    </div>
+                    <div id="receipt-error" class="mt-2 text-sm text-red-600 hidden"></div>
                 </div>
                 
                 <div class="flex gap-3">
@@ -368,21 +390,86 @@ window.closeTransactionModal = () => document.getElementById('transaction-modal'
 
 window.saveTransaction = async (e) => {
     e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target));
+    
+    // Validate receipt for expense transactions
+    const typeInput = document.querySelector('input[name="type"]:checked');
+    if (!typeInput) {
+        showToast('❌ Pilih jenis transaksi!', true);
+        return;
+    }
+    const type = typeInput.value;
+    const receiptFile = document.getElementById('receipt').files[0];
+    
+    if (type === 'expense' && !receiptFile) {
+        showToast('❌ Bukti transaksi wajib diupload untuk uang keluar!', true);
+        return;
+    }
+    
+    const formData = new FormData(e.target);
+    
     try {
-        const res = await fetch('{{ route("bendahara.kas.store") }}', {
+        // Debug: Check CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        console.log('CSRF Token:', csrfToken);
+        
+        if (!csrfToken) {
+            throw new Error('CSRF token tidak ditemukan');
+        }
+        
+        // Debug: Log form data
+        console.log('Submitting transaction with data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value);
+        }
+        
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+        
+        const res = await fetch('/bendahara/kas/store', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-            body: JSON.stringify(data)
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            body: formData,
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
+        
+        console.log('Response status:', res.status);
+        console.log('Response headers:', [...res.headers.entries()]);
+        
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error('Response error text:', errorText);
+            throw new Error(`HTTP ${res.status}: ${errorText}`);
+        }
+        
         const result = await res.json();
+        console.log('Response result:', result);
+        
         if (result.success) {
             closeTransactionModal();
             setTimeout(loadTransactions, 300);
             showToast('✅ Transaksi tersimpan!');
-        } else showToast('❌ ' + (result.message || 'Gagal simpan'), true);
-    } catch {
-        showToast('❌ Koneksi gagal', true);
+        } else {
+            showToast('❌ ' + (result.message || 'Gagal simpan'), true);
+        }
+    } catch (error) {
+        console.error('Transaction save error:', error);
+        
+        let errorMessage = 'Koneksi gagal';
+        
+        if (error.name === 'AbortError') {
+            errorMessage = 'Request timeout - coba lagi';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Tidak dapat terhubung ke server - periksa koneksi internet';
+        } else if (error.message.includes('CSRF')) {
+            errorMessage = 'Session expired - refresh halaman';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        showToast('❌ ' + errorMessage, true);
     }
 };
 
@@ -512,6 +599,18 @@ window.showTransactionDetail = (transactionId) => {
                 <div>
                     <label class="text-sm font-medium text-gray-500">Tahun</label>
                     <p class="text-lg font-semibold text-gray-900">${parsedInfo.year}</p>
+                </div>
+                ` : ''}
+                
+                ${transaction.receipt_path ? `
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Bukti Transaksi</label>
+                    <div class="mt-2">
+                        <img src="/${transaction.receipt_path}" alt="Bukti Transaksi" 
+                             class="max-w-xs rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+                             onclick="window.open('/${transaction.receipt_path}', '_blank')">
+                        <p class="text-xs text-gray-500 mt-1">Klik gambar untuk memperbesar</p>
+                    </div>
                 </div>
                 ` : ''}
             </div>
@@ -658,6 +757,88 @@ window.closeTransactionDetailModal = () => {
     const modal = document.getElementById('transactionDetailModal');
     modal.classList.add('hidden');
 };
+
+// Receipt upload functions
+window.handleReceiptUpload = (event) => {
+    const file = event.target.files[0];
+    const preview = document.getElementById('receipt-preview');
+    const error = document.getElementById('receipt-error');
+    
+    // Reset error
+    error.classList.add('hidden');
+    
+    if (!file) {
+        resetReceiptPreview();
+        return;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        error.textContent = 'File harus berupa gambar (JPG, PNG)';
+        error.classList.remove('hidden');
+        event.target.value = '';
+        return;
+    }
+    
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+        error.textContent = 'Ukuran file maksimal 2MB';
+        error.classList.remove('hidden');
+        event.target.value = '';
+        return;
+    }
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        preview.innerHTML = `
+            <img src="${e.target.result}" alt="Preview" class="mx-auto max-h-32 rounded-lg shadow-md mb-3">
+            <p class="text-sm text-green-600 font-medium">✅ ${file.name}</p>
+            <p class="text-xs text-gray-500">Ukuran: ${(file.size / 1024).toFixed(1)} KB</p>
+            <button type="button" onclick="clearReceipt()" class="mt-2 px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-medium transition">
+                🗑️ Hapus
+            </button>
+        `;
+    };
+    reader.readAsDataURL(file);
+};
+
+window.clearReceipt = () => {
+    const input = document.getElementById('receipt');
+    input.value = '';
+    resetReceiptPreview();
+};
+
+function resetReceiptPreview() {
+    const preview = document.getElementById('receipt-preview');
+    preview.innerHTML = `
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+        </svg>
+        <p class="text-sm text-gray-600 mt-2">Klik untuk upload bukti transaksi</p>
+        <p class="text-xs text-gray-500">Format: JPG, PNG, maksimal 2MB</p>
+    `;
+}
+
+// Toggle receipt section based on transaction type
+document.addEventListener('DOMContentLoaded', () => {
+    const receiptSection = document.getElementById('receipt-section');
+    
+    if (receiptSection) {
+        // Listen for changes on radio buttons
+        const typeRadios = document.querySelectorAll('input[name="type"]');
+        typeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'expense') {
+                    receiptSection.classList.remove('hidden');
+                } else {
+                    receiptSection.classList.add('hidden');
+                    clearReceipt(); // Clear any uploaded file
+                }
+            });
+        });
+    }
+});
 
 document.getElementById('transaction-modal')?.addEventListener('click', e => e.target.id === 'transaction-modal' && closeTransactionModal());
 document.getElementById('transactionDetailModal')?.addEventListener('click', e => e.target.id === 'transactionDetailModal' && closeTransactionDetailModal());
