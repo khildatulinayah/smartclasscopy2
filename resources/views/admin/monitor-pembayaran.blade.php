@@ -9,8 +9,8 @@
         <main class="main-content">
             <section class="greeting-section">
                 <div class="greeting-card">
-                    <h1 class="greeting-title">Monitor Kas</h1>
-                    <p class="greeting-subtitle">Pantau transaksi keuangan dan pembayaran mingguan (Read-Only)</p>
+                    <h1 class="greeting-title">Monitor Pembayaran Mingguan</h1>
+                    <p class="greeting-subtitle">Pantau pembayaran kas mingguan siswa (Read-Only)</p>
                 </div>
             </section>
 
@@ -21,24 +21,24 @@
                         <div class="stat-header">
                             <div class="stat-icon income">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </div>
-                            <div class="stat-title">Total Pemasukan</div>
+                            <div class="stat-title">Total Sudah Bayar</div>
                         </div>
-                        <div class="stat-value">Rp {{ number_format($totalIncome, 0, ',', '.') }}</div>
+                        <div class="stat-value">{{ $weeklyPayments->where('status', 'paid')->count() }} Pembayaran</div>
                         <div class="stat-description">{{ $monthName }}</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-header">
                             <div class="stat-icon expense">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 0h8m0 0v8m0-2v-2H9a2 2 0 00-2 2H6a2 2 0 00-2 2v2a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2v2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </div>
-                            <div class="stat-title">Total Pengeluaran</div>
+                            <div class="stat-title">Total Belum Bayar</div>
                         </div>
-                        <div class="stat-value">Rp {{ number_format($totalExpense, 0, ',', '.') }}</div>
+                        <div class="stat-value">{{ $weeklyPayments->where('status', 'unpaid')->count() }} Pembayaran</div>
                         <div class="stat-description">{{ $monthName }}</div>
                     </div>
                     <div class="stat-card">
@@ -48,10 +48,10 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </div>
-                            <div class="stat-title">Saldo Kas</div>
+                            <div class="stat-title">Nominal Kas</div>
                         </div>
-                        <div class="stat-value">Rp {{ number_format($balance, 0, ',', '.') }}</div>
-                        <div class="stat-description">Saat ini</div>
+                        <div class="stat-value">Rp {{ number_format($currentKasNominal, 0, ',', '.') }}</div>
+                        <div class="stat-description">Per minggu</div>
                     </div>
                 </div>
             </section>
@@ -62,14 +62,14 @@
                     <div class="table-title-section">
                         <h2 class="table-title">Pembayaran Mingguan</h2>
                         <div class="month-navigation">
-                            <a href="{{ route('admin.monitor.kas', ['month' => $prevDate->month, 'year' => $prevDate->year]) }}" class="nav-btn">
+                            <a href="{{ route('admin.monitor.pembayaran', ['month' => $prevDate->month, 'year' => $prevDate->year]) }}" class="nav-btn">
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                                 </svg>
                                 Prev
                             </a>
                             <span class="current-month">{{ $monthName }}</span>
-                            <a href="{{ route('admin.monitor.kas', ['month' => $nextDate->month, 'year' => $nextDate->year]) }}" class="nav-btn">
+                            <a href="{{ route('admin.monitor.pembayaran', ['month' => $nextDate->month, 'year' => $nextDate->year]) }}" class="nav-btn">
                                 Next
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -129,71 +129,6 @@
                                         {{ $studentPayments->where('status', 'paid')->count() }}/{{ $totalWeeks }} Lunas
                                     </span>
                                 </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Recent Transactions -->
-            <section class="table-header-section" style="margin-top: 32px;">
-                <div class="table-header">
-                    <div class="table-title-section">
-                        <h2 class="table-title">Transaksi Terbaru</h2>
-                        <div class="month-navigation">
-                            <a href="{{ route('admin.monitor.kas', ['month' => $prevDate->month, 'year' => $prevDate->year]) }}" class="nav-btn">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                                </svg>
-                                Prev
-                            </a>
-                            <span class="current-month">{{ $monthName }}</span>
-                            <a href="{{ route('admin.monitor.kas', ['month' => $nextDate->month, 'year' => $nextDate->year]) }}" class="nav-btn">
-                                Next
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="table-actions">
-                        <div class="search-container">
-                            <input type="text" id="searchTransaction" placeholder="Cari transaksi..." class="search-input">
-                            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <div class="table-card">
-                <div class="table-container">
-                    <table class="data-table" id="transactionsTable">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Tanggal</th>
-                                <th>Siswa</th>
-                                <th>Jenis</th>
-                                <th>Jumlah</th>
-                                <th>Keterangan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($transactions as $index => $transaction)
-                            <tr data-description="{{ strtolower($transaction->description) }}" data-type="{{ strtolower($transaction->type) }}">
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $transaction->date->format('d M Y') }}</td>
-                                <td>{{ $transaction->student->name ?? '-' }}</td>
-                                <td>
-                                    <span class="status-badge {{ $transaction->type == 'income' ? 'success' : 'warning' }}">
-                                        {{ $transaction->type == 'income' ? 'Pemasukan' : 'Pengeluaran' }}
-                                    </span>
-                                </td>
-                                <td class="font-semibold">Rp {{ number_format($transaction->amount, 0, ',', '.') }}</td>
-                                <td>{{ $transaction->description }}</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -695,25 +630,6 @@ document.addEventListener('DOMContentLoaded', function() {
             paymentsRows.forEach(row => {
                 const name = row.dataset.name;
                 if (name.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-    }
-
-    // Search functionality for transactions table
-    const searchTransactionInput = document.getElementById('searchTransaction');
-    const transactionsRows = document.querySelectorAll('#transactionsTable tbody tr');
-    
-    if (searchTransactionInput) {
-        searchTransactionInput.addEventListener('input', function() {
-            const query = this.value.toLowerCase();
-            transactionsRows.forEach(row => {
-                const description = row.dataset.description;
-                const type = row.dataset.type;
-                if (description.includes(query) || type.includes(query)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';

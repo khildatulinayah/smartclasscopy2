@@ -52,7 +52,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/students/{student}', [AdminController::class, 'updateStudent'])->name('students.update');
         Route::delete('/students/{student}', [AdminController::class, 'deleteStudent'])->name('students.delete');
         Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
-        Route::get('/monitor-kas', [AdminController::class, 'monitorKas'])->name('monitor.kas');
+        Route::get('/monitor-pembayaran', [AdminController::class, 'monitorPembayaran'])->name('monitor.pembayaran');
+        Route::get('/monitor-keuangan', [AdminController::class, 'monitorKeuangan'])->name('monitor.keuangan');
         Route::get('/monitor-absensi', [AdminController::class, 'monitorAbsensi'])->name('monitor.absensi');
     });
 

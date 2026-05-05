@@ -157,7 +157,7 @@ class AdminController extends Controller
         return view('admin.students', compact('students'));
     }
 
-    public function monitorKas(Request $request)
+    public function monitorPembayaran(Request $request)
     {
         // Get selected month/year or default to current
         $month = $request->get('month', now()->month);
@@ -177,23 +177,6 @@ class AdminController extends Controller
             ->orderBy('week_number')
             ->select('weekly_payments.*')
             ->get();
-            
-        // Get transactions for monitoring
-        $transactions = Transaction::with('student')
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->join('users', 'users.id', '=', 'transactions.student_id')
-            ->orderBy('users.name', 'asc')
-            ->orderBy('date', 'desc')
-            ->select('transactions.*')
-            ->get();
-            
-        // Calculate statistics
-        $totalIncome = $transactions->where('type', 'income')->sum('amount');
-        $totalExpense = $transactions->where('type', 'expense')->sum('amount');
-        $balance = $totalIncome - $totalExpense;
-        $totalPaid = $weeklyPayments->where('status', 'paid')->sum('amount');
-        $totalUnpaid = $weeklyPayments->where('status', 'unpaid')->sum('amount');
         
         // Format month name for display
         $monthName = $currentDate->format('F Y');
@@ -202,14 +185,8 @@ class AdminController extends Controller
         $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($month, $year);
         $currentKasNominal = KasSetting::getNominal((int) $month, (int) $year) ?? 0;
         
-        return view('admin.monitor_kas', compact(
+        return view('admin.monitor-pembayaran', compact(
             'weeklyPayments',
-            'transactions',
-            'totalIncome',
-            'totalExpense',
-            'balance',
-            'totalPaid',
-            'totalUnpaid',
             'month',
             'year',
             'monthName',
@@ -217,6 +194,46 @@ class AdminController extends Controller
             'nextDate',
             'wednesdayDates',
             'currentKasNominal'
+        ));
+    }
+    
+    public function monitorKeuangan(Request $request)
+    {
+        // Get selected month/year or default to current
+        $month = $request->get('month', now()->month);
+        $year = $request->get('year', now()->year);
+        
+        // Calculate prev and next month
+        $currentDate = \Carbon\Carbon::createFromDate($year, $month, 1);
+        $prevDate = $currentDate->copy()->subMonth();
+        $nextDate = $currentDate->copy()->addMonth();
+        
+        // Get transactions for monitoring
+        $transactions = Transaction::with(['student', 'creator'])
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        // Calculate statistics
+        $totalIncome = $transactions->where('type', 'income')->sum('amount');
+        $totalExpense = $transactions->where('type', 'expense')->sum('amount');
+        $balance = $totalIncome - $totalExpense;
+        
+        // Format month name for display
+        $monthName = $currentDate->format('F Y');
+        
+        return view('admin.monitor-keuangan', compact(
+            'transactions',
+            'totalIncome',
+            'totalExpense',
+            'balance',
+            'month',
+            'year',
+            'monthName',
+            'prevDate',
+            'nextDate'
         ));
     }
     
