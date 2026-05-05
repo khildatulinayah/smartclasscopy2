@@ -15,21 +15,7 @@
                 </div>
             </section>
 
-            <!-- Month Navigation -->
-            <div class="flex items-center justify-center mb-8 space-x-4">
-                <a href="?month=<?php echo e($prevMonth); ?>&year=<?php echo e($prevYear); ?>" class="nav-btn">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                    Bulan Sebelumnya
-                </a>
-                <div class="bg-blue-500 text-white px-8 py-4 rounded-xl shadow-lg">
-                    <div class="text-xl font-bold"><?php echo e($currentMonthName); ?></div>
-                </div>
-                <a href="?month=<?php echo e($nextMonth); ?>&year=<?php echo e($nextYear); ?>" class="nav-btn">
-                    Bulan Selanjutnya
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </a>
-            </div>
-    
+                
     <!-- Info Panel -->
     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
         <div class="flex items-center justify-between">
@@ -207,8 +193,75 @@
         </div>
     </div>
     
+    <!-- Search Box with Month Navigation -->
+    <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-100">
+        <div class="flex items-center space-x-4">
+            <div class="flex-1 relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <input type="text" id="searchInput" placeholder="Cari nama siswa... (Ctrl+F)" 
+                       title="Tekan Ctrl+F untuk fokus search, ESC untuk clear"
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       onkeyup="filterStudents()">
+            </div>
+            <button onclick="clearSearch()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Clear
+            </button>
+            
+            <!-- Month Navigation with Dropdown and Arrows -->
+            <div class="flex items-center space-x-2 pl-4 border-l border-gray-200">
+                <!-- Arrow Navigation -->
+                <a href="?month=<?php echo e($prevMonth); ?>&year=<?php echo e($prevYear); ?>" class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors" title="Bulan Sebelumnya">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </a>
+                
+                <!-- Dropdown Navigation -->
+                <form id="monthForm" method="GET" class="flex items-center space-x-2">
+                    <select name="month" id="monthSelect" onchange="this.form.submit()" 
+                            class="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg font-semibold text-sm border-0 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <?php for($m = 1; $m <= 12; $m++): ?>
+                            <option value="<?php echo e($m); ?>" <?php echo e($month == $m ? 'selected' : ''); ?>>
+                                <?php echo e(Carbon::create()->month($m)->locale('id')->translatedFormat('F')); ?>
+
+                            </option>
+                        <?php endfor; ?>
+                    </select>
+                    <select name="year" id="yearSelect" onchange="this.form.submit()" 
+                            class="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg font-semibold text-sm border-0 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <?php for($y = date('Y') - 2; $y <= date('Y') + 2; $y++): ?>
+                            <option value="<?php echo e($y); ?>" <?php echo e($year == $y ? 'selected' : ''); ?>>
+                                <?php echo e($y); ?>
+
+                            </option>
+                        <?php endfor; ?>
+                    </select>
+                    <!-- Hidden inputs to preserve other GET parameters -->
+                    <?php $__currentLoopData = request()->except(['month', 'year']); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <input type="hidden" name="<?php echo e($key); ?>" value="<?php echo e($value); ?>">
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </form>
+                
+                <!-- Arrow Navigation -->
+                <a href="?month=<?php echo e($nextMonth); ?>&year=<?php echo e($nextYear); ?>" class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors" title="Bulan Selanjutnya">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        <div id="searchResults" class="mt-2 text-sm text-gray-600"></div>
+    </div>
+    
     <!-- Daftar Pembayaran per Siswa -->
-    <div class="space-y-4">
+    <div id="studentsList" class="space-y-4">
         <?php
             $studentIndex = 0;
         ?>
@@ -224,11 +277,11 @@
                 $statusColor = $paidCount === $weeksInMonth ? 'green' : ($paidCount > 0 ? 'yellow' : 'red');
             ?>
             
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="student-card bg-white rounded-xl shadow-sm p-6 border border-gray-100" data-student-name="<?php echo e(strtolower($payments->first()->student->name)); ?>">
                 <div class="flex justify-between items-center mb-4">
                     <div class="flex items-center">
                         <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full font-bold text-sm mr-3"><?php echo e($index); ?></span>
-                        <h3 class="text-lg font-semibold text-gray-800"><?php echo e($payments->first()->student->name); ?></h3>
+                        <h3 class="text-lg font-semibold text-gray-800 student-name"><?php echo e($payments->first()->student->name); ?></h3>
                     </div>
                     <div class="text-right">
                         <div class="text-lg font-bold text-gray-800">Rp <?php echo e(number_format($totalBill, 0, ',', '.')); ?></div>
@@ -622,6 +675,94 @@ function processPaymentWithTransaction(paymentId) {
 </script>
 
 <script>
+// Search Functions
+function filterStudents() {
+    const searchInput = document.getElementById('searchInput');
+    const searchValue = searchInput.value.toLowerCase().trim();
+    const studentCards = document.querySelectorAll('.student-card');
+    const searchResults = document.getElementById('searchResults');
+    let visibleCount = 0;
+    let totalStudents = studentCards.length;
+
+    studentCards.forEach(card => {
+        const studentName = card.dataset.studentName;
+        const nameElement = card.querySelector('.student-name');
+        const originalName = nameElement.textContent;
+        
+        if (studentName.includes(searchValue)) {
+            card.style.display = 'block';
+            visibleCount++;
+            
+            // Highlight search text
+            if (searchValue.length > 0) {
+                nameElement.innerHTML = highlightSearchText(originalName, searchInput.value);
+            } else {
+                nameElement.textContent = originalName;
+            }
+        } else {
+            card.style.display = 'none';
+            nameElement.textContent = originalName; // Reset highlight when hidden
+        }
+    });
+
+    // Update search results info
+    if (searchValue.length > 0) {
+        searchResults.innerHTML = `Menampilkan <span class="font-semibold">${visibleCount}</span> dari <span class="font-semibold">${totalStudents}</span> siswa`;
+        if (visibleCount === 0) {
+            searchResults.innerHTML = `<span class="text-red-600 font-semibold">Tidak ada siswa dengan nama "${searchInput.value}"</span>`;
+        }
+    } else {
+        searchResults.textContent = '';
+    }
+}
+
+function clearSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const studentCards = document.querySelectorAll('.student-card');
+
+    searchInput.value = '';
+    searchResults.textContent = '';
+    
+    studentCards.forEach(card => {
+        card.style.display = 'block';
+        // Reset highlight
+        const nameElement = card.querySelector('.student-name');
+        if (nameElement) {
+            nameElement.textContent = nameElement.textContent; // Remove HTML tags
+        }
+    });
+
+    // Focus back to search input
+    searchInput.focus();
+}
+
+// Keyboard shortcut for search (Ctrl+F or Cmd+F)
+document.addEventListener('keydown', function(e) {
+    // Ctrl+F or Cmd+F for search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+        document.getElementById('searchInput').select();
+    }
+    
+    // Escape to clear search
+    if (e.key === 'Escape') {
+        const searchInput = document.getElementById('searchInput');
+        if (document.activeElement === searchInput) {
+            clearSearch();
+        }
+    }
+});
+
+// Highlight search text in student names
+function highlightSearchText(text, searchValue) {
+    if (!searchValue) return text;
+    
+    const regex = new RegExp(`(${searchValue})`, 'gi');
+    return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+}
+
 // Payment Modal Functions
 function showPaymentModal(paymentId, studentName, week, studentId) {
     console.log('Opening payment modal for:', {paymentId, studentName, week, studentId});

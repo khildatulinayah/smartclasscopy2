@@ -104,7 +104,7 @@
                     </div>
                 </div>
                 <div>
-                    <img src="<?php echo e(asset('images/logo.png')); ?>" alt="Logo" class="logo-right" onerror="this.style.display='none'">
+                    <img src="<?php echo e(asset('images/logo2.png')); ?>" alt="Logo" class="logo-right" onerror="this.style.display='none'">
                 </div>
             </div>
         </div>

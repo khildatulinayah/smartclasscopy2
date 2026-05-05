@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartClass - Login</title>
+    <link rel="icon" type="image/png" href="<?php echo e(asset('images/logo2.png')); ?>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -99,36 +100,11 @@
         }
         
         .logo-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            border-radius: 16px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 16px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .logo-icon::before {
-            content: "";
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: white;
-            border-radius: 8px;
-            transform: rotate(45deg);
-        }
-        
-        .logo-icon::after {
-            content: "";
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: #3b82f6;
-            border-radius: 6px;
-            transform: rotate(45deg);
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 16px;
         }
         
         .brand-name {
@@ -196,6 +172,76 @@
         
         .form-input::placeholder {
             color: #9ca3af;
+        }
+        
+        .password-strength {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        
+        .strength-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #374151;
+        }
+        
+        .strength-text {
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .strength-text.very-weak { color: #dc2626; }
+        .strength-text.weak { color: #ea580c; }
+        .strength-text.fair { color: #d97706; }
+        .strength-text.good { color: #059669; }
+        .strength-text.strong { color: #047857; }
+        
+        .strength-bar {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .strength-fill.very-weak { width: 20%; background: #dc2626; }
+        .strength-fill.weak { width: 40%; background: #ea580c; }
+        .strength-fill.fair { width: 60%; background: #f59e0b; }
+        .strength-fill.good { width: 80%; background: #10b981; }
+        .strength-fill.strong { width: 100%; background: #059669; }
+        
+        .strength-tips {
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        
+        .strength-tips ul {
+            margin: 0;
+            padding-left: 16px;
+        }
+        
+        .strength-tips li {
+            margin-bottom: 2px;
+        }
+        
+        .strength-tips li.valid {
+            color: #059669;
+            text-decoration: line-through;
         }
         
         .input-icon {
@@ -318,7 +364,7 @@
     
     <div class="login-container">
         <div class="logo-section">
-            <div class="logo-icon"></div>
+            <img src="<?php echo e(asset('images/logo2.png')); ?>" alt="Logo" class="logo-icon">
             <div class="brand-name">smartclass</div>
             <div class="brand-subtitle">Aplikasi Manajemen Kelas</div>
         </div>

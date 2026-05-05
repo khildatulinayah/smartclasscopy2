@@ -18,7 +18,7 @@
         .period-info { display: flex; gap: 20px; margin-bottom: 10px; font-size: 10px; }
         .period-item { display: flex; align-items: center; gap: 5px; }
         .period-label { font-weight: bold; }
-        .logo-right { width: 100px; height: 100px; }
+        .logo-right { width: 120px; height: 120px; }
         
         /* Table Styles */
         .attendance-table { width: 100%; border-collapse: collapse; margin-top: 15px; border: 2px solid #000; font-size: 11px; }
@@ -67,7 +67,7 @@
             .attendance-table th:nth-child(2), .attendance-table td:nth-child(2) { width: 170px; font-size: 9px; }
             .school-name { font-size: 18px; }
             .report-title { font-size: 16px; }
-            .logo-right { width: 80px; height: 80px; }
+            .logo-right { width: 100px; height: 100px; }
             .holiday-info { font-size: 8px; padding: 6px; }
             .holiday-info h4 { font-size: 9px; }
             .period-info { font-size: 9px; }
@@ -97,7 +97,7 @@
                     </div>
                 </div>
                 <div>
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="logo-right" onerror="this.style.display='none'">
+                    <img src="{{ asset('images/logo2.png') }}" alt="Logo" class="logo-right" onerror="this.style.display='none'">
                 </div>
             </div>
         </div>

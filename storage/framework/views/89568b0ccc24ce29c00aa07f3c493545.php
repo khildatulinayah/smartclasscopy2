@@ -1,7 +1,7 @@
 <aside class="sidebar">
     <div class="sidebar-header">
         <div class="logo">
-            <img src="<?php echo e(asset('images/logo.png')); ?>" alt="Logo" class="logo-img">
+            <img src="<?php echo e(asset('images/logo2.png')); ?>" alt="Logo" class="logo-img" style="width: 90px; height: 90px;">
             <span class="logo-text">SMARTCLASS</span>
         </div>
     </div>

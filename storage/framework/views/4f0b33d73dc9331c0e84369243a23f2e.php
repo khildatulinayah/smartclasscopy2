@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <title>SMARTCLASS - Dashboard</title>
-    <link rel="icon" type="image/x-icon" href="<?php echo e(asset('images/logo.png')); ?>">
+    <link rel="icon" type="image/png" href="<?php echo e(asset('images/logo2.png')); ?>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -26,17 +26,17 @@
         }
         .toast {
             background: white;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            border-left: 4px solid;
-            min-width: 300px;
-            max-width: 400px;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-left: 6px solid;
+            min-width: 400px;
+            max-width: 500px;
             pointer-events: auto;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
             animation: slideIn 0.15s ease-out;
             transition: all 0.15s ease;
         }
@@ -63,14 +63,15 @@
         }
         .toast-icon {
             flex-shrink: 0;
-            width: 20px;
-            height: 20px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             color: white;
+            font-size: 16px;
         }
         .toast.success .toast-icon {
             background: #10b981;
@@ -88,14 +89,15 @@
             flex: 1;
         }
         .toast-title {
-            font-weight: 600;
-            margin-bottom: 2px;
+            font-weight: 700;
+            margin-bottom: 4px;
             color: #1f2937;
+            font-size: 18px;
         }
         .toast-message {
-            font-size: 14px;
+            font-size: 16px;
             color: #6b7280;
-            line-height: 1.4;
+            line-height: 1.5;
         }
         .toast-close {
             flex-shrink: 0;
@@ -103,8 +105,8 @@
             border: none;
             color: #9ca3af;
             cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
+            padding: 6px;
+            border-radius: 6px;
             transition: all 0.2s;
         }
         .toast-close:hover {
@@ -140,6 +142,7 @@
             .toast {
                 min-width: auto;
                 max-width: none;
+                padding: 20px;
             }
         }
     </style>
