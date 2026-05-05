@@ -195,6 +195,26 @@
     </div>
 </div>
 
+<!-- Transaction Detail Modal -->
+<div id="transactionDetailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-900">Detail Transaksi</h2>
+                <button onclick="closeTransactionDetailModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div id="transactionDetailContent" class="p-6">
+            <!-- Dynamic content will be loaded here -->
+        </div>
+    </div>
+</div>
+
 <!-- Success Toast -->
 <div id="success-toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-full transition-transform duration-300 z-50">
     <div class="flex items-center">
@@ -286,9 +306,14 @@ function createTransactionCard(t) {
                     <div class="text-2xl font-bold ${isIncome ? 'text-green-600' : 'text-red-600'} leading-tight">
                         ${isIncome ? '+' : '-'} Rp ${Number(t.amount).toLocaleString('id-ID')}
                     </div>
-                    <button class="delete-btn mt-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition-all ml-auto border border-red-600 shadow-sm hover:shadow-md" data-id="${t.id}" title="Hapus transaksi">
-                        🗑️ Hapus
-                    </button>
+                    <div class="flex gap-2 mt-1">
+                        <button class="detail-btn px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-semibold transition-all border border-blue-600 shadow-sm hover:shadow-md" onclick="showTransactionDetail(${t.id})" title="Lihat detail transaksi">
+                            👁️ Detail
+                        </button>
+                        <button class="delete-btn px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition-all border border-red-600 shadow-sm hover:shadow-md" data-id="${t.id}" title="Hapus transaksi">
+                            🗑️ Hapus
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -394,7 +419,246 @@ window.showToast = (msg, isError) => {
     setTimeout(() => toast.classList.add('translate-y-full'), 3500);
 };
 
+// Transaction Detail Functions
+window.showTransactionDetail = (transactionId) => {
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (!transaction) return;
+    
+    const modal = document.getElementById('transactionDetailModal');
+    const content = document.getElementById('transactionDetailContent');
+    
+    const isIncome = transaction.type === 'income';
+    const formattedDate = new Date(transaction.date).toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    // Parse description untuk mengambil informasi minggu dan bulan
+    const parsedInfo = parseTransactionDescription(transaction.description);
+    
+    // If no month/year found in description, use transaction date as fallback
+    if (!parsedInfo.month && !parsedInfo.year) {
+        const transactionDate = new Date(transaction.date);
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                           'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        parsedInfo.month = monthNames[transactionDate.getMonth()];
+        parsedInfo.year = transactionDate.getFullYear().toString();
+        parsedInfo.monthNumber = transactionDate.getMonth() + 1;
+    }
+    
+    content.innerHTML = `
+        <div class="space-y-6">
+            <!-- Header Info -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="px-4 py-2 rounded-full text-sm font-bold bg-opacity-10 border ${isIncome ? 'bg-green text-green-800 border-green-200' : 'bg-red text-red-800 border-red-200'}">
+                        ${isIncome ? 'PEMASUKAN' : 'PENGELUARAN'}
+                    </div>
+                    <div class="text-3xl font-bold ${isIncome ? 'text-green-600' : 'text-red-600'}">
+                        ${isIncome ? '+' : '-'} Rp ${Number(transaction.amount).toLocaleString('id-ID')}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Transaction Details -->
+            <div class="bg-gray-50 rounded-xl p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Tanggal</label>
+                        <p class="text-lg font-semibold text-gray-900">${formattedDate}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">ID Transaksi</label>
+                        <p class="text-lg font-semibold text-gray-900">#${transaction.id}</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Keterangan</label>
+                    <p class="text-lg font-semibold text-gray-900">${transaction.description}</p>
+                </div>
+                
+                ${transaction.student ? `
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Siswa</label>
+                    <p class="text-lg font-semibold text-gray-900">${transaction.student.name}</p>
+                </div>
+                ` : ''}
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Dibuat oleh</label>
+                    <p class="text-lg font-semibold text-gray-900">${transaction.creator?.name || 'Sistem'}</p>
+                </div>
+                
+                ${parsedInfo.week ? `
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Minggu</label>
+                    <p class="text-lg font-semibold text-gray-900">${parsedInfo.week}</p>
+                </div>
+                ` : ''}
+                
+                ${parsedInfo.month ? `
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Bulan</label>
+                    <p class="text-lg font-semibold text-gray-900">${parsedInfo.month}</p>
+                </div>
+                ` : ''}
+                
+                ${parsedInfo.year ? `
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Tahun</label>
+                    <p class="text-lg font-semibold text-gray-900">${parsedInfo.year}</p>
+                </div>
+                ` : ''}
+            </div>
+            
+            <!-- Additional Info for Special Transactions -->
+            ${parsedInfo.isWeeklyPayment ? `
+            <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                <h4 class="text-sm font-bold text-green-800 mb-2">💰 Informasi Pembayaran Mingguan</h4>
+                <p class="text-sm text-green-700">Transaksi ini merupakan pembayaran kas mingguan untuk periode ${parsedInfo.month} ${parsedInfo.year}.</p>
+                ${parsedInfo.week ? `<p class="text-xs text-green-600 mt-1">Pembayaran untuk ${parsedInfo.week}</p>` : ''}
+            </div>
+            ` : ''}
+            
+            ${parsedInfo.isArrearsPayment ? `
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <h4 class="text-sm font-bold text-blue-800 mb-2">📋 Informasi Pelunasan Tunggakan</h4>
+                <p class="text-sm text-blue-700">Transaksi ini merupakan pelunasan tunggakan kas untuk periode ${parsedInfo.month} ${parsedInfo.year}.</p>
+                ${parsedInfo.week ? `<p class="text-xs text-blue-600 mt-1">Mencakup ${parsedInfo.week}</p>` : ''}
+                <p class="text-xs text-blue-500 mt-2">*Bulan diambil dari tanggal transaksi</p>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+};
+
+// Function to parse transaction description
+function parseTransactionDescription(description) {
+    const info = {
+        week: null,
+        month: null,
+        year: null,
+        monthNumber: null,
+        isWeeklyPayment: false,
+        isArrearsPayment: false
+    };
+    
+    const desc = description.toLowerCase();
+    
+    // Check for weekly payment pattern: "PEMBAYARAN KAS MINGGU X BULAN YYYY"
+    const weeklyMatch = description.match(/PEMBAYARAN KAS MINGGU (\d+) (\w+) (\d+)/i);
+    if (weeklyMatch) {
+        info.week = `Minggu ke-${weeklyMatch[1]}`;
+        info.month = weeklyMatch[2];
+        info.year = weeklyMatch[3];
+        info.monthNumber = getMonthNumber(weeklyMatch[2]);
+        info.isWeeklyPayment = true;
+    }
+    
+    // Check for alternative weekly payment pattern: "Pembayaran kas Minggu X - Siswa Y BULAN"
+    const altWeeklyMatch = description.match(/Pembayaran kas Minggu (\d+) .*? (\w+)$/i);
+    if (altWeeklyMatch && !info.isWeeklyPayment) {
+        info.week = `Minggu ke-${altWeeklyMatch[1]}`;
+        info.month = altWeeklyMatch[2];
+        info.year = new Date().getFullYear().toString(); // Use current year if not specified
+        info.monthNumber = getMonthNumber(altWeeklyMatch[2]);
+        info.isWeeklyPayment = true;
+    }
+    
+    // Check for arrears payment pattern: "PELUNASAN TUNGGAKAN KAS BULAN YYYY"
+    const arrearsMatch = description.match(/PELUNASAN TUNGGAKAN KAS (\w+) (\d+)/i);
+    if (arrearsMatch) {
+        info.month = arrearsMatch[1];
+        info.year = arrearsMatch[2];
+        info.monthNumber = getMonthNumber(arrearsMatch[1]);
+        info.isArrearsPayment = true;
+    }
+    
+    // Extract weeks info for arrears
+    if (info.isArrearsPayment && desc.includes('minggu')) {
+        const weeksMatch = description.match(/minggu (\d+)/gi);
+        if (weeksMatch) {
+            const weeks = weeksMatch.map(w => w.replace('minggu ', 'Minggu ')).join(', ');
+            info.week = weeks;
+        }
+    }
+    
+    // Fallback: Check for general weekly payment keywords
+    if (!info.isWeeklyPayment && !info.isArrearsPayment) {
+        if (desc.includes('minggu') && desc.includes('kas')) {
+            info.isWeeklyPayment = true;
+            
+            // Try to extract week number
+            const weekMatch = description.match(/minggu (\d+)/i);
+            if (weekMatch) {
+                info.week = `Minggu ke-${weekMatch[1]}`;
+            }
+            
+            // Try to extract month from the end
+            const monthMatch = description.match(/\b(\w+)$/i);
+            if (monthMatch) {
+                const monthName = monthMatch[1];
+                const monthNum = getMonthNumber(monthName);
+                if (monthNum) {
+                    info.month = monthName;
+                    info.monthNumber = monthNum;
+                    info.year = new Date().getFullYear().toString();
+                }
+            }
+        }
+    }
+    
+    // Additional fallback: Check for arrears without month/year in description
+    if (!info.isWeeklyPayment && !info.isArrearsPayment) {
+        if (desc.includes('pelunasan') || desc.includes('tunggakan')) {
+            info.isArrearsPayment = true;
+            
+            // Extract weeks info
+            const weeksMatch = description.match(/minggu (\d+)/gi);
+            if (weeksMatch) {
+                const weeks = weeksMatch.map(w => w.replace('minggu ', 'Minggu ')).join(', ');
+                info.week = weeks;
+            }
+            
+            // If no month/year found, use transaction date to determine period
+            if (!info.month && !info.year) {
+                // Try to extract from transaction date (this would be passed separately)
+                // For now, we'll leave it empty and handle it in the display
+                info.month = null;
+                info.year = null;
+                info.monthNumber = null;
+            }
+        }
+    }
+    
+    return info;
+}
+
+// Function to convert month name to number
+function getMonthNumber(monthName) {
+    const months = {
+        'januari': 1, 'februari': 2, 'maret': 3, 'april': 4,
+        'mei': 5, 'juni': 6, 'juli': 7, 'agustus': 8,
+        'september': 9, 'oktober': 10, 'november': 11, 'desember': 12
+    };
+    
+    // Handle uppercase and mixed case
+    const normalized = monthName.toLowerCase();
+    return months[normalized] || null;
+}
+
+window.closeTransactionDetailModal = () => {
+    const modal = document.getElementById('transactionDetailModal');
+    modal.classList.add('hidden');
+};
+
 document.getElementById('transaction-modal')?.addEventListener('click', e => e.target.id === 'transaction-modal' && closeTransactionModal());
+document.getElementById('transactionDetailModal')?.addEventListener('click', e => e.target.id === 'transactionDetailModal' && closeTransactionDetailModal());
 </script>
 
 
