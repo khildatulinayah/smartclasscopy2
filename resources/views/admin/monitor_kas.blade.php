@@ -113,7 +113,7 @@
                                         $weekNumber = $index + 1;
                                         $payment = $studentPayments->where('week_number', $weekNumber)->first();
                                         $status = $payment ? $payment->status : 'unpaid';
-                                        $amount = $payment ? $payment->amount : 5000;
+                                        $amount = $payment ? $payment->amount : $currentKasNominal;
                                     @endphp
                                     <td>
                                         <span class="status-badge {{ $status == 'paid' ? 'success' : 'warning' }}">

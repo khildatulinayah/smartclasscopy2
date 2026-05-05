@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use App\Models\KasSetting;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -66,9 +67,9 @@ class WeeklyPayment extends Model
     // Helper: generate tagihan mingguan untuk siswa
     public static function generateWeeklyBills($studentId, $month, $year, $amountPerWeek = null)
     {
-        // Ambil nominal dari settings, atau gunakan parameter jika diberikan
+        // Ambil nominal per bulan/tahun dari kas_settings, atau gunakan parameter jika diberikan
         if ($amountPerWeek === null) {
-            $amountPerWeek = (int) Setting::get('weekly_payment_amount', 5000);
+            $amountPerWeek = KasSetting::getNominal((int) $month, (int) $year) ?? 0;
         }
         
         $bills = [];
@@ -110,9 +111,11 @@ class WeeklyPayment extends Model
      * Sync monthly bills - Buat/update tagihan untuk semua siswa aktif di bulan tertentu
      * Ini idempotent: akan membuat tagihan untuk siswa baru, tapi tidak mengubah yang sudah ada
      */
-    public static function syncMonthlyBills($month, $year)
+    public static function syncMonthlyBills($month, $year, $amountPerWeek = null)
     {
-        $amountPerWeek = (int) Setting::get('weekly_payment_amount', 5000);
+        if ($amountPerWeek === null) {
+            $amountPerWeek = KasSetting::getNominal((int) $month, (int) $year) ?? 0;
+        }
         $students = User::where('role', 'siswa')->where('is_active', true)->get();
         $generatedCount = 0;
         
@@ -219,9 +222,11 @@ class WeeklyPayment extends Model
     /**
      * Get weekly payment amount from settings
      */
-    public static function getWeeklyPaymentAmount()
+    public static function getWeeklyPaymentAmount($month = null, $year = null)
     {
-        return (int) Setting::get('weekly_payment_amount', 5000);
+        $month = $month ?? now()->month;
+        $year = $year ?? now()->year;
+        return KasSetting::getNominal((int) $month, (int) $year) ?? 0;
     }
 
     // Helper: hitung total tunggakan siswa

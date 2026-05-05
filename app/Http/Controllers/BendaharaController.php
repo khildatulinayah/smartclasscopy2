@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Transaction;
 use App\Models\WeeklyPayment;
-use App\Models\Setting;
+use App\Models\KasSetting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -41,8 +41,9 @@ class BendaharaController extends Controller
         
         $nextWednesday = $today->copy()->next(Carbon::WEDNESDAY)->format('d M Y');
         
-        // Sinkronkan tagihan bulan ini (idempoten - buat yang hilang, jangan duplikasi)
-        WeeklyPayment::syncMonthlyBills($currentMonth, $currentYear);
+        // Sinkronkan tagihan bulan ini dengan nominal per bulan/tahun.
+        $currentMonthlyNominal = KasSetting::getNominal($currentMonth, $currentYear) ?? 0;
+        WeeklyPayment::syncMonthlyBills($currentMonth, $currentYear, $currentMonthlyNominal);
         
         $payments = WeeklyPayment::with(['student', 'transaction'])
             ->where('month', $currentMonth)
@@ -55,8 +56,8 @@ class BendaharaController extends Controller
             ->where('status', 'unpaid')
             ->count();
         
-        // Dapatkan jumlah pembayaran mingguan dari pengaturan
-        $weeklyPaymentAmount = WeeklyPayment::getWeeklyPaymentAmount();
+        // Dapatkan jumlah pembayaran mingguan dari pengaturan bulan berjalan
+        $weeklyPaymentAmount = WeeklyPayment::getWeeklyPaymentAmount($currentMonth, $currentYear);
         
         // --- DATA KEUANGAN RIIL ---
         $transactions = Transaction::orderBy('date', 'desc')->get();
@@ -122,21 +123,90 @@ class BendaharaController extends Controller
         return view('bendahara.simple-cash', compact('transactions', 'totalIncome', 'totalExpense', 'balance', 'students'));
     }
 
+    public function kasSettings()
+    {
+        $selectedMonth = (int) request()->get('month', now()->month);
+        $selectedYear = (int) request()->get('year', now()->year);
+        $currentNominal = KasSetting::getNominal($selectedMonth, $selectedYear) ?? 0;
+
+        $isCurrentMonth = $selectedMonth === now()->month && $selectedYear === now()->year;
+
+        return view('bendahara.kas-settings', compact(
+            'selectedMonth',
+            'selectedYear',
+            'currentNominal',
+            'isCurrentMonth'
+        ));
+    }
+
+    public function updateKasSettings(Request $request)
+    {
+        $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2020|max:2035',
+            'nominal' => 'required|numeric|min:0'
+        ]);
+
+        KasSetting::updateOrCreate(
+            [
+                'month' => (int) $request->month,
+                'year' => (int) $request->year,
+            ],
+            ['nominal' => $request->nominal]
+        );
+
+        return redirect()
+            ->route('bendahara.kas.settings', [
+                'month' => (int) $request->month,
+                'year' => (int) $request->year,
+            ])
+            ->with('success', 'Nominal kas berhasil diperbarui.');
+    }
+
     public function storeSimpleTransaction(Request $request)
     {
         try {
             $request->validate([
                 'type' => 'required|in:income,expense',
-                'amount' => 'required|numeric|min:1',
+                'amount' => 'nullable|numeric|min:0',
                 'description' => 'required|string|max:255',
                 'date' => 'required|date',
-                'student_id' => 'nullable|exists:users,id'
+                'student_id' => 'nullable|exists:users,id',
+                'week_number' => 'nullable|integer|min:1|max:6',
+                'month' => 'nullable|integer|min:1|max:12',
+                'year' => 'nullable|integer|min:2020|max:2035'
             ]);
+
+            $amount = $request->amount;
+
+            // Alur kas mingguan: nominal diambil dari kas_settings berdasarkan bulan/tahun.
+            if (
+                $request->type === 'income' &&
+                $request->filled('week_number') &&
+                $request->filled('month') &&
+                $request->filled('year')
+            ) {
+                $monthlyNominal = KasSetting::getNominal((int) $request->month, (int) $request->year);
+
+                if ($monthlyNominal === null) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Nominal kas bulan ini belum diatur.'
+                    ], 422);
+                }
+
+                $amount = $monthlyNominal;
+            } elseif ($amount === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nominal transaksi wajib diisi.'
+                ], 422);
+            }
 
             Log::info('Creating transaction:', [
                 'student_id' => $request->student_id,
                 'type' => $request->type,
-                'amount' => $request->amount,
+                'amount' => $amount,
                 'description' => $request->description,
                 'date' => $request->date,
                 'created_by' => auth()->id()
@@ -145,7 +215,7 @@ class BendaharaController extends Controller
             $transaction = Transaction::create([
                 'student_id' => $request->student_id,
                 'type' => $request->type,
-                'amount' => $request->amount,
+                'amount' => $amount,
                 'description' => $request->description,
                 'date' => $request->date,
                 'created_by' => auth()->id()
@@ -231,8 +301,14 @@ class BendaharaController extends Controller
         $nextMonth = ($month == 12) ? 1 : $month + 1;
         $nextYear = ($month == 12) ? $year + 1 : $year;
         
+        $monthlySetting = KasSetting::getNominal((int) $month, (int) $year);
+        $weeklyPaymentAmount = $monthlySetting ?? 0;
+        $kasSettingWarning = $monthlySetting === null
+            ? 'Nominal kas bulan ini belum diatur. Silakan atur di menu Pengaturan Kas.'
+            : null;
+
         // Sinkronkan tagihan untuk bulan yang dipilih (idempoten - buat yang hilang, jangan duplikasi)
-        WeeklyPayment::syncMonthlyBills($month, $year);
+        WeeklyPayment::syncMonthlyBills($month, $year, $weeklyPaymentAmount);
         
         $payments = WeeklyPayment::with(['student', 'transaction'])
             ->where('month', $month)
@@ -288,9 +364,6 @@ class BendaharaController extends Controller
         $paidAmount = $payments->where('status', 'paid')->sum('amount');
         $unpaidAmount = $payments->where('status', 'unpaid')->sum('amount');
         
-        // Dapatkan jumlah pembayaran mingguan untuk ditampilkan di Blade
-        $weeklyPaymentAmount = WeeklyPayment::getWeeklyPaymentAmount();
-        
         return view('bendahara.weekly-payments', compact(
             'paymentsByStudent',
             'totalStudents',
@@ -309,6 +382,7 @@ class BendaharaController extends Controller
             'weeksInMonth',
             'wednesdayDates',
             'weeklyPaymentAmount',
+            'kasSettingWarning',
             'currentMonthName',
             'prevMonth',
             'prevYear',
@@ -397,8 +471,11 @@ class BendaharaController extends Controller
         $nextMonth = ($month == 12) ? 1 : $month + 1;
         $nextYear = ($month == 12) ? $year + 1 : $year;
         
+        $monthlySetting = KasSetting::getNominal((int) $month, (int) $year);
+        $weeklyPaymentAmount = $monthlySetting ?? 0;
+
         // Sinkronkan tagihan untuk bulan yang dipilih (idempoten)
-        $this->generateMonthlyBills($month, $year);
+        $this->generateMonthlyBills($month, $year, $weeklyPaymentAmount);
         
         $payments = WeeklyPayment::with(['student', 'transaction'])
             ->where('month', $month)
@@ -410,7 +487,9 @@ class BendaharaController extends Controller
         $paymentsByStudent = $payments->groupBy('student_id');
         
         $weeksInMonth = WeeklyPayment::getWeeksInMonth($month, $year);
-        $weeklyPaymentAmount = WeeklyPayment::getWeeklyPaymentAmount();
+        $kasSettingWarning = $monthlySetting === null
+            ? 'Nominal kas bulan ini belum diatur. Silakan atur di menu Pengaturan Kas.'
+            : null;
         
         $totalStudents = User::where('role', 'siswa')->where('is_active', true)->count();
         $totalBills = $payments->count();
@@ -431,6 +510,7 @@ class BendaharaController extends Controller
             'unpaidAmount',
             'weeksInMonth',
             'weeklyPaymentAmount',
+            'kasSettingWarning',
             'month',
             'year',
             'currentMonthName',
@@ -448,7 +528,8 @@ class BendaharaController extends Controller
             'student_id' => 'required|exists:users,id',
             'week_number' => 'required|integer|min:1',  // Dinamis: jumlah minggu bisa berbeda per bulan
             'month' => 'required|integer|min:1|max:12',
-            'year' => 'required|integer|min:2020|max:2030'
+            'year' => 'required|integer|min:2020|max:2030',
+            'transaction_id' => 'nullable|exists:transactions,id'
         ]);
 
         // Validasi tambahan: minggu tidak boleh melebihi jumlah minggu di bulan tersebut
@@ -473,25 +554,10 @@ class BendaharaController extends Controller
             ], 404);
         }
 
-        // Cari transaksi terbaru yang bisa digunakan (gunakan jumlah dari pengaturan)
-        $amountPerWeek = WeeklyPayment::getWeeklyPaymentAmount();
-        $transaction = Transaction::where('type', 'income')
-            ->where('amount', $amountPerWeek)
-            ->whereNull('weekly_payment_id')
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        if (!$transaction) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak ada transaksi yang tersedia. Silahkan input transaksi terlebih dahulu.'
-            ], 404);
-        }
-
         return response()->json([
             'success' => true,
             'payment' => $payment,
-            'transaction_id' => $transaction->id
+            'transaction_id' => $request->transaction_id
         ]);
     }
 
@@ -760,10 +826,10 @@ class BendaharaController extends Controller
     /**
      * Buat tagihan bulanan - menggunakan syncMonthlyBills yang idempoten
      */
-    private function generateMonthlyBills($month, $year)
+    private function generateMonthlyBills($month, $year, $amountPerWeek = null)
     {
         // Gunakan syncMonthlyBills yang idempoten
-        return WeeklyPayment::syncMonthlyBills($month, $year);
+        return WeeklyPayment::syncMonthlyBills($month, $year, $amountPerWeek);
     }
 }
 

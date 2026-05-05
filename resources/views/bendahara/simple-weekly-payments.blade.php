@@ -244,7 +244,7 @@
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah:</label>
-                <div class="p-2 bg-green-100 rounded font-semibold">Rp 5.000</div>
+                <div class="p-2 bg-green-100 rounded font-semibold">Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}</div>
             </div>
             
             <div>
@@ -333,7 +333,8 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
                     student_id: formData.get('student_id'),
                     week_number: formData.get('week_number'),
                     month: formData.get('month'),
-                    year: formData.get('year')
+                    year: formData.get('year'),
+                    transaction_id: data.transaction.id
                 })
             });
         } else {

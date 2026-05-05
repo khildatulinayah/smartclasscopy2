@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Laporan Pembayaran Siswa - <?php echo e($monthName); ?></title>
+    <center>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Arial', sans-serif; line-height: 1.3; color: #333; background: white; }

@@ -28,5 +28,19 @@ class Setting extends Model
         );
         return $value;
     }
+
+    public static function getKasNominal($default = 5000)
+    {
+        $kasNominal = static::where('key', 'kas_nominal')->value('value');
+
+        if ($kasNominal !== null) {
+            return (int) $kasNominal;
+        }
+
+        // Backward compatibility for old key.
+        $legacyNominal = static::where('key', 'weekly_payment_amount')->value('value');
+
+        return $legacyNominal !== null ? (int) $legacyNominal : (int) $default;
+    }
 }
 

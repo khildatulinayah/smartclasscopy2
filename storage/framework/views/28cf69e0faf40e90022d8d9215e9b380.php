@@ -60,6 +60,16 @@
         <?php endif; ?>
     </div>
 
+    <?php if(!empty($kasSettingWarning)): ?>
+        <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
+            <h3 class="text-sm font-semibold text-orange-800">Nominal Belum Diatur</h3>
+            <p class="text-sm text-orange-700 mt-1"><?php echo e($kasSettingWarning); ?></p>
+            <a href="<?php echo e(route('bendahara.kas.settings', ['month' => $month, 'year' => $year])); ?>" class="inline-block mt-3 text-sm font-semibold text-orange-700 hover:text-orange-900">
+                Buka Pengaturan Kas
+            </a>
+        </div>
+    <?php endif; ?>
+
     
     <?php if(isset($isCurrentMonth) && $isCurrentMonth): ?>
         <?php if(isset($isWednesday) && $isWednesday): ?>
@@ -402,7 +412,10 @@
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah:</label>
-                <div class="px-3 py-2 bg-green-100 rounded-lg text-sm font-bold text-green-700">Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></div>
+                <div class="px-3 py-2 bg-green-100 rounded-lg text-sm font-bold text-green-700">
+                    Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?>
+
+                </div>
             </div>
             
             <div>
@@ -628,6 +641,7 @@ function showPaymentModal(paymentId, studentName, week, studentId) {
     });
     
     if (paymentIdElement) paymentIdElement.value = paymentId;
+    if (paymentIdElement) paymentIdElement.dataset.studentId = studentId;
     if (studentNameElement) studentNameElement.textContent = studentName;
     if (weekNumberElement) weekNumberElement.textContent = week;
     
@@ -669,11 +683,14 @@ document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
     const paymentId = document.getElementById('payment_id').value;
     const paymentDate = document.getElementById('payment_date').value;
     const description = document.getElementById('description').value;
+    const month = <?php echo e($month); ?>;
+    const year = <?php echo e($year); ?>;
+    const weekNumber = document.getElementById('week_number').textContent;
     
     console.log('Form data:', {paymentId, paymentDate, description});
     
     // Get student_id from the payment data
-    const studentId = document.getElementById('payment_id').dataset.studentId || 1;
+    const studentId = document.getElementById('payment_id').dataset.studentId;
     
     // Show loading
     const submitBtn = this.querySelector('button[type="submit"]');
@@ -692,9 +709,11 @@ document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
         body: JSON.stringify({
             student_id: studentId,
             type: 'income',
-            amount: <?php echo e($weeklyPaymentAmount); ?>,
             date: paymentDate,
-            description: description
+            description: description,
+            week_number: weekNumber,
+            month: month,
+            year: year
         })
     })
     .then(response => {

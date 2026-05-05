@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\Transaction;
 use App\Models\WeeklyPayment;
 use App\Models\Holiday;
+use App\Models\KasSetting;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -65,7 +66,7 @@ class SiswaController extends Controller
                                 ->get();
         
         // Calculate payment statistics
-        $totalWeeks = 4;
+        $totalWeeks = WeeklyPayment::getWeeksInMonth($currentMonth, $currentYear);
         $paidWeeks = $weeklyPayments->where('status', 'paid')->count();
         $unpaidWeeks = $weeklyPayments->where('status', 'unpaid')->count();
         $totalKasBulanan = $weeklyPayments->sum('amount');
@@ -190,9 +191,10 @@ class SiswaController extends Controller
                                 ->get();
         
         // Calculate payment statistics
-        $totalWeeks = 4;
+        $totalWeeks = WeeklyPayment::getWeeksInMonth($month, $year);
         $paidWeeks = $weeklyPayments->where('status', 'paid')->count();
         $kasSudahBayar = $weeklyPayments->where('status', 'paid')->sum('amount');
+        $currentKasNominal = KasSetting::getNominal((int) $month, (int) $year) ?? 0;
         
         // Get payment history for specified month
         $paymentHistory = Transaction::where('student_id', $student->id)
@@ -207,6 +209,7 @@ class SiswaController extends Controller
             'totalWeeks',
             'paidWeeks',
             'kasSudahBayar',
+            'currentKasNominal',
             'paymentHistory',
             'currentDate',
             'prevMonth',

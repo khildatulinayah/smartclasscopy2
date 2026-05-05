@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\Transaction;
 use App\Models\WeeklyPayment;
 use App\Models\Holiday;
+use App\Models\KasSetting;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -78,10 +79,12 @@ class AdminController extends Controller
 
     private function createDefaultCashTransaction($studentId)
     {
+        $kasNominal = KasSetting::getNominal(now()->month, now()->year) ?? 0;
+
         Transaction::create([
             'student_id' => $studentId,
             'type' => 'income',
-            'amount' => 5000,
+            'amount' => $kasNominal,
             'description' => 'Kas awal siswa',
             'date' => now(),
             'created_by' => auth()->id()
@@ -92,14 +95,16 @@ class AdminController extends Controller
     {
         $currentMonth = now()->month;
         $currentYear = now()->year;
+        $weeksInMonth = WeeklyPayment::getWeeksInMonth($currentMonth, $currentYear);
+        $kasNominal = KasSetting::getNominal($currentMonth, $currentYear) ?? 0;
         
-        for ($week = 1; $week <= 4; $week++) {
+        for ($week = 1; $week <= $weeksInMonth; $week++) {
             WeeklyPayment::create([
                 'student_id' => $studentId,
                 'week_number' => $week,
                 'month' => $currentMonth,
                 'year' => $currentYear,
-                'amount' => 5000,
+                'amount' => $kasNominal,
                 'status' => 'unpaid',
                 'payment_date' => null,
                 'transaction_id' => null,
@@ -189,6 +194,7 @@ class AdminController extends Controller
         
         // Get Wednesday dates for the month
         $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($month, $year);
+        $currentKasNominal = KasSetting::getNominal((int) $month, (int) $year) ?? 0;
         
         return view('admin.monitor_kas', compact(
             'weeklyPayments',
@@ -203,7 +209,8 @@ class AdminController extends Controller
             'monthName',
             'prevDate',
             'nextDate',
-            'wednesdayDates'
+            'wednesdayDates',
+            'currentKasNominal'
         ));
     }
     

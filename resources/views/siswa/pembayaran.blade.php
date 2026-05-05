@@ -83,7 +83,7 @@
                         <h2>Ringkasan Pembayaran {{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</h2>
                         <div class="summary-period">
                             <span class="period-label">Periode:</span>
-                            <span class="period-value">Minggu 1-4</span>
+                            <span class="period-value">Minggu 1-{{ $totalWeeks }}</span>
                         </div>
                     </div>
                     
@@ -100,7 +100,7 @@
                         <div class="summary-details">
                             <div class="detail-row">
                                 <span class="detail-label">Total Minggu:</span>
-                                <span class="detail-value">{{ $totalWeeks ?? 4 }}</span>
+                                <span class="detail-value">{{ $totalWeeks ?? 0 }}</span>
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Sudah Dibayar:</span>
@@ -108,7 +108,7 @@
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Belum Dibayar:</span>
-                                <span class="detail-value unpaid">{{ ($totalWeeks - $paidWeeks) ?? 4 }}</span>
+                                <span class="detail-value unpaid">{{ max(($totalWeeks - $paidWeeks), 0) }}</span>
                             </div>
                             <div class="detail-row total">
                                 <span class="detail-label">Total Pembayaran:</span>
@@ -143,7 +143,7 @@
                             <div class="payment-details">
                                 <div class="payment-amount">
                                     <span class="amount-label">Jumlah:</span>
-                                    <span class="amount-value">Rp {{ number_format($payment->amount ?? 15000, 0, ',', '.') }}</span>
+                                    <span class="amount-value">Rp {{ number_format($payment->amount ?? $currentKasNominal, 0, ',', '.') }}</span>
                                 </div>
                                 
                                 @if($payment->status == 'paid')

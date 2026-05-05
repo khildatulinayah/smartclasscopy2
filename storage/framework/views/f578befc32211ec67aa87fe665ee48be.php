@@ -55,9 +55,10 @@
                             </button>
                             <button type="button" onclick="downloadLaporanPDF()" class="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
                                 <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                 </svg>
-                                PDF
+                                Preview PDF
                             </button>
                         </div>
                     </form>
@@ -148,7 +149,7 @@
                             </div>
                             <div>
                                 <div class="font-semibold text-gray-800">Pilih Format</div>
-                                <div class="text-sm text-gray-600">Cetak (HTML) atau PDF</div>
+                                <div class="text-sm text-gray-600">Cetak (HTML) atau Preview PDF</div>
                             </div>
                         </div>
                         <div class="flex gap-4">
@@ -165,8 +166,8 @@
                                 <span class="text-blue-600 font-bold text-sm">4</span>
                             </div>
                             <div>
-                                <div class="font-semibold text-gray-800">Download/Print</div>
-                                <div class="text-sm text-gray-600">PDF bisa di-download atau dicetak</div>
+                                <div class="font-semibold text-gray-800">Preview & Download</div>
+                                <div class="text-sm text-gray-600">PDF tampil di browser, bisa download dari browser</div>
                             </div>
                         </div>
                     </div>
