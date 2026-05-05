@@ -162,19 +162,21 @@
                                 <table class="data-table">
                                     <thead>
                                         <tr>
+                                            <th class="text-center">No</th>
                                             <th>Nama Siswa</th>
                                             <th>Status Absensi</th>
                                             <th>Jam Masuk</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <?php
                                                 $attendance = $attendances->get($student->id);
                                                 $status = $attendance ? $attendance->status : 'belum_absen';
                                                 $time = $attendance ? $attendance->attendance_time : '-';
                                             ?>
                                             <tr>
+                                                <td class="text-center font-semibold"><?php echo e($index + 1); ?></td>
                                                 <td>
                                                     <div class="font-medium"><?php echo e($student->name); ?></div>
                                                 </td>

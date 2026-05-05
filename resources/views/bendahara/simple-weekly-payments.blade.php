@@ -85,6 +85,7 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
+                                    <th class="text-center">No</th>
                                     <th>Siswa</th>
                                     <th class="text-center">Minggu 1</th>
                                     <th class="text-center">Minggu 2</th>
@@ -95,11 +96,16 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @php
+                                    $studentIndex = 0;
+                                @endphp
                                 @forelse($paymentsByStudent ?? [] as $studentId => $payments)
                                 @php
+                                    $index = ++$studentIndex;
                                     $paidCount = $payments->where('status', 'paid')->count();
                                 @endphp
                                 <tr class="hover:bg-gray-50">
+                                    <td class="text-center font-semibold">{{ $index }}</td>
                                     <td class="font-semibold">{{ $payments->first()->student->name ?? 'Unknown' }}</td>
                                     @for($week = 1; $week <= 4; $week++)
                                         @php
@@ -129,7 +135,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-8 text-gray-500">
+                                    <td colspan="8" class="text-center py-8 text-gray-500">
                                         Belum ada data pembayaran untuk bulan {{ $currentMonthName ?? \Carbon\Carbon::create($year ?? now()->year, $month ?? now()->month)->locale('id')->translatedFormat('F Y') }}
                                     </td>
                                 </tr>

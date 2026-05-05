@@ -105,47 +105,48 @@
                         <div class="overflow-x-auto">
                             <table class="data-table">
                                 <thead>
+                                <tr>
+                                    <th class="text-center">No</th>
+                                    <th>Nama Siswa</th>
+                                    <th class="text-center">Hadir</th>
+                                    <th class="text-center">Sakit</th>
+                                    <th class="text-center">Izin</th>
+                                    <th class="text-center">Alpha</th>
+                                    <th class="text-center">Total</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <?php
+                                        $studentAttendances = $attendances->get($student->id, collect());
+                                        $hadir = $studentAttendances->where('status', 'hadir')->count();
+                                        $sakit = $studentAttendances->where('status', 'sakit')->count();
+                                        $izin = $studentAttendances->where('status', 'izin')->count();
+                                        $alpha = $studentAttendances->where('status', 'alpha')->count();
+                                        $total = $studentAttendances->count();
+                                    ?>
                                     <tr>
-                                        <th>Nama Siswa</th>
-                                        <th class="text-center">Hadir</th>
-                                        <th class="text-center">Sakit</th>
-                                        <th class="text-center">Izin</th>
-                                        <th class="text-center">Alpha</th>
-                                        <th class="text-center">Total</th>
-                                        <th class="text-center">Aksi</th>
+                                        <td class="text-center"><?php echo e($index + 1); ?></td>
+                                        <td class="font-semibold"><?php echo e($student->name); ?></td>
+                                        <td class="text-center"><span class="status-badge success px-3 py-1"><?php echo e($hadir); ?></span></td>
+                                        <td class="text-center"><span class="status-badge warning px-3 py-1"><?php echo e($sakit); ?></span></td>
+                                        <td class="text-center"><span class="status-badge info px-3 py-1"><?php echo e($izin); ?></span></td>
+                                        <td class="text-center"><span class="status-badge danger px-3 py-1"><?php echo e($alpha); ?></span></td>
+                                        <td class="text-center">
+                                            <span class="font-bold text-lg px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full text-blue-800"><?php echo e($total); ?></span>
+                                        </td>
+                                        <td class="text-center">
+                                            <?php if($total > 0): ?>
+                                                <button onclick="showDetail(<?php echo e($student->id); ?>)" class="feature-btn text-sm px-4 py-2" style="background: #3b82f6; min-width: 100px;">Lihat Detail</button>
+                                            <?php else: ?>
+                                                <span class="status-badge secondary px-3 py-1">—</span>
+                                            <?php endif; ?>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <?php
-                                            $studentAttendances = $attendances->get($student->id, collect());
-                                            $hadir = $studentAttendances->where('status', 'hadir')->count();
-                                            $sakit = $studentAttendances->where('status', 'sakit')->count();
-                                            $izin = $studentAttendances->where('status', 'izin')->count();
-                                            $alpha = $studentAttendances->where('status', 'alpha')->count();
-                                            $total = $studentAttendances->count();
-                                        ?>
-                                        <tr>
-                                            <td class="font-semibold"><?php echo e($student->name); ?></td>
-                                            <td class="text-center"><span class="status-badge success px-3 py-1"><?php echo e($hadir); ?></span></td>
-                                            <td class="text-center"><span class="status-badge warning px-3 py-1"><?php echo e($sakit); ?></span></td>
-                                            <td class="text-center"><span class="status-badge info px-3 py-1"><?php echo e($izin); ?></span></td>
-                                            <td class="text-center"><span class="status-badge danger px-3 py-1"><?php echo e($alpha); ?></span></td>
-                                            <td class="text-center">
-                                                <span class="font-bold text-lg px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full text-blue-800"><?php echo e($total); ?></span>
-                                            </td>
-                                            <td class="text-center">
-                                                <?php if($total > 0): ?>
-                                                    <button onclick="showDetail(<?php echo e($student->id); ?>)" class="feature-btn text-sm px-4 py-2" style="background: #3b82f6; min-width: 100px;">Lihat Detail</button>
-                                                <?php else: ?>
-                                                    <span class="status-badge secondary px-3 py-1">—</span>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                </tbody>
-                            </table>
-                        </div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>

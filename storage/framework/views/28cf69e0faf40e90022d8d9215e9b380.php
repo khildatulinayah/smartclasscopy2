@@ -209,8 +209,12 @@
     
     <!-- Daftar Pembayaran per Siswa -->
     <div class="space-y-4">
+        <?php
+            $studentIndex = 0;
+        ?>
         <?php $__currentLoopData = $paymentsByStudent; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $payments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <?php
+                $index = ++$studentIndex;
                 $totalPaid = $payments->where('status', 'paid')->sum('amount');
                 $totalBill = $payments->sum('amount');
                 $totalArrears = $totalBill - $totalPaid;
@@ -222,7 +226,10 @@
             
             <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800"><?php echo e($payments->first()->student->name); ?></h3>
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full font-bold text-sm mr-3"><?php echo e($index); ?></span>
+                        <h3 class="text-lg font-semibold text-gray-800"><?php echo e($payments->first()->student->name); ?></h3>
+                    </div>
                     <div class="text-right">
                         <div class="text-lg font-bold text-gray-800">Rp <?php echo e(number_format($totalBill, 0, ',', '.')); ?></div>
                         <div class="text-sm text-gray-500">Total Tagihan</div>
@@ -336,6 +343,9 @@
             
             <!-- Daftar Siswa Menunggak -->
             <div class="space-y-4">
+                <?php
+                    $arrearsIndex = 0;
+                ?>
                 <?php $__currentLoopData = $paymentsByStudent; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $payments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <?php
                     $unpaidPayments = $payments->where('status', 'unpaid');
@@ -343,12 +353,14 @@
                         continue;
                     }
                     
+                    $arrearsIndex++;
                     $totalArrears = $unpaidPayments->sum('amount');
                     $unpaidWeeks = $unpaidPayments->pluck('week_number');
                     ?>
                     <div class="bg-red-50 border border-red-200 rounded-lg p-4">
                         <div class="flex justify-between items-center">
-                            <div>
+                            <div class="flex items-center">
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-red-100 text-red-800 rounded-full font-bold text-xs mr-2"><?php echo e($arrearsIndex); ?></span>
                                 <h3 class="text-sm font-semibold text-gray-800"><?php echo e($payments->first()->student->name); ?></h3>
                                 <p class="text-xs text-gray-600 mt-1">
                                     Menunggak <?php echo e($unpaidPayments->count()); ?> minggu:<br>
@@ -427,7 +439,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan:</label>
                 <input type="text" id="description" name="description" 
-                       placeholder="Pembayaran kas mingguan" 
+                       placeholder="PEMBAYARAN KAS MINGGUAN" 
                        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full">
             </div>
             
@@ -480,7 +492,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan:</label>
                 <input type="text" id="arrears_description" name="description" 
-                       placeholder="Pelunasan tunggakan kas" 
+                       placeholder="PELUNASAN TUNGGAKAN KAS" 
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
             </div>
             
@@ -648,7 +660,16 @@ function showPaymentModal(paymentId, studentName, week, studentId) {
     // Set current date and default description
     const today = new Date().toISOString().split('T')[0];
     if (paymentDateElement) paymentDateElement.value = today;
-    if (descriptionElement) descriptionElement.value = `Pembayaran kas Minggu ${week} - ${studentName}`;
+    
+    // Get month name in uppercase
+    const monthNames = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 
+                       'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentMonth = parseInt(urlParams.get('month')) || new Date().getMonth() + 1;
+    const currentYear = parseInt(urlParams.get('year')) || new Date().getFullYear();
+    const monthName = monthNames[currentMonth - 1];
+    
+    if (descriptionElement) descriptionElement.value = `PEMBAYARAN KAS MINGGU ${week} ${monthName} ${currentYear} - ${studentName}`;
     
     console.log('Form values set, showing modal...');
     
@@ -832,7 +853,13 @@ function showArrearsModal(studentId, studentName, totalArrears, weeks) {
     
     // Set date and description
     document.getElementById('arrears_date').value = new Date().toISOString().split('T')[0];
-    document.getElementById('arrears_description').value = `Pelunasan tunggakan kas - ${weeksArray}`;
+    
+    // Get month name in uppercase
+    const monthNames = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 
+                       'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
+    const monthName = monthNames[currentMonth - 1];
+    
+    document.getElementById('arrears_description').value = `PELUNASAN TUNGGAKAN KAS ${monthName} ${currentYear} - ${weeksArray}`;
     
     // Show modal
     modal.classList.remove('hidden');

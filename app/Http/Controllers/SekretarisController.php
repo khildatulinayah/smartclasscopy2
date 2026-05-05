@@ -19,7 +19,7 @@ class SekretarisController extends Controller
         $students = User::where('role', 'siswa')
                         ->where('is_active', true)
                         ->with('student')
-                        ->orderBy('name')
+                        ->orderBy('name', 'asc')
                         ->get();
         
         // Ambil absensi hari ini
@@ -78,7 +78,7 @@ class SekretarisController extends Controller
     public function simpleAttendance(Request $request)
     {
         $selectedDate = $request->input('date', now()->toDateString());
-        $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name')->get();
+        $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name', 'asc')->get();
         
         $holiday = Holiday::where('date', $selectedDate)->first();
         
@@ -156,7 +156,7 @@ class SekretarisController extends Controller
         $currentMonth = request('month', now()->month);
         $currentYear = now()->year;
         
-        $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name')->get();
+        $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name', 'asc')->get();
         
         // Get all attendance data for current month (not grouped yet)
         $allAttendances = Attendance::whereMonth('date', $currentMonth)
@@ -328,7 +328,7 @@ class SekretarisController extends Controller
         $students = User::where('role', 'siswa')
                         ->where('is_active', true)
                         ->with('student')
-                        ->orderBy('name')
+                        ->orderBy('name', 'asc')
                         ->get();
         
         $attendances = Attendance::whereMonth('date', $month)
@@ -387,7 +387,7 @@ class SekretarisController extends Controller
         $students = User::where('role', 'siswa')
                         ->where('is_active', true)
                         ->with('student')
-                        ->orderBy('name')
+                        ->orderBy('name', 'asc')
                         ->get();
         
         $attendances = Attendance::whereMonth('date', $month)

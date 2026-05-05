@@ -66,6 +66,7 @@
                     <table class="data-table" id="studentsTable">
                         <thead>
                             <tr>
+                                <th class="text-center">No</th>
                                 <th>Foto</th>
                                 <th>Nama</th>
                                 <th>Email</th>
@@ -76,8 +77,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($students as $student)
-                            <tr data-name="{{ strtolower($student->name) }}" data-email="{{ strtolower($student->email) }}" data-role="{{ strtolower($student->role) }}">
+                            @foreach($students as $index => $student)
+                            <tr data-no="{{ $index + 1 }}" data-name="{{ strtolower($student->name) }}" data-email="{{ strtolower($student->email) }}" data-role="{{ strtolower($student->role) }}">
+                                <td class="text-center font-semibold">{{ $index + 1 }}</td>
                                 <td>
                                     <img src="https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=3b82f6&color=fff&size=40" alt="{{ $student->name }}" class="avatar-img">
                                 </td>

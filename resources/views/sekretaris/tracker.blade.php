@@ -106,47 +106,48 @@
                         <div class="overflow-x-auto">
                             <table class="data-table">
                                 <thead>
+                                <tr>
+                                    <th class="text-center">No</th>
+                                    <th>Nama Siswa</th>
+                                    <th class="text-center">Hadir</th>
+                                    <th class="text-center">Sakit</th>
+                                    <th class="text-center">Izin</th>
+                                    <th class="text-center">Alpha</th>
+                                    <th class="text-center">Total</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($students as $index => $student)
+                                    @php
+                                        $studentAttendances = $attendances->get($student->id, collect());
+                                        $hadir = $studentAttendances->where('status', 'hadir')->count();
+                                        $sakit = $studentAttendances->where('status', 'sakit')->count();
+                                        $izin = $studentAttendances->where('status', 'izin')->count();
+                                        $alpha = $studentAttendances->where('status', 'alpha')->count();
+                                        $total = $studentAttendances->count();
+                                    @endphp
                                     <tr>
-                                        <th>Nama Siswa</th>
-                                        <th class="text-center">Hadir</th>
-                                        <th class="text-center">Sakit</th>
-                                        <th class="text-center">Izin</th>
-                                        <th class="text-center">Alpha</th>
-                                        <th class="text-center">Total</th>
-                                        <th class="text-center">Aksi</th>
+                                        <td class="text-center">{{ $index + 1 }}</td>
+                                        <td class="font-semibold">{{ $student->name }}</td>
+                                        <td class="text-center"><span class="status-badge success px-3 py-1">{{ $hadir }}</span></td>
+                                        <td class="text-center"><span class="status-badge warning px-3 py-1">{{ $sakit }}</span></td>
+                                        <td class="text-center"><span class="status-badge info px-3 py-1">{{ $izin }}</span></td>
+                                        <td class="text-center"><span class="status-badge danger px-3 py-1">{{ $alpha }}</span></td>
+                                        <td class="text-center">
+                                            <span class="font-bold text-lg px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full text-blue-800">{{ $total }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            @if($total > 0)
+                                                <button onclick="showDetail({{ $student->id }})" class="feature-btn text-sm px-4 py-2" style="background: #3b82f6; min-width: 100px;">Lihat Detail</button>
+                                            @else
+                                                <span class="status-badge secondary px-3 py-1">—</span>
+                                            @endif
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($students as $student)
-                                        @php
-                                            $studentAttendances = $attendances->get($student->id, collect());
-                                            $hadir = $studentAttendances->where('status', 'hadir')->count();
-                                            $sakit = $studentAttendances->where('status', 'sakit')->count();
-                                            $izin = $studentAttendances->where('status', 'izin')->count();
-                                            $alpha = $studentAttendances->where('status', 'alpha')->count();
-                                            $total = $studentAttendances->count();
-                                        @endphp
-                                        <tr>
-                                            <td class="font-semibold">{{ $student->name }}</td>
-                                            <td class="text-center"><span class="status-badge success px-3 py-1">{{ $hadir }}</span></td>
-                                            <td class="text-center"><span class="status-badge warning px-3 py-1">{{ $sakit }}</span></td>
-                                            <td class="text-center"><span class="status-badge info px-3 py-1">{{ $izin }}</span></td>
-                                            <td class="text-center"><span class="status-badge danger px-3 py-1">{{ $alpha }}</span></td>
-                                            <td class="text-center">
-                                                <span class="font-bold text-lg px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full text-blue-800">{{ $total }}</span>
-                                            </td>
-                                            <td class="text-center">
-                                                @if($total > 0)
-                                                    <button onclick="showDetail({{ $student->id }})" class="feature-btn text-sm px-4 py-2" style="background: #3b82f6; min-width: 100px;">Lihat Detail</button>
-                                                @else
-                                                    <span class="status-badge secondary px-3 py-1">—</span>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>

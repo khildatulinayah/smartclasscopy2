@@ -64,6 +64,7 @@
                     <table class="data-table" id="studentsTable">
                         <thead>
                             <tr>
+                                <th class="text-center">No</th>
                                 <th>Foto</th>
                                 <th>Nama</th>
                                 <th>Email</th>
@@ -74,8 +75,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <tr data-name="<?php echo e(strtolower($student->name)); ?>" data-email="<?php echo e(strtolower($student->email)); ?>" data-role="<?php echo e(strtolower($student->role)); ?>">
+                            <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <tr data-no="<?php echo e($index + 1); ?>" data-name="<?php echo e(strtolower($student->name)); ?>" data-email="<?php echo e(strtolower($student->email)); ?>" data-role="<?php echo e(strtolower($student->role)); ?>">
+                                <td class="text-center font-semibold"><?php echo e($index + 1); ?></td>
                                 <td>
                                     <img src="https://ui-avatars.com/api/?name=<?php echo e(urlencode($student->name)); ?>&background=3b82f6&color=fff&size=40" alt="<?php echo e($student->name); ?>" class="avatar-img">
                                 </td>

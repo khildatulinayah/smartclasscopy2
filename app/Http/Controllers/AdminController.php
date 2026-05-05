@@ -153,7 +153,7 @@ class AdminController extends Controller
 
     public function students()
     {
-        $students = User::where('role', 'siswa')->get();
+        $students = User::where('role', 'siswa')->orderBy('name', 'asc')->get();
         return view('admin.students', compact('students'));
     }
 

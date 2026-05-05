@@ -164,19 +164,21 @@
                                 <table class="data-table">
                                     <thead>
                                         <tr>
+                                            <th class="text-center">No</th>
                                             <th>Nama Siswa</th>
                                             <th>Status Absensi</th>
                                             <th>Jam Masuk</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($students as $student)
+                                        @foreach($students as $index => $student)
                                             @php
                                                 $attendance = $attendances->get($student->id);
                                                 $status = $attendance ? $attendance->status : 'belum_absen';
                                                 $time = $attendance ? $attendance->attendance_time : '-';
                                             @endphp
                                             <tr>
+                                                <td class="text-center font-semibold">{{ $index + 1 }}</td>
                                                 <td>
                                                     <div class="font-medium">{{ $student->name }}</div>
                                                 </td>

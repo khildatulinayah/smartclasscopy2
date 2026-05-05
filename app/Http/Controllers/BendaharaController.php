@@ -314,7 +314,9 @@ class BendaharaController extends Controller
             ->where('month', $month)
             ->where('year', $year)
             ->orderBy('week_number')
-            ->orderBy('student_id')
+            ->join('users', 'users.id', '=', 'weekly_payments.student_id')
+            ->orderBy('users.name', 'asc')
+            ->select('weekly_payments.*')
             ->get();
         
         $paymentsByStudent = $payments->groupBy('student_id');
@@ -481,7 +483,9 @@ class BendaharaController extends Controller
             ->where('month', $month)
             ->where('year', $year)
             ->orderBy('week_number')
-            ->orderBy('student_id')
+            ->join('users', 'users.id', '=', 'weekly_payments.student_id')
+            ->orderBy('users.name', 'asc')
+            ->select('weekly_payments.*')
             ->get();
         
         $paymentsByStudent = $payments->groupBy('student_id');
