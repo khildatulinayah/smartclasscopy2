@@ -90,14 +90,6 @@
                                     Pengeluaran
                                 </button>
                             </div>
-                            <div class="group-buttons">
-                                <button onclick="groupTransactions('none')" class="group-btn active" data-group="none">
-                                    Tidak Dikelompokkan
-                                </button>
-                                <button onclick="groupTransactions('type')" class="group-btn" data-group="type">
-                                    Kelompokkan Jenis
-                                </button>
-                            </div>
                         </div>
                         <div class="search-container">
                             <input type="text" id="searchTransaction" placeholder="Cari transaksi..." class="search-input">
@@ -154,75 +146,7 @@
                     </div>
                 </div>
 
-                <!-- Grouped View (Hidden by default) -->
-                <div id="groupedView" style="display: none;">
-                    <!-- Income Group -->
-                    <div class="transaction-group" id="incomeGroup">
-                        <div class="group-header income">
-                            <h3 class="group-title">
-                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Pemasukan
-                                <span class="group-count" id="incomeCount">0</span>
-                                <span class="group-amount income" id="incomeTotal">Rp 0</span>
-                            </h3>
-                        </div>
-                        <div class="group-table">
-                            <div class="table-container">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Tanggal</th>
-                                            <th>Siswa</th>
-                                            <th>Jumlah</th>
-                                            <th>Keterangan</th>
-                                            <th>Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="incomeTransactions">
-                                        <!-- Income transactions will be inserted here -->
-                                    </tbody>
-                                </table>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Expense Group -->
-                    <div class="transaction-group" id="expenseGroup">
-                        <div class="group-header expense">
-                            <h3 class="group-title">
-                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-                                </svg>
-                                Pengeluaran
-                                <span class="group-count" id="expenseCount">0</span>
-                                <span class="group-amount expense" id="expenseTotal">Rp 0</span>
-                            </h3>
-                        </div>
-                        <div class="group-table">
-                            <div class="table-container">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Tanggal</th>
-                                            <th>Siswa</th>
-                                            <th>Jumlah</th>
-                                            <th>Keterangan</th>
-                                            <th>Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="expenseTransactions">
-                                        <!-- Expense transactions will be inserted here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 </div>
@@ -562,11 +486,6 @@
     gap: 8px; 
 }
 
-.group-buttons { 
-    display: flex; 
-    gap: 8px; 
-}
-
 .filter-btn { 
     padding: 8px 16px; 
     border: 1px solid #e2e8f0; 
@@ -599,30 +518,6 @@
 .filter-btn[data-type="expense"].active { 
     background: #ef4444; 
     border-color: #ef4444; 
-}
-
-.group-btn { 
-    padding: 8px 16px; 
-    border: 1px solid #e2e8f0; 
-    border-radius: 8px; 
-    background: white; 
-    color: #64748b; 
-    font-size: 14px; 
-    font-weight: 500; 
-    cursor: pointer; 
-    transition: all 0.2s ease; 
-}
-
-.group-btn:hover { 
-    background: #f8fafc; 
-    border-color: #8b5cf6; 
-    color: #8b5cf6; 
-}
-
-.group-btn.active { 
-    background: #8b5cf6; 
-    border-color: #8b5cf6; 
-    color: white; 
 }
 
 .search-container { 
@@ -717,69 +612,6 @@
     color: #92400e; 
 }
 
-/* Grouping Styles */
-.transaction-group {
-    margin-bottom: 24px;
-}
-
-.group-header {
-    background: #f8fafc;
-    padding: 16px 24px;
-    border-radius: 12px;
-    margin-bottom: 12px;
-    border-left: 4px solid #3b82f6;
-}
-
-.group-header.income {
-    border-left-color: #10b981;
-    background: #f0fdf4;
-}
-
-.group-header.expense {
-    border-left-color: #ef4444;
-    background: #fef2f2;
-}
-
-.group-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.group-count {
-    background: #e2e8f0;
-    color: #64748b;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.group-amount {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1e293b;
-}
-
-.group-amount.income {
-    color: #10b981;
-}
-
-.group-amount.expense {
-    color: #ef4444;
-}
-
-.group-table {
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border: 1px solid #e2e8f0;
-}
 
 .detail-btn {
     display: flex;
@@ -880,124 +712,13 @@ document.addEventListener('DOMContentLoaded', function() {
         applyFiltersAndSearch();
     };
     
-    // Group functionality
-    window.groupTransactions = function(groupType) {
-        // Update button states
-        document.querySelectorAll('.group-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-group="${groupType}"]`).classList.add('active');
         
-        const normalView = document.getElementById('normalView');
-        const groupedView = document.getElementById('groupedView');
-        
-        if (groupType === 'none') {
-            normalView.style.display = 'block';
-            groupedView.style.display = 'none';
-        } else if (groupType === 'type') {
-            normalView.style.display = 'none';
-            groupedView.style.display = 'block';
-            populateGroupedView();
-        }
-        
-        applyFiltersAndSearch();
-    };
-    
-    // Populate grouped view
-    function populateGroupedView() {
-        const incomeTransactions = transactionsData.filter(t => t.typeLower === 'income');
-        const expenseTransactions = transactionsData.filter(t => t.typeLower === 'expense');
-        
-        // Update income group
-        const incomeContainer = document.getElementById('incomeTransactions');
-        const incomeCount = document.getElementById('incomeCount');
-        const incomeTotal = document.getElementById('incomeTotal');
-        
-        incomeContainer.innerHTML = '';
-        let incomeAmount = 0;
-        
-        incomeTransactions.forEach((transaction, index) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${transaction.date}</td>
-                <td>${transaction.student}</td>
-                <td class="font-semibold">${transaction.amount}</td>
-                <td>${transaction.description}</td>
-                <td>
-                    <button class="detail-btn" onclick="showTransactionDetail(${transaction.element.dataset.id})" title="Lihat detail transaksi">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                        </svg>
-                        Detail
-                    </button>
-                </td>
-            `;
-            row.dataset.description = transaction.descriptionLower;
-            row.dataset.type = transaction.typeLower;
-            row.dataset.id = transaction.element.dataset.id;
-            row.dataset.receiptPath = transaction.receiptPath || '';
-            incomeContainer.appendChild(row);
-            
-            // Calculate total
-            incomeAmount += parseInt(transaction.amount.replace(/[^\d]/g, ''));
-        });
-        
-        incomeCount.textContent = incomeTransactions.length;
-        incomeTotal.textContent = 'Rp ' + incomeAmount.toLocaleString('id-ID');
-        
-        // Update expense group
-        const expenseContainer = document.getElementById('expenseTransactions');
-        const expenseCount = document.getElementById('expenseCount');
-        const expenseTotal = document.getElementById('expenseTotal');
-        
-        expenseContainer.innerHTML = '';
-        let expenseAmount = 0;
-        
-        expenseTransactions.forEach((transaction, index) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${transaction.date}</td>
-                <td>${transaction.student}</td>
-                <td class="font-semibold">${transaction.amount}</td>
-                <td>${transaction.description}</td>
-                <td>
-                    <button class="detail-btn" onclick="showTransactionDetail(${transaction.element.dataset.id})" title="Lihat detail transaksi">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                        </svg>
-                        Detail
-                    </button>
-                </td>
-            `;
-            row.dataset.description = transaction.descriptionLower;
-            row.dataset.type = transaction.typeLower;
-            row.dataset.id = transaction.element.dataset.id;
-            row.dataset.receiptPath = transaction.receiptPath || '';
-            expenseContainer.appendChild(row);
-            
-            // Calculate total
-            expenseAmount += parseInt(transaction.amount.replace(/[^\d]/g, ''));
-        });
-        
-        expenseCount.textContent = expenseTransactions.length;
-        expenseTotal.textContent = 'Rp ' + expenseAmount.toLocaleString('id-ID');
-    }
-    
     // Apply filters and search
     function applyFiltersAndSearch() {
         const query = searchTransactionInput ? searchTransactionInput.value.toLowerCase() : '';
         const activeFilter = document.querySelector('.filter-btn.active').dataset.type;
-        const isGrouped = document.querySelector('.group-btn.active').dataset.group === 'type';
         
-        const targetRows = isGrouped ? 
-            document.querySelectorAll('#incomeTransactions tr, #expenseTransactions tr') :
-            transactionsRows;
-        
-        targetRows.forEach(row => {
+        transactionsRows.forEach(row => {
             const description = row.dataset.description;
             const type = row.dataset.type;
             const matchesSearch = !query || description.includes(query) || type.includes(query);
@@ -1009,17 +730,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 row.style.display = 'none';
             }
         });
-        
-        // Hide empty groups in grouped view
-        if (isGrouped) {
-            const incomeGroup = document.getElementById('incomeGroup');
-            const expenseGroup = document.getElementById('expenseGroup');
-            const hasVisibleIncome = document.querySelectorAll('#incomeTransactions tr[style=""], #incomeTransactions tr:not([style])').length > 0;
-            const hasVisibleExpense = document.querySelectorAll('#expenseTransactions tr[style=""], #expenseTransactions tr:not([style])').length > 0;
-            
-            incomeGroup.style.display = (activeFilter === 'all' || activeFilter === 'income') && hasVisibleIncome ? 'block' : 'none';
-            expenseGroup.style.display = (activeFilter === 'all' || activeFilter === 'expense') && hasVisibleExpense ? 'block' : 'none';
-        }
     }
     
     // Search functionality

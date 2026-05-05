@@ -15,11 +15,17 @@
             <span>CRUD Siswa</span>
         </a>
         <a href="<?php echo e(route('admin.monitor.absensi')); ?>" class="nav-item <?php echo e(request()->routeIs('admin.monitor.absensi') ? 'active' : ''); ?>">
-            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5 0.5l.5.5 8.5a.5.5 0 01-.5-.5v-8a.5.5 0 011 0v8a.5.5 0 01-.5.5z"></path>
+            </svg>
             <span>Monitor Absensi</span>
         </a>
         <a href="<?php echo e(route('admin.monitor.pembayaran')); ?>" class="nav-item <?php echo e(request()->routeIs('admin.monitor.pembayaran') ? 'active' : ''); ?>">
-            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2m2 10h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2m-4 2H7a2 2 0 00-2 2v4a2 2 0 002 2h2"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h1m4 0h1"></path>
+            </svg>
             <span>Monitor Pembayaran</span>
         </a>
         <a href="<?php echo e(route('admin.monitor.keuangan')); ?>" class="nav-item <?php echo e(request()->routeIs('admin.monitor.keuangan') ? 'active' : ''); ?>">
