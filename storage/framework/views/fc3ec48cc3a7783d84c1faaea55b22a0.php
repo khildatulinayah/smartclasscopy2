@@ -232,7 +232,8 @@
 <style>
 /* Full dashboard styles copied from sekretaris/dashboard.blade.php */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-.dashboard-layout { display: flex; height: 100vh; background: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+html, body { height: 100%; }
+.dashboard-layout { display: flex; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; background: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 .sidebar { width: 280px; background: white; border-right: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
 .sidebar-header { padding: 24px 20px; border-bottom: 1px solid #e2e8f0; }
 .logo { display: flex; align-items: center; gap: 12px; }
@@ -252,11 +253,11 @@
 .logout-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: #fee2e2; color: #dc2626; border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
 .logout-btn:hover { background: #fecaca; }
 .logout-icon { width: 16px; height: 16px; }
-.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.main-content { flex: 1; padding: 32px; overflow-y: auto; }
+.main-area { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.main-content { flex: 1; min-height: 0; padding: 32px; overflow-y: auto; }
 .greeting-section { margin-bottom: 32px; }
 .greeting-title { font-size: 32px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
-.greeting-card { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+.greeting-card { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 32px; }
 .greeting-subtitle { font-size: 16px; color: #64748b; }
 .feature-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; }
 .feature-card { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: center; transition: all 0.2s ease; text-decoration: none; color: inherit; }
@@ -298,7 +299,17 @@
 .status-badge.info { background: #dbeafe; color: #1e40af; border-color: #3b82f6; }
 .status-badge.danger { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
 .status-badge.secondary { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
-.status-toggle { display: inline-flex; align-items: center; height: 32px; }
+.status-toggle { position: relative; display: inline-flex; align-items: center; height: 32px; }
+.status-toggle .peer.sr-only {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    opacity: 0 !important;
+    clip: auto !important;
+    clip-path: none !important;
+}
 .status-toggle input:checked + .status-badge { box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
 .status-container { min-height: 32px; display: flex; align-items: center; }
 .progress-container { margin: 16px 0; }
@@ -435,7 +446,7 @@
 }
 
 @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .tables-section { grid-template-columns: 1fr; } }
-@media (max-width: 768px) { .sidebar { width: 100%; position: absolute; z-index: 50; transform: translateX(-100%); } .main-content { padding: 20px; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .feature-cards { grid-template-columns: 1fr; } .lg\:flex-row { flex-direction: column; } 
+@media (max-width: 768px) { .sidebar { width: 100%; position: absolute; z-index: 50; transform: translateX(-100%); } .main-content { padding: 16px; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .feature-cards { grid-template-columns: 1fr; } .lg\:flex-row { flex-direction: column; } 
     .date-navigation-card { padding: 16px; }
     .date-nav-content { flex-direction: column; align-items: stretch; gap: 16px; }
     .date-picker-inline { min-width: 100%; }
