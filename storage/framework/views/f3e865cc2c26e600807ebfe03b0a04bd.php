@@ -222,10 +222,12 @@ function showDetail(studentId) {
                 
                 // Format status label
                 let statusLabel = attendance.status.charAt(0).toUpperCase() + attendance.status.slice(1).replace('_', ' ');
-                if (attendance.status === 'libur' && attendance.holiday_note) {
-                    statusLabel = `📅 ${attendance.holiday_note}`;
-                } else if (attendance.status === 'libur') {
-                    statusLabel = '📅 Hari Libur';
+                if (attendance.status === 'libur') {
+                    if (attendance.holiday_note) {
+                        statusLabel = `📅 ${attendance.holiday_note}`;
+                    } else {
+                        statusLabel = '📅 Hari Libur';
+                    }
                 }
                 
                 html += `

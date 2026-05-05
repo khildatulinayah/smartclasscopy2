@@ -202,9 +202,22 @@ class SekretarisController extends Controller
             foreach ($studentAttendances as $attendance) {
                 $dateString = $attendance->date->format('Y-m-d');
                 $isHoliday = in_array($dateString, $holidays);
+                $date = \Carbon\Carbon::create($currentYear, $currentMonth, $attendance->date->day);
+                $dayOfWeek = $date->dayOfWeek;
                 
-                // Skip counting 'belum_absen' if it's a holiday
-                if ($attendance->status === 'belum_absen' && $isHoliday) {
+                // Auto mark weekends as 'libur' if not already set
+                if (($dayOfWeek == 0 || $dayOfWeek == 6) && $attendance->status === 'belum_absen') {
+                    $attendance->status = 'libur';
+                    $attendance->holiday_note = 'Hari Libur Sabtu/Minggu';
+                }
+                // Auto mark holidays as 'libur' if not already set
+                elseif ($isHoliday && $attendance->status === 'belum_absen') {
+                    $attendance->status = 'libur';
+                    $attendance->holiday_note = 'Hari Libur';
+                }
+                
+                // Skip counting 'belum_absen' if it's a holiday or weekend
+                if ($attendance->status === 'belum_absen' && ($isHoliday || $dayOfWeek == 0 || $dayOfWeek == 6)) {
                     continue;
                 }
                 
@@ -264,14 +277,25 @@ class SekretarisController extends Controller
                           });
         
         // Transform data untuk JSON response yang aman
-        $data = $attendances->map(function ($attendance) use ($holidays) {
+        $data = $attendances->map(function ($attendance) use ($holidays, $month, $year) {
             $dateString = $attendance->date ? $attendance->date->format('Y-m-d') : null;
             $holidayNote = $holidays[$dateString] ?? null;
             
+            // Check if weekend
+            $date = \Carbon\Carbon::create($year, $month, $attendance->date->day);
+            $dayOfWeek = $date->dayOfWeek;
+            $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6);
+            
             // Jika hari libur dan status belum_absen, ubah menjadi 'libur'
             $status = $attendance->status;
-            if ($holidayNote && $status === 'belum_absen') {
+            $holidayNoteToUse = $holidayNote;
+            
+            if ($isWeekend && $status === 'belum_absen') {
                 $status = 'libur';
+                $holidayNoteToUse = 'Hari Libur Sabtu/Minggu';
+            } elseif ($holidayNote && $status === 'belum_absen') {
+                $status = 'libur';
+                $holidayNoteToUse = 'Hari Libur';
             }
             
             return [
@@ -283,7 +307,7 @@ class SekretarisController extends Controller
                 'created_by' => $attendance->created_by,
                 'created_at' => $attendance->created_at,
                 'updated_at' => $attendance->updated_at,
-                'holiday_note' => $holidayNote,
+                'holiday_note' => $holidayNoteToUse,
             ];
         });
         
