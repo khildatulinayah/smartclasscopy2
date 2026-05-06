@@ -13,26 +13,41 @@
                 </div>
             </section>
 
-            <section class="feature-cards">
-                <div class="feature-card">
-                    <div class="feature-icon blue"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-                    <h3 class="feature-title">Keuangan</h3>
-                    <p class="feature-description">Kelola pemasukan dan pengeluaran kas kelas</p>
-                    <a href="{{ route('bendahara.kas') }}" class="feature-btn">Kelola Keuangan</a>
+            <div class="features-container">
+                <section class="feature-cards">
+                    <div class="feature-card">
+                        <div class="feature-icon blue"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                        <h3 class="feature-title">Keuangan</h3>
+                        <p class="feature-description">Kelola pemasukan dan pengeluaran kas kelas</p>
+                        <a href="{{ route('bendahara.kas') }}" class="feature-btn">Kelola Keuangan</a>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon green"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>
+                        <h3 class="feature-title">Pembayaran Mingguan</h3>
+                        <p class="feature-description">Tracking pembayaran kas mingguan siswa</p>
+                        <a href="{{ route('bendahara.simple.weekly.payments') }}" class="feature-btn">Lihat Pembayaran</a>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon purple"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 10v2a2 2 0 01-2 2H9m-3-8h12M17 8v4m0 0H9"></path></svg></div>
+                        <h3 class="feature-title">Cetak Laporan</h3>
+                        <p class="feature-description">Laporan kas dan pembayaran siswa per bulan</p>
+                        <a href="{{ route('bendahara.laporan') }}" class="feature-btn">Cetak Laporan</a>
+                    </div>
+                </section>
+                
+                <!-- Pengaturan Kas di samping -->
+                <div class="feature-card side-card">
+                    <div class="feature-icon" style="background: #fef3c7; color: #f59e0b;">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Pengaturan Kas</h3>
+                    <p class="feature-description">Konfigurasi pengaturan kas kelas</p>
+                    <a href="{{ route('bendahara.kas.settings') }}" class="feature-btn">Pengaturan</a>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon green"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>
-                    <h3 class="feature-title">Pembayaran Mingguan</h3>
-                    <p class="feature-description">Tracking pembayaran kas mingguan siswa</p>
-                    <a href="{{ route('bendahara.simple.weekly.payments') }}" class="feature-btn">Lihat Pembayaran</a>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon purple"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 10v2a2 2 0 01-2 2H9m-3-8h12M17 8v4m0 0H9"></path></svg></div>
-                    <h3 class="feature-title">Cetak Laporan</h3>
-                    <p class="feature-description">Laporan kas dan pembayaran siswa per bulan</p>
-                    <a href="{{ route('bendahara.laporan') }}" class="feature-btn">Cetak Laporan</a>
-                </div>
-                            </section>
+            </div>
 
             @php $paymentPercent = $totalBills > 0 ? round(($paidBills / $totalBills) * 100) : 0; @endphp
 
@@ -141,7 +156,9 @@
     margin-bottom: 32px; 
 }
 .greeting-subtitle { font-size: 16px; color: #64748b; }
-.feature-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; }
+.features-container { display: flex; gap: 24px; margin-bottom: 32px; }
+.feature-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; flex: 1; }
+.side-card { width: calc((100% - 48px) / 4); min-width: 250px; max-width: 280px; }
 .feature-card { background: white; padding: 32px 24px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: center; transition: all 0.2s ease; }
 .feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
 .feature-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
@@ -201,8 +218,8 @@
 .text-center { text-align: center; }
 .py-4 { padding-top: 16px; padding-bottom: 16px; }
 .text-gray-500 { color: #6b7280; }
-@media (max-width: 1200px) { .stats-grid { grid-template-columns: 1fr; } .tables-section { grid-template-columns: 1fr; } }
-@media (max-width: 768px) { .sidebar { width: 260px; } .main-content { padding: 20px; } .feature-cards { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr; gap: 16px; } }
+@media (max-width: 1200px) { .stats-grid { grid-template-columns: 1fr; } .tables-section { grid-template-columns: 1fr; } .features-container { flex-direction: column; } .feature-cards { grid-template-columns: repeat(2, 1fr); } .side-card { width: 100%; min-width: auto; max-width: none; } }
+@media (max-width: 768px) { .sidebar { width: 260px; } .main-content { padding: 20px; } .features-container { flex-direction: column; } .feature-cards { grid-template-columns: 1fr; } .side-card { width: 100%; min-width: auto; max-width: none; } .stats-grid { grid-template-columns: 1fr; gap: 16px; } }
 </style>
 @endsection
 

@@ -269,4 +269,41 @@ class SiswaController extends Controller
         
         return $statusTexts[$status] ?? 'Hadir';
     }
+    
+    public function profile()
+    {
+        $student = auth()->user();
+        
+        return view('siswa.profile', compact(
+            'student'
+        ));
+    }
+    
+    public function updateProfile(Request $request)
+    {
+        $student = auth()->user();
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'gender' => 'nullable|in:L,P',
+            'profile_photo' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048',
+        ]);
+        
+        $updateData = [
+            'name' => $request->name,
+            'gender' => $request->gender,
+        ];
+        
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            $file = $request->file('profile_photo');
+            $filename = time() . '_' . $student->id . '.' . $file->getClientOriginalExtension();
+            $file->move(storage_path('app/public/storage/profile_photos'), $filename);
+            $updateData['profile_photo'] = $filename;
+        }
+        
+        $student->update($updateData);
+        
+        return redirect()->route('siswa.profile')->with('success', 'Profile berhasil diperbarui!');
+    }
 }

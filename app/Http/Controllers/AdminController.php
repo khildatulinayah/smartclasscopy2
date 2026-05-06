@@ -58,6 +58,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6',
+            'gender' => 'nullable|in:L,P',
         ]);
 
         $user = User::create([
@@ -66,6 +67,7 @@ class AdminController extends Controller
             'password' => bcrypt($request->password),
             'role' => 'siswa',
             'is_active' => true,
+            'gender' => $request->gender,
         ]);
 
         // Create default cash transaction for new student
@@ -126,20 +128,20 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $student->id,
+            'gender' => 'nullable|in:L,P',
         ]);
 
+        $updateData = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'gender' => $request->gender,
+        ];
+
         if ($request->password) {
-            $student->update([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => bcrypt($request->password),
-            ]);
-        } else {
-            $student->update([
-                'name' => $request->name,
-                'email' => $request->email,
-            ]);
+            $updateData['password'] = bcrypt($request->password);
         }
+
+        $student->update($updateData);
 
         return redirect()->route('admin.students')->with('success', 'Student updated successfully');
     }
@@ -250,30 +252,46 @@ class AdminController extends Controller
         // Check if the selected date is weekend
         $isWeekend = $date->isWeekend();
         
-        // Get attendance data for specific date
-        $attendances = Attendance::with('student')
-            ->whereDate('date', $date->format('Y-m-d'))
-            ->join('users', 'users.id', '=', 'attendances.student_id')
-            ->orderBy('users.name', 'asc')
-            ->select('attendances.*')
+        // Get all active students
+        $allStudents = User::where('role', 'siswa')
+            ->where('is_active', true)
+            ->orderBy('name', 'asc')
             ->get();
             
-        // If it's a holiday or weekend and no attendance data, don't show "belum absen"
-        if (($isHoliday || $isWeekend) && $attendances->isEmpty()) {
-            $attendances = collect(); // Empty collection
-            $totalHadir = 0;
-            $totalSakit = 0;
-            $totalIzin = 0;
-            $totalAlpha = 0;
-            $totalStudents = 0;
-        } else {
-            // Calculate statistics for the selected date
-            $totalHadir = $attendances->where('status', 'hadir')->count();
-            $totalSakit = $attendances->where('status', 'sakit')->count();
-            $totalIzin = $attendances->where('status', 'izin')->count();
-            $totalAlpha = $attendances->where('status', 'alpha')->count();
-            $totalStudents = $attendances->pluck('student_id')->unique()->count();
+        // Get attendance data for specific date
+        $attendanceData = Attendance::whereDate('date', $date->format('Y-m-d'))
+            ->get()
+            ->keyBy('student_id');
+            
+        // Create attendance collection for all students
+        $attendances = collect();
+        foreach ($allStudents as $student) {
+            $attendance = $attendanceData->get($student->id);
+            
+            if ($attendance) {
+                // Student has attendance record
+                $attendances->push($attendance);
+            } else {
+                // Student hasn't attended yet - create a dummy attendance record
+                $dummyAttendance = new \stdClass();
+                $dummyAttendance->id = null;
+                $dummyAttendance->student_id = $student->id;
+                $dummyAttendance->student = $student;
+                $dummyAttendance->date = $date->format('Y-m-d');
+                $dummyAttendance->status = 'belum_absen';
+                $dummyAttendance->keterangan = null;
+                $dummyAttendance->attendance_time = null;
+                
+                $attendances->push($dummyAttendance);
+            }
         }
+            
+        // Calculate statistics for the selected date
+        $totalHadir = $attendances->where('status', 'hadir')->count();
+        $totalSakit = $attendances->where('status', 'sakit')->count();
+        $totalIzin = $attendances->where('status', 'izin')->count();
+        $totalAlpha = $attendances->where('status', 'alpha')->count();
+        $totalStudents = $allStudents->count();
         
         // Calculate prev and next dates
         $prevDate = $date->copy()->subDay()->format('Y-m-d');

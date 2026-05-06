@@ -48,6 +48,18 @@
                                 @error('password') <span class="error-text">{{ $message }}</span> @enderror
                             </div>
                             <div class="form-group">
+                                <label class="form-label">Jenis Kelamin</label>
+                                <select name="gender" class="form-input">
+                                    <option value="">Pilih Jenis Kelamin</option>
+                                    <option value="L" {{ old('gender') == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                                    <option value="P" {{ old('gender') == 'P' ? 'selected' : '' }}>Perempuan</option>
+                                </select>
+                                @error('gender') <span class="error-text">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
                                 <label class="form-label">Role <span class="required">*</span></label>
                                 <select name="role" class="form-input" required>
                                     <option value="">Pilih Role</option>

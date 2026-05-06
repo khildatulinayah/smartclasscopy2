@@ -118,6 +118,7 @@
                                 <option value="sakit">Sakit</option>
                                 <option value="izin">Izin</option>
                                 <option value="alpha">Alpa</option>
+                                <option value="belum_absen">Belum Absen</option>
                             </select>
                         </div>
                     </div>
@@ -160,31 +161,37 @@
                                         </div>
                                     </td>
                                 </tr>
-                            @elseif($attendances->count() > 0)
+                            @else
                                 @foreach($attendances as $index => $attendance)
                                 <tr data-name="{{ strtolower($attendance->student->name) }}" data-status="{{ strtolower($attendance->status) }}">
                                     <td>{{ $index + 1 }}</td>
                                     <td class="font-semibold">{{ $attendance->student->name }}</td>
                                     <td>
-                                        <span class="status-badge {{ $attendance->status == 'hadir' ? 'success' : ($attendance->status == 'sakit' ? 'warning' : ($attendance->status == 'izin' ? 'info' : 'danger')) }}">
-                                            {{ strtoupper($attendance->status) }}
+                                        @php
+                                            $statusClass = 'secondary';
+                                            $statusText = 'BELUM ABSEN';
+                                            
+                                            if ($attendance->status == 'hadir') {
+                                                $statusClass = 'success';
+                                                $statusText = 'HADIR';
+                                            } elseif ($attendance->status == 'sakit') {
+                                                $statusClass = 'warning';
+                                                $statusText = 'SAKIT';
+                                            } elseif ($attendance->status == 'izin') {
+                                                $statusClass = 'info';
+                                                $statusText = 'IZIN';
+                                            } elseif ($attendance->status == 'alpha') {
+                                                $statusClass = 'danger';
+                                                $statusText = 'ALPA';
+                                            }
+                                        @endphp
+                                        <span class="status-badge {{ $statusClass }}">
+                                            {{ $statusText }}
                                         </span>
                                     </td>
                                     <td>{{ $attendance->keterangan ?? '-' }}</td>
                                 </tr>
                                 @endforeach
-                            @else
-                                <tr>
-                                    <td colspan="4" style="text-align: center; padding: 40px; color: #64748b;">
-                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 48px; height: 48px; color: #cbd5e1;">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                            <div style="font-size: 16px; font-weight: 600;">Tidak ada data absensi</div>
-                                            <div style="font-size: 14px;">Belum ada siswa yang melakukan absensi pada tanggal ini</div>
-                                        </div>
-                                    </td>
-                                </tr>
                             @endif
                         </tbody>
                     </table>
@@ -603,6 +610,11 @@
 .status-badge.danger { 
     background: #fee2e2; 
     color: #dc2626; 
+}
+
+.status-badge.secondary { 
+    background: #f3f4f6; 
+    color: #374151; 
 }
 
 /* Date Navigation Styles */

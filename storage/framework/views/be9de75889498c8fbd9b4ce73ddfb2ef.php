@@ -1,41 +1,53 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="dashboard-layout">
     <!-- Sidebar -->
-    @include('components.admin-sidebar')
+    <?php echo $__env->make('components.admin-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="main-area">
         <main class="main-content">
             <section class="greeting-section">
                 <div class="greeting-card">
                     <h1 class="greeting-title">Edit Data Siswa</h1>
-                    <p class="greeting-subtitle">{{ $student->name }} - Update informasi siswa</p>
+                    <p class="greeting-subtitle"><?php echo e($student->name); ?> - Update informasi siswa</p>
                 </div>
             </section>
 
             <div class="form-section">
                 <div class="form-card">
-                    <form method="POST" action="{{ route('admin.students.update', $student->id) }}" class="student-form">
-                        @csrf @method('PUT')
+                    <form method="POST" action="<?php echo e(route('admin.students.update', $student->id)); ?>" class="student-form">
+                        <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
                         
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Foto Profil</label>
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=3b82f6&color=fff&size=120" class="avatar-preview" alt="{{ $student->name }}">
+                                <img src="https://ui-avatars.com/api/?name=<?php echo e(urlencode($student->name)); ?>&background=3b82f6&color=fff&size=120" class="avatar-preview" alt="<?php echo e($student->name); ?>">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Nama Lengkap <span class="required">*</span></label>
-                                <input type="text" name="name" id="nameInput" class="form-input" required value="{{ old('name', $student->name) }}">
-                                @error('name') <span class="error-text">{{ $message }}</span> @enderror
+                                <input type="text" name="name" id="nameInput" class="form-input" required value="<?php echo e(old('name', $student->name)); ?>">
+                                <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="error-text"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Email <span class="required">*</span></label>
-                                <input type="email" name="email" id="emailInput" class="form-input" required value="{{ old('email', $student->email) }}">
-                                @error('email') <span class="error-text">{{ $message }}</span> @enderror
+                                <input type="email" name="email" id="emailInput" class="form-input" required value="<?php echo e(old('email', $student->email)); ?>">
+                                <?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="error-text"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                         </div>
 
@@ -43,16 +55,30 @@
                             <div class="form-group">
                                 <label class="form-label">Password Baru (kosongkan jika tidak diubah)</label>
                                 <input type="password" name="password" class="form-input">
-                                @error('password') <span class="error-text">{{ $message }}</span> @enderror
+                                <?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="error-text"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Jenis Kelamin</label>
                                 <select name="gender" class="form-input">
                                     <option value="">Pilih Jenis Kelamin</option>
-                                    <option value="L" {{ old('gender', $student->gender) == 'L' ? 'selected' : '' }}>Laki-laki</option>
-                                    <option value="P" {{ old('gender', $student->gender) == 'P' ? 'selected' : '' }}>Perempuan</option>
+                                    <option value="L" <?php echo e(old('gender', $student->gender) == 'L' ? 'selected' : ''); ?>>Laki-laki</option>
+                                    <option value="P" <?php echo e(old('gender', $student->gender) == 'P' ? 'selected' : ''); ?>>Perempuan</option>
                                 </select>
-                                @error('gender') <span class="error-text">{{ $message }}</span> @enderror
+                                <?php $__errorArgs = ['gender'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="error-text"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                         </div>
 
@@ -61,17 +87,24 @@
                                 <label class="form-label">Role <span class="required">*</span></label>
                                 <select name="role" class="form-input" required>
                                     <option value="">Pilih Role</option>
-                                    <option value="siswa" {{ old('role', $student->role) == 'siswa' ? 'selected' : '' }}>Siswa</option>
-                                    <option value="admin" {{ old('role', $student->role) == 'admin' ? 'selected' : '' }}>Admin</option>
-                                    <option value="bendahara" {{ old('role', $student->role) == 'bendahara' ? 'selected' : '' }}>Bendahara</option>
-                                    <option value="sekretaris" {{ old('role', $student->role) == 'sekretaris' ? 'selected' : '' }}>Sekretaris</option>
+                                    <option value="siswa" <?php echo e(old('role', $student->role) == 'siswa' ? 'selected' : ''); ?>>Siswa</option>
+                                    <option value="admin" <?php echo e(old('role', $student->role) == 'admin' ? 'selected' : ''); ?>>Admin</option>
+                                    <option value="bendahara" <?php echo e(old('role', $student->role) == 'bendahara' ? 'selected' : ''); ?>>Bendahara</option>
+                                    <option value="sekretaris" <?php echo e(old('role', $student->role) == 'sekretaris' ? 'selected' : ''); ?>>Sekretaris</option>
                                 </select>
-                                @error('role') <span class="error-text">{{ $message }}</span> @enderror
+                                <?php $__errorArgs = ['role'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="error-text"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                         </div>
 
                         <div class="form-actions">
-                            <a href="{{ route('admin.students') }}" class="btn-secondary">🔙 Kembali</a>
+                            <a href="<?php echo e(route('admin.students')); ?>" class="btn-secondary">🔙 Kembali</a>
                             <button type="submit" class="btn-primary">💾 Update Siswa</button>
                         </div>
                     </form>
@@ -414,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const avatarPreview = document.querySelector('.avatar-preview');
     
     function updatePreview() {
-        const name = nameInput.value || '{{ $student->name }}';
+        const name = nameInput.value || '<?php echo e($student->name); ?>';
         avatarPreview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3b82f6&color=fff&size=120`;
     }
     
@@ -422,4 +455,6 @@ document.addEventListener('DOMContentLoaded', () => {
     emailInput.addEventListener('input', updatePreview);
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/admin/edit_student.blade.php ENDPATH**/ ?>

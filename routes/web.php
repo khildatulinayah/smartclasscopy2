@@ -99,6 +99,8 @@ Route::get('/kas', [BendaharaController::class, 'simpleCash'])->name('kas'); // 
     // Siswa routes
     Route::middleware('role:siswa')->prefix('siswa')->name('siswa.')->group(function () {
         Route::get('/dashboard', [SiswaController::class, 'dashboard'])->name('dashboard');
+        Route::get('/profile', [SiswaController::class, 'profile'])->name('profile');
+        Route::put('/profile', [SiswaController::class, 'updateProfile'])->name('profile.update');
         Route::get('/absensi', [SiswaController::class, 'absensi'])->name('absensi');
         Route::get('/absensi/{month?}/{year?}', [SiswaController::class, 'absensi'])->name('absensi.month');
         Route::get('/pembayaran', [SiswaController::class, 'pembayaran'])->name('pembayaran');

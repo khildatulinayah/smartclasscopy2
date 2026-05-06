@@ -14,24 +14,68 @@
                 </div>
             </section>
 
+            <!-- Horizontal Navigation Menu -->
             <section class="feature-cards">
+                <!-- CRUD Siswa -->
                 <div class="feature-card">
-                    <div class="feature-icon blue"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a4 4 0 11-8 0 4 4 0 018 0zm1 3a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div>
+                    <div class="feature-icon blue">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a4 4 0 11-8 0 4 4 0 018 0zm1 3a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </div>
                     <h3 class="feature-title">CRUD Siswa</h3>
                     <p class="feature-description">Kelola data siswa (tambah, edit, hapus)</p>
                     <a href="{{ route('admin.students') }}" class="feature-btn">Kelola Siswa</a>
                 </div>
+                
+                <!-- Monitor Absensi -->
                 <div class="feature-card">
-                    <div class="feature-icon green"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    <div class="feature-icon green">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5 0.5l.5.5 8.5a.5.5 0 01-.5-.5v-8a.5.5 0 011 0v8a.5.5 0 01-.5.5z"></path>
+                        </svg>
+                    </div>
                     <h3 class="feature-title">Monitor Absensi</h3>
                     <p class="feature-description">Pantau kehadiran siswa real-time</p>
-                    <a href="{{ route('sekretaris.absensi') }}" class="feature-btn">Lihat Absensi</a>
+                    <a href="{{ route('admin.monitor.absensi') }}" class="feature-btn">Lihat Absensi</a>
                 </div>
+                
+                <!-- Monitor Pembayaran -->
                 <div class="feature-card">
-                    <div class="feature-icon orange"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-                    <h3 class="feature-title">Monitor Kas</h3>
+                    <div class="feature-icon green">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2m2 10h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2m-4 2H7a2 2 0 00-2 2v4a2 2 0 002 2h2"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h1m4 0h1"></path>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Monitor Pembayaran</h3>
+                    <p class="feature-description">Pantau pembayaran kas mingguan</p>
+                    <a href="{{ route('admin.monitor.pembayaran') }}" class="feature-btn">Lihat Pembayaran</a>
+                </div>
+                
+                <!-- Monitor Keuangan -->
+                <div class="feature-card">
+                    <div class="feature-icon orange">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Monitor Keuangan</h3>
                     <p class="feature-description">Lihat transaksi keuangan kelas</p>
-                    <a href="{{ route('bendahara.kas') }}" class="feature-btn">Lihat Keuangan</a>
+                    <a href="{{ route('admin.monitor.keuangan') }}" class="feature-btn">Lihat Keuangan</a>
+                </div>
+                
+                <!-- Laporan -->
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: #e0e7ff; color: #6366f1;">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Laporan</h3>
+                    <p class="feature-description">Generate dan download laporan</p>
+                    <a href="{{ route('admin.reports') }}" class="feature-btn">Buat Laporan</a>
                 </div>
             </section>
 
@@ -146,7 +190,7 @@
     margin-bottom: 32px; 
 }
 .greeting-subtitle { font-size: 16px; color: #64748b; }
-.feature-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; }
+.feature-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px; }
 .feature-card { background: white; padding: 32px 24px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: center; transition: all 0.2s ease; }
 .feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
 .feature-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
@@ -199,7 +243,8 @@
 .text-center { text-align: center; }
 .py-4 { padding-top: 16px; padding-bottom: 16px; }
 .text-gray-500 { color: #6b7280; }
-@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 1400px) { .feature-cards { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .feature-cards { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px) { .sidebar { width: 260px; } .main-content { padding: 20px; } .feature-cards { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr; gap: 16px; } }
 </style>
 @endsection

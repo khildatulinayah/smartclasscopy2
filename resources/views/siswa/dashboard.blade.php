@@ -63,16 +63,34 @@
                         </div>
                         <div class="profile-info">
                             <div class="info-row">
-                                <span class="info-label">Nama:</span>
+                                <span class="info-label">Nama Lengkap:</span>
 <span class="info-value">{{ auth()->user()->name }}</span>
                             </div>
                             <div class="info-row">
-                                <span class="info-label">NIS:</span>
-<span class="info-value">{{ auth()->user()->student->nis ?? 'N/A' }}</span>
+                                <span class="info-label">Email:</span>
+<span class="info-value">{{ auth()->user()->email }}</span>
                             </div>
                             <div class="info-row">
-                                <span class="info-label">Kelas:</span>
-<span class="info-value">{{ auth()->user()->student->class ?? 'N/A' }}</span>
+                                <span class="info-label">Jenis Kelamin:</span>
+<span class="info-value">
+                                    @if(auth()->user()->gender)
+                                        <span class="gender-badge {{ auth()->user()->gender == 'L' ? 'male' : 'female' }}">
+                                            {{ auth()->user()->gender == 'L' ? 'Laki-laki' : 'Perempuan' }}
+                                        </span>
+                                    @else
+                                        <span class="gender-badge unknown">Belum diisi</span>
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Status:</span>
+<span class="info-value">
+                                    <span class="status-badge active">Siswa Aktif</span>
+                                </span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Tanggal Bergabung:</span>
+<span class="info-value">{{ auth()->user()->created_at->format('d F Y') }}</span>
                             </div>
                         </div>
                     </div>
@@ -561,6 +579,42 @@ stroke-dashoffset="{{ $totalDays > 0 ? 326.73 - ($totalHadir / $totalDays * 326.
     font-size: 14px;
     font-weight: 600;
     color: #1e293b;
+}
+
+/* Status Badges */
+.status-badge { 
+    padding: 4px 12px; 
+    border-radius: 20px; 
+    font-size: 12px; 
+    font-weight: 600; 
+}
+
+.status-badge.active { 
+    background: #dcfce7; 
+    color: #166534; 
+}
+
+/* Gender Badges */
+.gender-badge { 
+    padding: 4px 12px; 
+    border-radius: 20px; 
+    font-size: 12px; 
+    font-weight: 600; 
+}
+
+.gender-badge.male { 
+    background: #dbeafe; 
+    color: #1e40af; 
+}
+
+.gender-badge.female { 
+    background: #fce7f3; 
+    color: #be185d; 
+}
+
+.gender-badge.unknown { 
+    background: #f3f4f6; 
+    color: #6b7280; 
 }
 
 /* ===== ATTENDANCE CIRCLE ===== */
