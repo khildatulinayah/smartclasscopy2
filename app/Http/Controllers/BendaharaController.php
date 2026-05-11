@@ -978,5 +978,3 @@ class BendaharaController extends Controller
         return WeeklyPayment::syncMonthlyBills($month, $year, $amountPerWeek);
     }
 }
-
-
