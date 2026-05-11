@@ -266,8 +266,8 @@
         @foreach($paymentsByStudent as $studentId => $payments)
             @php
                 $index = ++$studentIndex;
-                $totalPaid = $payments->where('status', 'paid')->sum('amount');
-                $totalBill = $payments->sum('amount');
+                $totalPaid = $payments->where('status', 'paid')->count() * $weeklyPaymentAmount;
+                $totalBill = $payments->count() * $weeklyPaymentAmount;
                 $totalArrears = $totalBill - $totalPaid;
                 $paidCount = $payments->where('status', 'paid')->count();
                 // Dynamic status based on actual weeks in month (not hardcoded 4)
@@ -305,9 +305,9 @@
                             @endif
                             <div class="font-bold mb-2">
                                 @if($isPaid)
-                                    <span class="text-green-700">✓ Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
+                                    <span class="text-green-700">✓ Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}</span>
                                 @else
-                                    <span class="text-red-700">✗ Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
+                                    <span class="text-red-700">✗ Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}</span>
                                 @endif
                             </div>
                             @if(!$isPaid)

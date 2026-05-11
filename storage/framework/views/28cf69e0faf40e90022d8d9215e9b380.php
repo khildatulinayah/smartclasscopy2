@@ -268,8 +268,8 @@
         <?php $__currentLoopData = $paymentsByStudent; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $payments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <?php
                 $index = ++$studentIndex;
-                $totalPaid = $payments->where('status', 'paid')->sum('amount');
-                $totalBill = $payments->sum('amount');
+                $totalPaid = $payments->where('status', 'paid')->count() * $weeklyPaymentAmount;
+                $totalBill = $payments->count() * $weeklyPaymentAmount;
                 $totalArrears = $totalBill - $totalPaid;
                 $paidCount = $payments->where('status', 'paid')->count();
                 // Dynamic status based on actual weeks in month (not hardcoded 4)
@@ -307,9 +307,9 @@
                             <?php endif; ?>
                             <div class="font-bold mb-2">
                                 <?php if($isPaid): ?>
-                                    <span class="text-green-700">✓ Rp <?php echo e(number_format($payment->amount, 0, ',', '.')); ?></span>
+                                    <span class="text-green-700">✓ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
                                 <?php else: ?>
-                                    <span class="text-red-700">✗ Rp <?php echo e(number_format($payment->amount, 0, ',', '.')); ?></span>
+                                    <span class="text-red-700">✗ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
                                 <?php endif; ?>
                             </div>
                             <?php if(!$isPaid): ?>
