@@ -277,7 +277,7 @@
                 $statusColor = $paidCount === $weeksInMonth ? 'green' : ($paidCount > 0 ? 'yellow' : 'red');
             ?>
             
-            <div class="student-card bg-white rounded-xl shadow-sm p-6 border border-gray-100" data-student-name="<?php echo e(strtolower($payments->first()->student->name)); ?>">
+            <div class="student-card bg-white rounded-xl shadow-sm p-6 border border-gray-100" data-student-id="<?php echo e($studentId); ?>" data-student-name="<?php echo e(strtolower($payments->first()->student->name)); ?>">
                 <div class="flex justify-between items-center mb-4">
                     <div class="flex items-center">
                         <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full font-bold text-sm mr-3"><?php echo e($index); ?></span>
@@ -300,7 +300,7 @@
                             // Highlight current week only if viewing current month AND it's Wednesday
                             $highlightClass = (isset($isCurrentMonth) && $isCurrentMonth && isset($isWednesday) && $isWednesday && $week == $currentWeek) ? 'ring-4 ring-red-400 bg-yellow-50' : '';
                         ?>
-                        <div class="text-center p-4 border-2 rounded-lg <?php echo e($isPaid ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'); ?> <?php echo e($highlightClass); ?>">
+                        <div class="text-center p-4 border-2 rounded-lg <?php echo e($isPaid ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'); ?> <?php echo e($highlightClass); ?>" data-week="<?php echo e($week); ?>">
                             <div class="font-bold text-sm mb-1">Minggu <?php echo e($week); ?></div>
                             <?php if($dateLabel): ?>
                                 <div class="text-xs text-gray-600 mb-2">Rabu, <?php echo e($dateLabel); ?></div>
@@ -913,7 +913,9 @@ document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
         if (data.success) {
             showSuccessToast('Pembayaran berhasil dicatat!');
             closePaymentModal();
-            location.reload();
+            // Tetap fokus pada siswa yang baru dibayar
+            scrollToStudent(studentId);
+            updateStudentUI(studentId, weekNumber);
         } else {
             showErrorToast('Gagal memproses pembayaran: ' + (data.message || 'Unknown error'));
         }
@@ -1131,6 +1133,87 @@ document.getElementById('arrearsModal')?.addEventListener('click', function(e) {
         closeArrearsModal();
     }
 });
+
+// Fungsi untuk scroll ke siswa yang baru dibayar
+function scrollToStudent(studentId) {
+    console.log('Scrolling to student:', studentId);
+    
+    // Cari container siswa berdasarkan student ID
+    setTimeout(() => {
+        // Cari elemen siswa dengan data attribute yang sesuai
+        const studentElements = document.querySelectorAll('[data-student-id]');
+        let targetElement = null;
+        
+        studentElements.forEach(element => {
+            if (element.dataset.studentId == studentId) {
+                targetElement = element;
+            }
+        });
+        
+        if (targetElement) {
+            // Scroll ke elemen dengan smooth behavior
+            targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+            
+            // Tambahkan highlight effect
+            targetElement.classList.add('payment-success-highlight');
+            
+            // Hapus highlight setelah 3 detik
+            setTimeout(() => {
+                targetElement.classList.remove('payment-success-highlight');
+            }, 3000);
+            
+            console.log('Successfully scrolled to student element');
+        } else {
+            console.warn('Student element not found for ID:', studentId);
+        }
+    }, 500); // Delay sedikit untuk memastikan DOM siap
+}
+
+// Fungsi untuk update UI siswa setelah pembayaran
+function updateStudentUI(studentId, weekNumber) {
+    console.log('Updating UI for student:', studentId, 'week:', weekNumber);
+    
+    // Cari container siswa
+    const studentContainer = document.querySelector(`[data-student-id="${studentId}"]`);
+    if (studentContainer) {
+        // Cari card minggu yang dibayar
+        const weekCard = studentContainer.querySelector(`[data-week="${weekNumber}"]`);
+        if (weekCard) {
+            // Ubah warna card dari merah menjadi hijau
+            weekCard.classList.remove('bg-red-50', 'border-red-300');
+            weekCard.classList.add('bg-green-50', 'border-green-300');
+            
+            // Cari tombol bayar dalam card tersebut
+            const weekButton = weekCard.querySelector('button');
+            if (weekButton) {
+                // Ganti tombol dengan indikator berhasil
+                weekButton.innerHTML = '✓ Lunas';
+                weekButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                weekButton.classList.add('bg-green-500', 'cursor-default');
+                weekButton.disabled = true;
+                weekButton.onclick = null;
+            }
+            
+            // Cari amount text dan ubah warnanya
+            const amountText = weekCard.querySelector('.text-red-700');
+            if (amountText) {
+                amountText.classList.remove('text-red-700');
+                amountText.classList.add('text-green-700');
+                amountText.innerHTML = '✓ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?>';
+            }
+        }
+        
+        // Update status badge jika ada
+        const statusBadge = studentContainer.querySelector('.status-badge');
+        if (statusBadge) {
+            // Hitung ulang status (ini akan diupdate oleh server saat refresh)
+            console.log('Status badge found, will be updated on next refresh');
+        }
+    }
+}
 </script>
 <?php $__env->stopSection(); ?>
 
@@ -1199,6 +1282,40 @@ document.getElementById('arrearsModal')?.addEventListener('click', function(e) {
 .action-btn:hover { background: #059669; transform: translateY(-1px); }
 @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px) { .sidebar { width: 260px; } .main-content { padding: 20px; } .stats-grid { grid-template-columns: 1fr; } .tables-section { grid-template-columns: 1fr; } }
+
+/* Payment Success Highlight */
+.payment-success-highlight {
+    animation: paymentSuccessPulse 2s ease-in-out;
+    border-color: #10b981 !important;
+    background-color: #f0fdf4 !important;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3) !important;
+}
+
+@keyframes paymentSuccessPulse {
+    0% {
+        box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
+        transform: scale(1.02);
+    }
+    100% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        transform: scale(1);
+    }
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Update button styles for paid status */
+.bg-green-500.cursor-default {
+    cursor: default !important;
+    opacity: 0.8;
+}
 </style>
 
         </main>

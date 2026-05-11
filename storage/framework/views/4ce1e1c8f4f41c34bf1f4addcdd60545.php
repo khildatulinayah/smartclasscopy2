@@ -247,6 +247,36 @@
     </div>
 </div>
 
+<!-- Delete Transaction Confirmation Modal -->
+<div id="deleteTransactionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md mx-4 transform transition-all">
+        <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Konfirmasi Hapus</h3>
+                <p class="text-sm text-gray-500">Tindakan ini tidak dapat dibatalkan</p>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <p class="text-gray-700">Apakah Anda yakin ingin menghapus transaksi ini? Data transaksi akan dihapus permanen dari sistem.</p>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="hideDeleteTransactionModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                Batal
+            </button>
+            <button type="button" onclick="confirmDeleteTransaction()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                Hapus Transaksi
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 let transactions = [];
 let currentFilter = 'all';
@@ -472,18 +502,61 @@ window.saveTransaction = async (e) => {
 };
 
 window.deleteTransaction = async (id) => {
-    if (!confirm('Hapus transaksi permanen?')) return;
+    showDeleteTransactionModal(id);
+};
+
+// Delete Transaction Modal Functions
+let currentDeleteTransactionId = null;
+
+window.showDeleteTransactionModal = (id) => {
+    currentDeleteTransactionId = id;
+    const modal = document.getElementById('deleteTransactionModal');
+    
+    // Show modal with animation
+    modal.classList.remove('hidden');
+    modal.classList.add('flex', 'modal-overlay');
+    
+    // Add animation to modal content
+    const modalContent = modal.querySelector('.bg-white');
+    modalContent.classList.add('modal-content');
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+};
+
+window.hideDeleteTransactionModal = () => {
+    const modal = document.getElementById('deleteTransactionModal');
+    
+    // Hide modal
+    modal.classList.add('hidden');
+    modal.classList.remove('flex', 'modal-overlay');
+    
+    // Restore body scroll
+    document.body.style.overflow = 'auto';
+    
+    // Clear current transaction ID
+    currentDeleteTransactionId = null;
+};
+
+window.confirmDeleteTransaction = async () => {
+    if (!currentDeleteTransactionId) return;
+    
     try {
-        const res = await fetch(`/bendahara/transactions/${id}`, { 
+        const res = await fetch(`/bendahara/transactions/${currentDeleteTransactionId}`, { 
             method: 'DELETE', 
             headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } 
         });
         const result = await res.json();
         if (result.success) {
+            hideDeleteTransactionModal();
             loadTransactions();
             showToast('🗑️ Transaksi dihapus');
-        } else showToast('❌ Gagal hapus', true);
+        } else {
+            hideDeleteTransactionModal();
+            showToast('❌ Gagal hapus', true);
+        }
     } catch {
+        hideDeleteTransactionModal();
         showToast('❌ Error', true);
     }
 };
@@ -840,6 +913,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.getElementById('transaction-modal')?.addEventListener('click', e => e.target.id === 'transaction-modal' && closeTransactionModal());
 document.getElementById('transactionDetailModal')?.addEventListener('click', e => e.target.id === 'transactionDetailModal' && closeTransactionDetailModal());
+
+// Delete Transaction Modal Event Listeners
+document.getElementById('deleteTransactionModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideDeleteTransactionModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const deleteModal = document.getElementById('deleteTransactionModal');
+        if (!deleteModal.classList.contains('hidden')) {
+            hideDeleteTransactionModal();
+        }
+    }
+});
 </script>
 
 
@@ -903,6 +993,52 @@ document.getElementById('transactionDetailModal')?.addEventListener('click', e =
 .feature-btn:hover { background: linear-gradient(135deg, #2563eb, #1e40af); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5); }
 @media (max-width: 1024px) { .stats-grid { grid-template-columns: 1fr; } }
 @media (max-width: 768px) { .sidebar { transform: translateX(-100%); position: fixed; z-index: 40; height: 100vh; transition: transform 0.3s; } .main-content { padding: 1.5rem; } .stats-grid { gap: 1rem; } .table-header { flex-direction: column; gap: 1rem; align-items: stretch; } }
+
+/* Modal Styles */
+.modal-backdrop {
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-overlay {
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Ensure modal is visible when shown */
+#deleteTransactionModal:not(.hidden) {
+    display: flex !important;
+}
+
+/* Button hover effects */
+.bg-red-600:hover {
+    background-color: #dc2626 !important;
+}
+
+.bg-gray-200:hover {
+    background-color: #e5e7eb !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .max-w-md {
+        max-width: 90vw !important;
+    }
+}
+
 @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .stat-card, .greeting-card { animation: fadeIn 0.6s ease-out; }
 </style>
