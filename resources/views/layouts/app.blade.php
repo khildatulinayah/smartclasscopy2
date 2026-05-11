@@ -145,6 +145,56 @@
                 padding: 20px;
             }
         }
+        
+        /* Modal Styles */
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-overlay {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Ensure modal is visible when shown */
+        #logoutModal:not(.hidden) {
+            display: flex !important;
+        }
+
+        /* Button hover effects */
+        .bg-blue-600:hover {
+            background-color: #2563eb !important;
+        }
+
+        .bg-gray-200:hover {
+            background-color: #e5e7eb !important;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .max-w-md {
+                max-width: 90vw !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -152,6 +202,36 @@
     <div id="toastContainer" class="toast-container"></div>
     
     @yield('content')
+    
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md mx-4 transform transition-all">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Konfirmasi Logout</h3>
+                    <p class="text-sm text-gray-500">Apakah Anda ingin keluar dari sistem?</p>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-gray-700">Apakah Anda yakin ingin keluar dari sistem SMARTCLASS? Session Anda akan berakhir.</p>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="hideLogoutModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                    Batal
+                </button>
+                <button type="button" onclick="performLogout()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Ya, Logout
+                </button>
+            </div>
+        </div>
+    </div>
     
     <!-- Toast System JavaScript -->
     <script>
@@ -235,6 +315,64 @@
         function showInfoToast(message, title = null, duration = 6000) {
             return showToast(message, 'info', title, duration);
         }
+        
+        // Logout confirmation function
+        function confirmLogout() {
+            showLogoutModal();
+            return false; // Prevent form submission
+        }
+        
+        function showLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            
+            // Show modal with animation
+            modal.classList.remove('hidden');
+            modal.classList.add('flex', 'modal-overlay');
+            
+            // Add animation to modal content
+            const modalContent = modal.querySelector('.bg-white');
+            modalContent.classList.add('modal-content');
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function hideLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            
+            // Hide modal
+            modal.classList.add('hidden');
+            modal.classList.remove('flex', 'modal-overlay');
+            
+            // Restore body scroll
+            document.body.style.overflow = 'auto';
+        }
+        
+        function performLogout() {
+            // Submit the logout form
+            const logoutForm = document.querySelector('.logout-form');
+            logoutForm.submit();
+        }
+        
+        // Event listeners for logout modal
+        document.addEventListener('DOMContentLoaded', function() {
+            // Close modal when clicking outside
+            const logoutModal = document.getElementById('logoutModal');
+            if (logoutModal) {
+                logoutModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        hideLogoutModal();
+                    }
+                });
+            }
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideLogoutModal();
+                }
+            });
+        });
     </script>
 </body>
 </html>

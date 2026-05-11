@@ -1,7 +1,7 @@
 <aside class="sidebar">
     <div class="sidebar-header">
         <div class="logo">
-            <img src="{{ asset('images/logo2.png') }}" alt="Logo" class="logo-img" style="width: 90px; height: 90px;">
+            <img src="{{ asset('images/logo2.png') }}" alt="Logo" class="logo-img" style="width: 60px; height: 60px;">
             <span class="logo-text">SMARTCLASS</span>
         </div>
     </div>
@@ -45,7 +45,7 @@
                 <div class="user-role-mini">{{ ucfirst(auth()->user()->role) }}</div>
             </div>
         </div>
-        <form method="POST" action="{{ route('logout') }}" class="logout-form">
+        <form method="POST" action="{{ route('logout') }}" class="logout-form" onsubmit="return confirmLogout()">
             @csrf
             <button type="submit" class="logout-btn">
                 <svg class="logout-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>

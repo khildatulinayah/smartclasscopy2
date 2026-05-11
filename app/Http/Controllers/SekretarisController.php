@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+/**
+ * Sekretaris Controller - Mengelola absensi dan laporan
+ * MVC Pattern: Model (data) -> Controller (logic) -> View (tampilan)
+ */
+
 use App\Models\User;
 use App\Models\Attendance;
 use Illuminate\Http\Request;
@@ -11,27 +16,31 @@ use App\Models\Holiday;
 
 class SekretarisController extends Controller
 {
+    // ============= DASHBOARD =============
+    /**
+     * Dashboard - Halaman utama sekretaris
+     */
     public function dashboard()
     {
         $today = now()->toDateString();
         
-        // Ambil semua siswa aktif beserta profil student (kelas)
+        // Ambil semua siswa aktif
         $students = User::where('role', 'siswa')
                         ->where('is_active', true)
                         ->with('student')
                         ->orderBy('name', 'asc')
                         ->get();
         
-        // Ambil absensi hari ini
+        // Data absensi hari ini
         $todayAttendances = Attendance::where('date', $today)
                                       ->with('student')
                                       ->get()
                                       ->keyBy('student_id');
         
-        // Cek hari libur (dipindahkan ke atas agar bisa digunakan dalam statistik)
+        // Cek hari libur
         $holiday = Holiday::where('date', $today)->first();
         
-        // Pastikan semua siswa punya record absensi hari ini (create jika belum ada)
+        // Buat record absensi jika belum ada
         foreach ($students as $student) {
             if (!$todayAttendances->has($student->id)) {
                 $attendance = Attendance::create([
@@ -45,7 +54,7 @@ class SekretarisController extends Controller
             }
         }
         
-        // Hitung statistik (exclude holidays from 'belum_absen' count)
+        // Hitung statistik absensi
         $stats = [
             'total' => $students->count(),
             'hadir' => $todayAttendances->where('status', 'hadir')->count(),
@@ -55,7 +64,7 @@ class SekretarisController extends Controller
             'belum_absen' => $holiday ? 0 : $todayAttendances->where('status', 'belum_absen')->count(),
         ];
         
-        // Data untuk tabel (limit 10 untuk dashboard)
+        // Data untuk dashboard (limit 10)
         $recentAttendances = $students->map(function ($student) use ($todayAttendances) {
             $attendance = $todayAttendances->get($student->id);
             return [
@@ -74,7 +83,11 @@ class SekretarisController extends Controller
         ));
     }
 
-    // Absensi Harian (Simple Version)
+    // ============= ABSENSI =============
+    
+    /**
+     * Simple Attendance - Absensi harian
+     */
     public function simpleAttendance(Request $request)
     {
         $selectedDate = $request->input('date', now()->toDateString());
@@ -83,7 +96,7 @@ class SekretarisController extends Controller
         $holiday = Holiday::where('date', $selectedDate)->first();
         
         if ($holiday) {
-            // Holiday date - no attendances needed
+            // Hari libur - tidak perlu absensi
             $attendances = collect();
         } else {
             $attendances = Attendance::where('date', $selectedDate)->get()->keyBy('student_id');
@@ -105,13 +118,16 @@ class SekretarisController extends Controller
         return view('sekretaris.absensi', compact('students', 'attendances', 'selectedDate', 'holiday'));
     }
 
+    /**
+     * Batch Update Attendance - Update absensi batch
+     */
     public function batchUpdateAttendance(Request $request)
     {
         $date = $request->input('date', now()->toDateString());
         $statuses = $request->input('status', []);
         $holidayNote = $request->input('holiday_note');
         
-        // Save holiday if provided
+        // Simpan keterangan libur
         if ($holidayNote !== null && trim($holidayNote) !== '') {
             Holiday::updateOrCreate(
                 ['date' => $date],
@@ -140,6 +156,9 @@ class SekretarisController extends Controller
             ->with('success', 'Absensi dan keterangan libur berhasil disimpan!');
     }
 
+    /**
+     * Delete Holiday - Hapus keterangan libur
+     */
     public function deleteHoliday(Request $request)
     {
         $date = $request->input('date');
@@ -148,9 +167,11 @@ class SekretarisController extends Controller
             ->with('success', 'Keterangan libur dihapus!');
     }
 
+    // ============= TRACKER =============
     
-    
-// Attendance Tracker (Simple Version)
+    /**
+     * Simple Tracker - Tracker absensi bulanan
+     */
     public function simpleTracker()
     {
         $currentMonth = request('month', now()->month);
@@ -158,13 +179,13 @@ class SekretarisController extends Controller
         
         $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name', 'asc')->get();
         
-        // Get all attendance data for current month (not grouped yet)
+        // Data absensi bulan ini
         $allAttendances = Attendance::whereMonth('date', $currentMonth)
                                 ->whereYear('date', $currentYear)
                                 ->orderBy('date')
                                 ->get();
         
-        // Get holidays for current month to exclude from working days
+        // Data hari libur bulan ini
         $holidays = Holiday::whereMonth('date', $currentMonth)
                         ->whereYear('date', $currentYear)
                         ->pluck('date')
@@ -173,7 +194,7 @@ class SekretarisController extends Controller
                         })
                         ->toArray();
         
-        // Calculate total working days in month (excluding weekends and holidays)
+        // Hitung hari kerja bulan ini
         $daysInMonth = \Carbon\Carbon::create($currentYear, $currentMonth)->daysInMonth;
         $workingDays = 0;
         for ($day = 1; $day <= $daysInMonth; $day++) {
@@ -186,10 +207,10 @@ class SekretarisController extends Controller
             }
         }
         
-        // Group attendances by student_id for easy lookup
+        // Kelompokkan absensi per siswa
         $attendances = $allAttendances->groupBy('student_id');
         
-        // Calculate total per status (each student = 1 count, not each attendance)
+        // Hitung total per status
         $totalHadir = 0;
         $totalSakit = 0;
         $totalIzin = 0;
@@ -198,30 +219,30 @@ class SekretarisController extends Controller
         foreach ($students as $student) {
             $studentAttendances = $attendances->get($student->id, collect());
             
-            // Check each attendance and exclude holidays from 'belum_absen' count
+            // Cek absensi dan exclude libur
             foreach ($studentAttendances as $attendance) {
                 $dateString = $attendance->date->format('Y-m-d');
                 $isHoliday = in_array($dateString, $holidays);
                 $date = \Carbon\Carbon::create($currentYear, $currentMonth, $attendance->date->day);
                 $dayOfWeek = $date->dayOfWeek;
                 
-                // Auto mark weekends as 'libur' if not already set
+                // Auto mark weekend sebagai 'libur'
                 if (($dayOfWeek == 0 || $dayOfWeek == 6) && $attendance->status === 'belum_absen') {
                     $attendance->status = 'libur';
                     $attendance->holiday_note = 'Hari Libur Sabtu/Minggu';
                 }
-                // Auto mark holidays as 'libur' if not already set
+                // Auto mark libur sebagai 'libur'
                 elseif ($isHoliday && $attendance->status === 'belum_absen') {
                     $attendance->status = 'libur';
                     $attendance->holiday_note = 'Hari Libur';
                 }
                 
-                // Skip counting 'belum_absen' if it's a holiday or weekend
+                // Skip hitung 'belum_absen' jika libur/weekend
                 if ($attendance->status === 'belum_absen' && ($isHoliday || $dayOfWeek == 0 || $dayOfWeek == 6)) {
                     continue;
                 }
                 
-                // Count each status (but don't double count per student)
+                // Hitung per status (jangan double count)
                 if ($attendance->status === 'hadir') {
                     $totalHadir++;
                 } elseif ($attendance->status === 'sakit') {
@@ -234,12 +255,11 @@ class SekretarisController extends Controller
             }
         }
         
-        // Total attendances in the month (count each student once per status)
+        // Total absensi bulan ini
         $totalAttendances = $totalHadir + $totalSakit + $totalIzin + $totalAlpha;
         
-        // Calculate working days used (based on how many students have any attendance record)
-        // If workingDays = 10 and 3 students, total possible = 30
-        // But simpler: just use workingDays as reference
+        // Hitung hari kerja yang digunakan
+        // Gunakan workingDays sebagai referensi
         $totalDays = $workingDays;
         
         return view('sekretaris.tracker', compact(
@@ -256,7 +276,11 @@ class SekretarisController extends Controller
         ));
     }
 
-    // API untuk detail attendance siswa
+    // ============= API =============
+    
+    /**
+     * Get Student Attendance - API detail absensi siswa
+     */
     public function getStudentAttendance($studentId)
     {
         $month = request('month', now()->month);
@@ -268,7 +292,7 @@ class SekretarisController extends Controller
                                 ->orderBy('date')
                                 ->get();
         
-        // Fix: Format date ke string agar bisa jadi key array
+        // Format date untuk key array
         $holidays = Holiday::whereMonth('date', $month)
                           ->whereYear('date', $year)
                           ->get()
@@ -276,17 +300,17 @@ class SekretarisController extends Controller
                               return [$holiday->date->format('Y-m-d') => $holiday->note];
                           });
         
-        // Transform data untuk JSON response yang aman
+        // Transform data untuk JSON response
         $data = $attendances->map(function ($attendance) use ($holidays, $month, $year) {
             $dateString = $attendance->date ? $attendance->date->format('Y-m-d') : null;
             $holidayNote = $holidays[$dateString] ?? null;
             
-            // Check if weekend
+            // Cek apakah weekend
             $date = \Carbon\Carbon::create($year, $month, $attendance->date->day);
             $dayOfWeek = $date->dayOfWeek;
             $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6);
             
-            // Jika hari libur dan status belum_absen, ubah menjadi 'libur'
+            // Ubah 'belum_absen' jadi 'libur' jika hari libur
             $status = $attendance->status;
             $holidayNoteToUse = $holidayNote;
             
@@ -314,12 +338,14 @@ class SekretarisController extends Controller
         return response()->json($data);
     }
 
+    // ============= LAPORAN =============
+    
     /**
-     * Halaman utama laporan absensi
+     * Laporan - Halaman utama laporan
      */
     public function laporan()
     {
-        // Prepare months and years for dropdown
+        // Data bulan dan tahun untuk dropdown
         $months = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
@@ -329,7 +355,7 @@ class SekretarisController extends Controller
         $currentMonth = now()->month;
         $currentYear = now()->year;
         
-        // Generate years list (current year and 2 years back)
+        // Generate list tahun (2 tahun ke belakang)
         $years = [];
         for ($i = 0; $i < 3; $i++) {
             $years[] = $currentYear - $i;
@@ -339,7 +365,7 @@ class SekretarisController extends Controller
     }
 
     /**
-     * Cetak laporan absensi (HTML version)
+     * Cetak Absensi - Cetak laporan absensi
      */
     public function cetakAbsensi($month, $year)
     {
@@ -398,7 +424,7 @@ class SekretarisController extends Controller
     }
 
     /**
-     * Generate PDF laporan absensi
+     * Laporan Absensi PDF - Export PDF laporan
      */
     public function laporanAbsensiPdf($month, $year)
     {
@@ -407,7 +433,7 @@ class SekretarisController extends Controller
             abort(404, 'Invalid month or year');
         }
         
-        // Get attendance data (same as cetakAbsensi)
+        // Data absensi untuk PDF (sama seperti cetak)
         $students = User::where('role', 'siswa')
                         ->where('is_active', true)
                         ->with('student')
@@ -456,7 +482,7 @@ class SekretarisController extends Controller
             'monthName'
         ));
         
-        $pdf->setPaper('a4', 'landscape'); // Landscape for better table display
+        $pdf->setPaper('a4', 'landscape'); // Landscape untuk tabel
         $pdf->setOptions([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => false,
@@ -473,11 +499,11 @@ class SekretarisController extends Controller
     }
 
     /**
-     * Calculate attendance statistics
+     * Calculate Attendance Stats - Hitung statistik absensi
      */
     private function calculateAttendanceStats($students, $attendances, $holidays, $month, $year)
     {
-        // Calculate working days (excluding weekends and holidays)
+        // Hitung hari kerja (exclude weekend/libur)
         $daysInMonth = Carbon::create($year, $month)->daysInMonth;
         $workingDays = 0;
         $workingDates = [];
@@ -494,14 +520,14 @@ class SekretarisController extends Controller
             }
         }
         
-        // Initialize counters
+        // Inisialisasi counter
         $totalHadir = 0;
         $totalSakit = 0;
         $totalIzin = 0;
         $totalAlpha = 0;
         $totalBelumAbsen = 0;
         
-        // Count attendances
+        // Hitung data absensi
         foreach ($attendances as $attendance) {
             $dateString = $attendance->date->format('Y-m-d');
             $isHoliday = $holidays->has($dateString);
@@ -530,7 +556,7 @@ class SekretarisController extends Controller
             }
         }
         
-        // Calculate percentage
+        // Hitung persentase kehadiran
         $totalPossibleAttendances = $students->count() * $workingDays;
         $attendanceRate = $totalPossibleAttendances > 0 ? round(($totalHadir / $totalPossibleAttendances) * 100, 2) : 0;
         

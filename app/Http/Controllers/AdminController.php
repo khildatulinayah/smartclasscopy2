@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+/**
+ * Admin Controller - Mengelola sistem secara keseluruhan
+ * MVC Pattern: Model (data) -> Controller (logic) -> View (tampilan)
+ */
+
 use App\Models\User;
 use App\Models\Attendance;
 use App\Models\Transaction;
@@ -12,12 +17,16 @@ use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
+    // ============= DASHBOARD =============
+    /**
+     * Dashboard - Halaman utama admin
+     */
     public function dashboard()
     {
-        // Get real-time statistics
+        // Statistik real-time
         $totalStudents = User::where('role', 'siswa')->where('is_active', true)->count();
         
-        // Attendance statistics for current month
+        // Statistik absensi bulan ini
         $currentMonth = now()->month;
         $currentYear = now()->year;
         
@@ -28,7 +37,7 @@ class AdminController extends Controller
         $totalHadir = $attendances->where('status', 'hadir')->count();
         $totalTidakHadir = $attendances->whereIn('status', ['sakit', 'izin', 'alpha'])->count();
         
-        // Cash statistics for current month
+        // Statistik kas bulan ini
         $transactions = Transaction::whereMonth('date', $currentMonth)
             ->whereYear('date', $currentYear)
             ->get();
@@ -47,11 +56,19 @@ class AdminController extends Controller
         ));
     }
 
+    // ============= MANAJEMEN SISWA =============
+    
+    /**
+     * Create Student - Form tambah siswa
+     */
     public function createStudent()
     {
         return view('admin.create_student');
     }
 
+    /**
+     * Store Student - Simpan data siswa baru
+     */
     public function storeStudent(Request $request)
     {
         $request->validate([
@@ -70,29 +87,16 @@ class AdminController extends Controller
             'gender' => $request->gender,
         ]);
 
-        // Create default cash transaction for new student
-        $this->createDefaultCashTransaction($user->id);
-
-        // Generate weekly payments for current month
+        // Generate pembayaran mingguan untuk bulan ini
         $this->generateStudentWeeklyPayments($user->id);
 
         return redirect()->route('admin.students')->with('success', 'Student created successfully');
     }
 
-    private function createDefaultCashTransaction($studentId)
-    {
-        $kasNominal = KasSetting::getNominal(now()->month, now()->year) ?? 0;
 
-        Transaction::create([
-            'student_id' => $studentId,
-            'type' => 'income',
-            'amount' => $kasNominal,
-            'description' => 'Kas awal siswa',
-            'date' => now(),
-            'created_by' => auth()->id()
-        ]);
-    }
-
+    /**
+     * Generate Student Weekly Payments - Buat tagihan mingguan
+     */
     private function generateStudentWeeklyPayments($studentId)
     {
         $currentMonth = now()->month;
@@ -115,12 +119,18 @@ class AdminController extends Controller
         }
     }
 
+    /**
+     * Edit Student - Form edit siswa
+     */
     public function editStudent($id)
     {
         $student = User::findOrFail($id);
         return view('admin.edit_student', compact('student'));
     }
 
+    /**
+     * Update Student - Update data siswa
+     */
     public function updateStudent(Request $request, $id)
     {
         $student = User::findOrFail($id);
@@ -146,6 +156,9 @@ class AdminController extends Controller
         return redirect()->route('admin.students')->with('success', 'Student updated successfully');
     }
 
+    /**
+     * Delete Student - Hapus siswa
+     */
     public function deleteStudent($id)
     {
         $student = User::findOrFail($id);
@@ -153,15 +166,23 @@ class AdminController extends Controller
         return redirect()->route('admin.students')->with('success', 'Student deleted successfully');
     }
 
+    /**
+     * Students - Daftar semua siswa
+     */
     public function students()
     {
         $students = User::where('role', 'siswa')->orderBy('name', 'asc')->get();
         return view('admin.students', compact('students'));
     }
 
+    // ============= MONITORING =============
+    
+    /**
+     * Monitor Pembayaran - Monitor pembayaran siswa
+     */
     public function monitorPembayaran(Request $request)
     {
-        // Get selected month/year or default to current
+        // Ambil bulan/tahun yang dipilih
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
         
@@ -170,7 +191,7 @@ class AdminController extends Controller
         $prevDate = $currentDate->copy()->subMonth();
         $nextDate = $currentDate->copy()->addMonth();
         
-        // Get weekly payments data for monitoring (read-only)
+        // Data pembayaran mingguan untuk monitoring
         $weeklyPayments = WeeklyPayment::with('student')
             ->where('month', $month)
             ->where('year', $year)
@@ -180,10 +201,10 @@ class AdminController extends Controller
             ->select('weekly_payments.*')
             ->get();
         
-        // Format month name for display
+        // Format nama bulan untuk tampilan
         $monthName = $currentDate->format('F Y');
         
-        // Get Wednesday dates for the month
+        // Ambil tanggal Rabu dalam bulan
         $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($month, $year);
         $currentKasNominal = KasSetting::getNominal((int) $month, (int) $year) ?? 0;
         
@@ -199,18 +220,21 @@ class AdminController extends Controller
         ));
     }
     
+    /**
+     * Monitor Keuangan - Monitor transaksi kas
+     */
     public function monitorKeuangan(Request $request)
     {
-        // Get selected month/year or default to current
+        // Ambil bulan/tahun yang dipilih
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
         
-        // Calculate prev and next month
+        // Hitung bulan sebelumnya/selanjutnya
         $currentDate = \Carbon\Carbon::createFromDate($year, $month, 1);
         $prevDate = $currentDate->copy()->subMonth();
         $nextDate = $currentDate->copy()->addMonth();
         
-        // Get transactions for monitoring
+        // Data transaksi untuk monitoring
         $transactions = Transaction::with(['student', 'creator'])
             ->whereMonth('date', $month)
             ->whereYear('date', $year)
@@ -218,12 +242,12 @@ class AdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
             
-        // Calculate statistics
+        // Hitung statistik keuangan
         $totalIncome = $transactions->where('type', 'income')->sum('amount');
         $totalExpense = $transactions->where('type', 'expense')->sum('amount');
         $balance = $totalIncome - $totalExpense;
         
-        // Format month name for display
+        // Format nama bulan untuk tampilan
         $monthName = $currentDate->format('F Y');
         
         return view('admin.monitor-keuangan', compact(
@@ -239,40 +263,43 @@ class AdminController extends Controller
         ));
     }
     
+    /**
+     * Monitor Absensi - Monitor absensi harian
+     */
     public function monitorAbsensi(Request $request)
     {
-        // Get selected date or default to today
+        // Ambil tanggal yang dipilih
         $selectedDate = $request->get('date', now()->format('Y-m-d'));
         $date = \Carbon\Carbon::parse($selectedDate);
         
-        // Check if the selected date is a holiday
+        // Cek apakah tanggal tersebut hari libur
         $holiday = Holiday::where('date', $date->format('Y-m-d'))->first();
         $isHoliday = $holiday !== null;
         
-        // Check if the selected date is weekend
+        // Cek apakah tanggal tersebut weekend
         $isWeekend = $date->isWeekend();
         
-        // Get all active students
+        // Ambil semua siswa aktif
         $allStudents = User::where('role', 'siswa')
             ->where('is_active', true)
             ->orderBy('name', 'asc')
             ->get();
             
-        // Get attendance data for specific date
+        // Data absensi untuk tanggal tersebut
         $attendanceData = Attendance::whereDate('date', $date->format('Y-m-d'))
             ->get()
             ->keyBy('student_id');
             
-        // Create attendance collection for all students
+        // Buat koleksi absensi untuk semua siswa
         $attendances = collect();
         foreach ($allStudents as $student) {
             $attendance = $attendanceData->get($student->id);
             
             if ($attendance) {
-                // Student has attendance record
+                // Siswa sudah ada data absensi
                 $attendances->push($attendance);
             } else {
-                // Student hasn't attended yet - create a dummy attendance record
+                // Siswa belum absen - buat record dummy
                 $dummyAttendance = new \stdClass();
                 $dummyAttendance->id = null;
                 $dummyAttendance->student_id = $student->id;
@@ -286,14 +313,14 @@ class AdminController extends Controller
             }
         }
             
-        // Calculate statistics for the selected date
+        // Hitung statistik untuk tanggal tersebut
         $totalHadir = $attendances->where('status', 'hadir')->count();
         $totalSakit = $attendances->where('status', 'sakit')->count();
         $totalIzin = $attendances->where('status', 'izin')->count();
         $totalAlpha = $attendances->where('status', 'alpha')->count();
         $totalStudents = $allStudents->count();
         
-        // Calculate prev and next dates
+        // Hitung tanggal sebelumnya/selanjutnya
         $prevDate = $date->copy()->subDay()->format('Y-m-d');
         $nextDate = $date->copy()->addDay()->format('Y-m-d');
         
@@ -313,9 +340,14 @@ class AdminController extends Controller
         ));
     }
 
+    // ============= REPORTS =============
+    
+    /**
+     * Reports - Redirect ke halaman monitoring
+     */
     public function reports(Request $request)
     {
-        // Redirect to monitor pages since reports views don't exist
+        // Redirect ke halaman monitoring (views reports tidak ada)
         $type = $request->get('type', 'attendance');
         
         if ($type === 'attendance') {
@@ -324,7 +356,7 @@ class AdminController extends Controller
             return redirect()->route('admin.monitor.kas');
         }
         
-        // Default redirect to attendance monitoring
+        // Default redirect ke monitoring absensi
         return redirect()->route('admin.monitor.absensi');
     }
 }

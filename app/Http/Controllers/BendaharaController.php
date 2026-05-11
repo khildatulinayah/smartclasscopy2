@@ -13,6 +13,10 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class BendaharaController extends Controller
 {
+    // ============= DASHBOARD =============
+    /**
+     * Dashboard - Halaman utama bendahara
+     */
     public function dashboard()
     {
         $today = Carbon::now();
@@ -56,10 +60,10 @@ class BendaharaController extends Controller
             ->where('status', 'unpaid')
             ->count();
         
-        // Dapatkan jumlah pembayaran mingguan dari pengaturan bulan berjalan
+        // Update atau create nominal kasjalan
         $weeklyPaymentAmount = WeeklyPayment::getWeeklyPaymentAmount($currentMonth, $currentYear);
         
-        // --- DATA KEUANGAN RIIL ---
+        // Data keuangan
         $transactions = Transaction::orderBy('date', 'desc')->get();
         $totalIncomeAll = $transactions->where('type', 'income')->sum('amount');
         $totalExpenseAll = $transactions->where('type', 'expense')->sum('amount');
@@ -72,7 +76,7 @@ class BendaharaController extends Controller
         $monthlyIncome = $monthlyTransactions->where('type', 'income')->sum('amount');
         $monthlyExpense = $monthlyTransactions->where('type', 'expense')->sum('amount');
         
-        // --- DATA PEMBAYARAN MINGGUAN ---
+        // Statistik pembayaran
         $totalStudents = User::where('role', 'siswa')->where('is_active', true)->count();
         $totalBills = $payments->count();
         $paidBills = $payments->where('status', 'paid')->count();
@@ -80,7 +84,7 @@ class BendaharaController extends Controller
         $paidAmount = $payments->where('status', 'paid')->sum('amount');
         $unpaidAmount = $payments->where('status', 'unpaid')->sum('amount');
         
-        // --- RIWAYAT TERBARU ---
+        // Riwayat pembayaran terbaru
         $recentPayments = WeeklyPayment::with('student')
             ->where('status', 'paid')
             ->orderBy('payment_date', 'desc')
@@ -106,7 +110,11 @@ class BendaharaController extends Controller
         ));
     }
 
-    // Manajemen Kas Sederhana
+    // ============= MANAJEMEN KAS =============
+    
+    /**
+     * Simple Cash - Halaman manajemen kas
+     */
     public function simpleCash()
     {
         $transactions = Transaction::with(['student', 'creator'])
@@ -123,6 +131,9 @@ class BendaharaController extends Controller
         return view('bendahara.simple-cash', compact('transactions', 'totalIncome', 'totalExpense', 'balance', 'students'));
     }
 
+    /**
+     * Kas Settings - Pengaturan nominal kas
+     */
     public function kasSettings()
     {
         $selectedMonth = (int) request()->get('month', now()->month);
@@ -139,6 +150,9 @@ class BendaharaController extends Controller
         ));
     }
 
+    /**
+     * Update Kas Settings - Simpan nominal kas
+     */
     public function updateKasSettings(Request $request)
     {
         $request->validate([
@@ -163,6 +177,9 @@ class BendaharaController extends Controller
             ->with('success', 'Nominal kas berhasil diperbarui.');
     }
 
+    /**
+     * Store Simple Transaction - Simpan transaksi kas
+     */
     public function storeSimpleTransaction(Request $request)
     {
         try {
@@ -180,7 +197,7 @@ class BendaharaController extends Controller
 
             $amount = $request->amount;
 
-            // Alur kas mingguan: nominal diambil dari kas_settings berdasarkan bulan/tahun.
+            // Ambil nominal dari settings untuk pembayaran mingguan
             if (
                 $request->type === 'income' &&
                 $request->filled('week_number') &&
@@ -288,7 +305,11 @@ class BendaharaController extends Controller
         }
     }
 
-    // API untuk pemrosesan pembayaran
+    // ============= API METHODS =============
+    
+    /**
+     * Get Transactions - API untuk ambil data transaksi
+     */
     public function getTransactions()
     {
         try {
@@ -326,6 +347,9 @@ class BendaharaController extends Controller
         }
     }
 
+    /**
+     * Delete Transaction - Hapus transaksi
+     */
     public function deleteTransaction($id)
     {
         Transaction::findOrFail($id)->delete();
@@ -337,7 +361,11 @@ class BendaharaController extends Controller
     }
 
     
-    // Pembayaran Mingguan
+    // ============= PEMBAYARAN MINGGUAN =============
+    
+    /**
+     * Weekly Payments - Halaman pembayaran mingguan
+     */
     public function weeklyPayments(Request $request)
     {
         $month = $request->get('month', now()->month);
@@ -444,6 +472,9 @@ class BendaharaController extends Controller
         ));
     }
 
+    /**
+     * Process Weekly Payment - Proses pembayaran mingguan
+     */
     public function processWeeklyPayment(Request $request)
     {
         $request->validate([
@@ -467,7 +498,7 @@ class BendaharaController extends Controller
     }
 
     /**
-     * Process arrears - melunasi semua tunggakan siswa di bulan & tahun tertentu
+     * Process Arrears - Lunasi tunggakan siswa
      */
     public function processArrears(Request $request)
     {
@@ -481,7 +512,7 @@ class BendaharaController extends Controller
         try {
             $transaction = Transaction::findOrFail($request->transaction_id);
             
-            // Get all unpaid payments for this student in the specified month/year ONLY
+            // Ambil semua pembayaran belum lunas untuk siswa ini
             $unpaidPayments = WeeklyPayment::where('student_id', $request->student_id)
                                         ->where('month', $request->month)
                                         ->where('year', $request->year)
@@ -509,7 +540,9 @@ class BendaharaController extends Controller
         }
     }
 
-    // Simple Weekly Payments - untuk simple-weekly-payments.blade.php
+    /**
+     * Simple Weekly Payments - Halaman pembayaran sederhana
+     */
     public function simpleWeeklyPayments(Request $request)
     {
         $month = $request->get('month', now()->month);
@@ -576,7 +609,9 @@ class BendaharaController extends Controller
         ));
     }
 
-    // API: Cari pembayaran berdasarkan siswa, minggu, bulan, tahun
+    /**
+     * Find Payment - API cari pembayaran
+     */
     public function findPayment(Request $request)
     {
         $request->validate([
@@ -587,7 +622,7 @@ class BendaharaController extends Controller
             'transaction_id' => 'nullable|exists:transactions,id'
         ]);
 
-        // Validasi tambahan: minggu tidak boleh melebihi jumlah minggu di bulan tersebut
+        // Validasi: minggu tidak boleh melebihi jumlah minggu di bulan
         $weeksInMonth = WeeklyPayment::getWeeksInMonth($request->month, $request->year);
         if ($request->week_number > $weeksInMonth) {
             return response()->json([
@@ -616,15 +651,17 @@ class BendaharaController extends Controller
         ]);
     }
 
+    // ============= LAPORAN =============
+    
     /**
-     * Laporan cetak - Halaman utama
+     * Laporan - Halaman utama laporan
      */
     public function laporan()
     {
         $currentYear = now()->year;
         $currentMonth = now()->month;
         
-        // Dapatkan tahun yang tersedia dari data (3 tahun terakhir)
+        // Ambil tahun tersedia dari data
         $years = Transaction::selectRaw('YEAR(date) as year')
             ->union(WeeklyPayment::selectRaw('year'))
             ->distinct()
@@ -642,7 +679,7 @@ class BendaharaController extends Controller
     }
 
     /**
-     * Cetak laporan riwayat masuk keluar uang (Transaction)
+     * Cetak Keuangan - Cetak laporan keuangan
      */
     public function cetakKeuangan($month, $year = null)
     {
@@ -671,7 +708,7 @@ class BendaharaController extends Controller
     }
 
     /**
-     * Cetak laporan pembayaran siswa mingguan (WeeklyPayment)
+     * Cetak Pembayaran Siswa - Cetak laporan pembayaran
      */
     public function cetakPembayaranSiswa($month, $year = null)
     {
@@ -701,7 +738,7 @@ class BendaharaController extends Controller
     }
 
     /**
-     * Laporan Pembayaran - Halaman utama
+     * Laporan Pembayaran - Halaman laporan pembayaran
      */
     public function laporanPembayaran()
     {
@@ -717,7 +754,7 @@ class BendaharaController extends Controller
     }
 
     /**
-     * Laporan Pembayaran - Cetak
+     * Laporan Cetak - Cetak laporan pembayaran
      */
     public function laporanCetak(Request $request)
     {
@@ -729,7 +766,7 @@ class BendaharaController extends Controller
         $month = $request->month;
         $year = $request->year;
 
-        // Sync bills untuk memastikan data lengkap
+        // Sinkronkan tagihan untuk data lengkap
         WeeklyPayment::syncMonthlyBills($month, $year);
 
         $payments = WeeklyPayment::with('student')
@@ -746,14 +783,16 @@ class BendaharaController extends Controller
         return view('bendahara.laporan-pembayaran-cetak', compact('paymentsByStudent', 'month', 'year', 'monthName'));
     }
 
+    // ============= PDF EXPORT =============
+    
     /**
-     * PDF Laporan Keuangan - Method terpisah
+     * PDF Keuangan - Export laporan keuangan ke PDF
      */
     public function laporanKeuanganPdf($month, $year = null)
     {
         $year = $year ?? now()->year;
         
-        // PDF Laporan Keuangan
+        // Data untuk PDF keuangan
         $transactions = Transaction::with(['student', 'creator'])
             ->whereMonth('date', $month)
             ->whereYear('date', $year)
@@ -789,14 +828,14 @@ class BendaharaController extends Controller
     }
 
     /**
-     * PDF Laporan Pembayaran Siswa - Method terpisah
+     * PDF Pembayaran Siswa - Export laporan pembayaran ke PDF
      */
     public function laporanPembayaranPdf($month, $year = null)
     {
         $year = $year ?? now()->year;
         
         try {
-            // Pastikan user terautentikasi untuk pembuatan PDF
+            // Cek autentikasi user untuk PDF
             if (!auth()->check()) {
                 // Coba dapatkan user default untuk pembuatan PDF
                 $defaultUser = \App\Models\User::where('role', 'bendahara')->first();
@@ -805,10 +844,10 @@ class BendaharaController extends Controller
                 }
             }
             
-            // Sinkronkan tagihan untuk memastikan data lengkap
+            // Sinkronkan tagihan untuk data PDF lengkap
             WeeklyPayment::syncMonthlyBills($month, $year);
             
-            // PDF Laporan Pembayaran Siswa
+            // Data untuk PDF pembayaran
             $payments = WeeklyPayment::with(['student', 'transaction'])
                 ->where('month', $month)
                 ->where('year', $year)
@@ -816,7 +855,7 @@ class BendaharaController extends Controller
                 ->orderBy('week_number')
                 ->get();
                 
-            // Debug: Periksa apakah siswa sudah dimuat
+            // Debug: cek relasi siswa
             foreach($payments as $payment) {
                 if (!$payment->student) {
                     Log::warning('Payment without student: ' . $payment->id);
@@ -829,11 +868,11 @@ class BendaharaController extends Controller
 
             $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
 
-            // Dapatkan info user dengan aman
+            // Info user yang login
             $userName = auth()->check() ? auth()->user()->name : 'System';
             $userRole = auth()->check() ? ucfirst(auth()->user()->role) : 'Administrator';
 
-            // Debug: Log data
+            // Debug: log data PDF
             Log::info('PDF Pembayaran Data:', [
                 'month' => $month,
                 'year' => $year,

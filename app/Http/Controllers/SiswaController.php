@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+/**
+ * Siswa Controller - Portal siswa untuk melihat data pribadi
+ * MVC Pattern: Model (data) -> Controller (logic) -> View (tampilan)
+ */
+
 use App\Models\Attendance;
 use App\Models\Transaction;
 use App\Models\WeeklyPayment;
@@ -12,11 +17,15 @@ use Carbon\Carbon;
 
 class SiswaController extends Controller
 {
+    // ============= DASHBOARD =============
+    /**
+     * Dashboard - Halaman utama siswa
+     */
     public function dashboard()
     {
         $student = auth()->user();
         
-        // Get attendance history for current month
+        // Data absensi bulan ini
         $attendances = Attendance::where('student_id', $student->id)
             ->whereMonth('date', now()->month)
             ->whereYear('date', now()->year)
@@ -30,13 +39,13 @@ class SiswaController extends Controller
         $totalAlpha = $attendances->where('status', 'alpha')->count();
         $totalDays = $attendances->count();
         
-        // Get today's attendance status
+        // Status absensi hari ini
         $today = now()->format('Y-m-d');
         $todayAttendance = Attendance::where('student_id', $student->id)
             ->where('date', $today)
             ->first();
         
-        // Cek apakah hari ini libur
+        // Cek hari libur hari ini
         $isHoliday = Holiday::where('date', $today)->exists();
         
         if ($isHoliday) {
@@ -45,7 +54,7 @@ class SiswaController extends Controller
             $statusHariIni = $todayAttendance ? $todayAttendance->status : 'belum_absen';
         }
         
-        // Get payment/transaction history for current month
+        // Data transaksi bulan ini
         $transactions = Transaction::where('student_id', $student->id)
             ->whereMonth('date', now()->month)
             ->whereYear('date', now()->year)
@@ -55,7 +64,7 @@ class SiswaController extends Controller
         $totalPemasukan = $transactions->where('type', 'income')->sum('amount');
         $totalPengeluaran = $transactions->where('type', 'expense')->sum('amount');
         
-        // Get weekly payment status for current month
+        // Data pembayaran mingguan bulan ini
         $currentMonth = now()->month;
         $currentYear = now()->year;
         
@@ -73,7 +82,7 @@ class SiswaController extends Controller
         $kasSudahBayar = $weeklyPayments->where('status', 'paid')->sum('amount');
         $kasTunggakan = $weeklyPayments->where('status', 'unpaid')->sum('amount');
         
-        // Payment status text
+        // Status pembayaran
         $statusKas = 'Lunas';
         if ($unpaidWeeks > 0) {
             $statusKas = 'Ada Tunggakan';
@@ -83,6 +92,7 @@ class SiswaController extends Controller
         }
 
         return view('siswa.dashboard', compact(
+            //absensi data
             'attendances', 
             'transactions',
             'totalHadir', 
@@ -107,11 +117,16 @@ class SiswaController extends Controller
         ));
     }
 
+    // ============= ABSENSI =============
+    
+    /**
+     * Absensi - Halaman riwayat absensi
+     */
     public function absensi($month = null, $year = null)
     {
         $student = auth()->user();
         
-        // Get requested month/year or default to current
+        // Ambil bulan/tahun yang dipilih
         $month = $month ?? now()->month;
         $year = $year ?? now()->year;
         
@@ -120,7 +135,7 @@ class SiswaController extends Controller
         $prevMonth = $currentDate->copy()->subMonth();
         $nextMonth = $currentDate->copy()->addMonth();
         
-        // Get holidays for the month
+        // Data hari libur bulan ini
         $holidays = Holiday::whereMonth('date', $month)
                           ->whereYear('date', $year)
                           ->get()
@@ -128,19 +143,19 @@ class SiswaController extends Controller
                               return [$holiday->date->format('Y-m-d') => $holiday->note];
                           });
         
-        // Get attendance history for specified month
+        // Data absensi untuk bulan yang dipilih
         $attendances = Attendance::where('student_id', $student->id)
             ->whereMonth('date', $month)
             ->whereYear('date', $year)
             ->orderBy('date', 'desc')
             ->get();
         
-        // Transform attendance data to handle holidays
+        // Transform data absensi untuk handle hari libur
         $attendances = $attendances->map(function ($attendance) use ($holidays) {
             $dateString = $attendance->date->format('Y-m-d');
             $holidayNote = $holidays[$dateString] ?? null;
             
-            // If it's a holiday and status is belum_absen, change to 'libur'
+            // Ubah 'belum_absen' jadi 'libur' jika hari libur
             $status = $attendance->status;
             if ($holidayNote && $status === 'belum_absen') {
                 $status = 'libur';
@@ -152,7 +167,7 @@ class SiswaController extends Controller
             return $attendance;
         });
         
-        // Calculate attendance statistics (excluding holidays from 'belum_absen' count)
+        // Hitung statistik absensi (exclude hari libur)
         $totalHadir = $attendances->where('status', 'hadir')->count();
         $totalSakit = $attendances->where('status', 'sakit')->count();
         $totalIzin = $attendances->where('status', 'izin')->count();
@@ -170,11 +185,16 @@ class SiswaController extends Controller
         ));
     }
 
+    // ============= PEMBAYARAN =============
+    
+    /**
+     * Pembayaran - Halaman riwayat pembayaran
+     */
     public function pembayaran($month = null, $year = null)
     {
         $student = auth()->user();
         
-        // Get requested month/year or default to current
+        // Ambil bulan/tahun yang dipilih
         $month = $month ?? now()->month;
         $year = $year ?? now()->year;
         
@@ -183,7 +203,7 @@ class SiswaController extends Controller
         $prevMonth = $currentDate->copy()->subMonth();
         $nextMonth = $currentDate->copy()->addMonth();
         
-        // Get weekly payment status for specified month
+        // Data pembayaran mingguan untuk bulan yang dipilih
         $weeklyPayments = WeeklyPayment::where('student_id', $student->id)
                                 ->where('month', $month)
                                 ->where('year', $year)
@@ -196,7 +216,7 @@ class SiswaController extends Controller
         $kasSudahBayar = $weeklyPayments->where('status', 'paid')->sum('amount');
         $currentKasNominal = KasSetting::getNominal((int) $month, (int) $year) ?? 0;
         
-        // Get payment history for specified month
+        // Data riwayat pembayaran untuk bulan yang dipilih
         $paymentHistory = Transaction::where('student_id', $student->id)
             ->where('type', 'income')
             ->whereMonth('date', $month)
@@ -217,11 +237,16 @@ class SiswaController extends Controller
         ));
     }
 
+    // ============= API =============
+    
+    /**
+     * Get My Status - API status siswa
+     */
     public function getMyStatus()
     {
         $student = auth()->user();
         
-        // Get recent attendance data
+        // Data absensi terbaru
         $attendances = Attendance::where('student_id', $student->id)
             ->orderBy('date', 'desc')
             ->take(7)
@@ -234,7 +259,7 @@ class SiswaController extends Controller
                 ];
             });
 
-        // Get recent transaction data
+        // Data transaksi terbaru
         $transactions = Transaction::where('student_id', $student->id)
             ->orderBy('date', 'desc')
             ->take(6)
@@ -256,6 +281,9 @@ class SiswaController extends Controller
         ]);
     }
     
+    /**
+     * Get Status Text - Helper untuk teks status
+     */
     private function getStatusText($status)
     {
         $statusTexts = [
@@ -270,6 +298,11 @@ class SiswaController extends Controller
         return $statusTexts[$status] ?? 'Hadir';
     }
     
+    // ============= PROFILE =============
+    
+    /**
+     * Profile - Halaman profil siswa
+     */
     public function profile()
     {
         $student = auth()->user();
@@ -279,6 +312,9 @@ class SiswaController extends Controller
         ));
     }
     
+    /**
+     * Update Profile - Update profil siswa
+     */
     public function updateProfile(Request $request)
     {
         $student = auth()->user();
@@ -294,7 +330,7 @@ class SiswaController extends Controller
             'gender' => $request->gender,
         ];
         
-        // Handle profile photo upload
+        // Handle upload foto profil
         if ($request->hasFile('profile_photo')) {
             $file = $request->file('profile_photo');
             $filename = time() . '_' . $student->id . '.' . $file->getClientOriginalExtension();

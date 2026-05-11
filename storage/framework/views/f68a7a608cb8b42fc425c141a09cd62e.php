@@ -43,7 +43,7 @@
                 <div class="profile-card">
                     <div class="profile-info">
                         <div class="profile-avatar">
-                            <img src="<?php echo e($student->profile_photo ? asset('storage/profile_photos/' . $student->profile_photo) : 'https://picsum.photos/seed/' . $student->id . '/120/120.jpg'); ?>" alt="<?php echo e($student->name); ?>" class="avatar-img" id="avatarPreview">
+                            <img src="<?php echo e($student->profile_photo ? asset('storage/app/public/profile_photos/' . $student->profile_photo) : 'https://picsum.photos/seed/' . $student->id . '/120/120.jpg'); ?>" alt="<?php echo e($student->name); ?>" class="avatar-img" id="avatarPreview">
                             <div class="avatar-status online"></div>
                             <div class="avatar-upload">
                                 <label for="profilePhoto" class="upload-btn">

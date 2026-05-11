@@ -60,7 +60,7 @@ Route::middleware('auth')->group(function () {
     // Bendahara routes
     Route::middleware('role:bendahara')->prefix('bendahara')->name('bendahara.')->group(function () {
         Route::get('/dashboard', [BendaharaController::class, 'dashboard'])->name('dashboard');
-Route::get('/kas', [BendaharaController::class, 'simpleCash'])->name('kas'); // kas.blade.php
+        Route::get('/kas', [BendaharaController::class, 'simpleCash'])->name('kas'); // kas.blade.php
         Route::post('/kas/store', [BendaharaController::class, 'storeSimpleTransaction'])->name('kas.store');
         Route::get('/api/transactions', [BendaharaController::class, 'getTransactions'])->name('api.transactions');
         Route::delete('/transactions/{id}', [BendaharaController::class, 'deleteTransaction'])->name('transactions.delete');
