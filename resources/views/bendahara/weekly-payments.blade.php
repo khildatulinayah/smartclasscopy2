@@ -267,12 +267,34 @@
             @php
                 $index = ++$studentIndex;
                 $totalPaid = $payments->where('status', 'paid')->count() * $weeklyPaymentAmount;
-                $totalBill = $payments->count() * $weeklyPaymentAmount;
-                $totalArrears = $totalBill - $totalPaid;
+                
+                // Hanya hitung tagihan untuk hari Rabu yang sudah lewat
+                $eligibleWeeks = 0;
+                $unpaidAmount = 0;
+                $now = Carbon::now();
+                
+                foreach($payments as $payment) {
+                    // Cek tanggal Rabu untuk minggu ini
+                    $wednesdayDate = isset($wednesdayDates[$payment->week_number - 1]) 
+                        ? $wednesdayDates[$payment->week_number - 1] 
+                        : null;
+                    
+                    // Hanya hitung jika Rabu sudah lewat atau bukan bulan sekarang
+                    if ($wednesdayDate && ($wednesdayDate->lt($now) || $month != $now->month || $year != $now->year)) {
+                        $eligibleWeeks++;
+                        if ($payment->status === 'unpaid') {
+                            $unpaidAmount += $payment->amount;
+                        }
+                    }
+                }
+                
+                $totalBill = $eligibleWeeks * $weeklyPaymentAmount;
+                $totalArrears = $unpaidAmount;
                 $paidCount = $payments->where('status', 'paid')->count();
-                // Dynamic status based on actual weeks in month (not hardcoded 4)
-                $status = $paidCount === $weeksInMonth ? 'Lunas' : ($paidCount > 0 ? 'Tunggakan' : 'Belum Lunas');
-                $statusColor = $paidCount === $weeksInMonth ? 'green' : ($paidCount > 0 ? 'yellow' : 'red');
+                
+                // Dynamic status based on eligible weeks (not total weeks in month)
+                $status = $totalArrears === 0 ? 'Lunas' : ($paidCount > 0 ? 'Tunggakan' : 'Belum Lunas');
+                $statusColor = $totalArrears === 0 ? 'green' : ($paidCount > 0 ? 'yellow' : 'red');
             @endphp
             
             <div class="student-card bg-white rounded-xl shadow-sm p-6 border border-gray-100" data-student-id="{{ $studentId }}" data-student-name="{{ strtolower($payments->first()->student->name) }}">
@@ -328,7 +350,7 @@
                             Total: <span class="font-bold">Rp {{ number_format($totalBill, 0, ',', '.') }}</span>
                         </span>
                         <span class="text-sm text-gray-600">
-                            Lunas: <span class="font-bold text-green-700">{{ $paidCount }}/{{ $weeksInMonth }}</span>
+                            Lunas: <span class="font-bold text-green-700">{{ $paidCount }}/{{ $eligibleWeeks }}</span>
                         </span>
                     </div>
                     <div class="flex items-center space-x-2">
@@ -384,8 +406,29 @@
             
             <!-- Total Tunggakan -->
             <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-center">
+                @php
+                    // Hitung total tunggakan hanya untuk Rabu yang sudah lewat
+                    $totalEligibleArrears = 0;
+                    $now = Carbon::now();
+                    
+                    foreach($paymentsByStudent as $studentId => $payments) {
+                        foreach($payments as $payment) {
+                            if ($payment->status === 'unpaid') {
+                                // Cek tanggal Rabu untuk minggu ini
+                                $wednesdayDate = isset($wednesdayDates[$payment->week_number - 1]) 
+                                    ? $wednesdayDates[$payment->week_number - 1] 
+                                    : null;
+                                
+                                // Hanya hitung jika Rabu sudah lewat atau bukan bulan sekarang
+                                if ($wednesdayDate && ($wednesdayDate->lt($now) || $month != $now->month || $year != $now->year)) {
+                                    $totalEligibleArrears += $payment->amount;
+                                }
+                            }
+                        }
+                    }
+                @endphp
                 <div class="text-2xl font-bold text-red-700">
-                    Rp {{ number_format($unpaidAmount, 0, ',', '.') }}
+                    Rp {{ number_format($totalEligibleArrears, 0, ',', '.') }}
                 </div>
                 <div class="text-sm text-red-600">Total Tunggakan Bulan Ini</div>
             </div>
@@ -397,14 +440,31 @@
                 @endphp
                 @foreach($paymentsByStudent as $studentId => $payments)
                     @php
-                    $unpaidPayments = $payments->where('status', 'unpaid');
-                    if ($unpaidPayments->count() === 0) {
+                    // Hanya hitung tunggakan untuk hari Rabu yang sudah lewat
+                    $eligibleUnpaidPayments = collect();
+                    $now = Carbon::now();
+                    
+                    foreach($payments as $payment) {
+                        if ($payment->status === 'unpaid') {
+                            // Cek tanggal Rabu untuk minggu ini
+                            $wednesdayDate = isset($wednesdayDates[$payment->week_number - 1]) 
+                                ? $wednesdayDates[$payment->week_number - 1] 
+                                : null;
+                            
+                            // Hanya hitung jika Rabu sudah lewat atau bukan bulan sekarang
+                            if ($wednesdayDate && ($wednesdayDate->lt($now) || $month != $now->month || $year != $now->year)) {
+                                $eligibleUnpaidPayments->push($payment);
+                            }
+                        }
+                    }
+                    
+                    if ($eligibleUnpaidPayments->count() === 0) {
                         continue;
                     }
                     
                     $arrearsIndex++;
-                    $totalArrears = $unpaidPayments->sum('amount');
-                    $unpaidWeeks = $unpaidPayments->pluck('week_number');
+                    $totalArrears = $eligibleUnpaidPayments->sum('amount');
+                    $unpaidWeeks = $eligibleUnpaidPayments->pluck('week_number');
                     @endphp
                     <div class="bg-red-50 border border-red-200 rounded-lg p-4">
                         <div class="flex justify-between items-center">
@@ -412,7 +472,7 @@
                                 <span class="inline-flex items-center justify-center w-6 h-6 bg-red-100 text-red-800 rounded-full font-bold text-xs mr-2">{{ $arrearsIndex }}</span>
                                 <h3 class="text-sm font-semibold text-gray-800">{{ $payments->first()->student->name }}</h3>
                                 <p class="text-xs text-gray-600 mt-1">
-                                    Menunggak {{ $unpaidPayments->count() }} minggu:<br>
+                                    Menunggak {{ $eligibleUnpaidPayments->count() }} minggu:<br>
                                     Minggu {{ implode(', ', $unpaidWeeks->toArray()) }}
 @php
                                     $now = Carbon::now();

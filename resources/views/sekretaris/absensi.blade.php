@@ -8,14 +8,28 @@
     <div class="main-area">
         <main class="main-content">
             @if(session('success'))
-                <div class="stat-card mb-6" style="background: #dcfce7; border-left: 4px solid #10b981;">
+                <div id="successAlert" class="stat-card mb-6" style="background: #dcfce7; border-left: 4px solid #10b981; position: relative; animation: slideInRight 0.5s ease;">
                     <div class="stat-header">
                         <div class="stat-icon" style="background: #10b98133; color: #059669;">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         </div>
-                        <div class="stat-title" style="color: #166534;">Berhasil Diperbarui</div>
+                        <div class="stat-title" style="color: #166534;">✅ Berhasil</div>
                     </div>
                     <div class="stat-value" style="color: #166534;">{{ session('success') }}</div>
+                    <button onclick="this.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #059669; cursor: pointer; font-size: 18px;">×</button>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div id="errorAlert" class="stat-card mb-6" style="background: #fee2e2; border-left: 4px solid #ef4444; position: relative; animation: slideInRight 0.5s ease;">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: #ef444433; color: #dc2626;">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </div>
+                        <div class="stat-title" style="color: #991b1b;">⚠️ Terjadi Kesalahan</div>
+                    </div>
+                    <div class="stat-value" style="color: #991b1b;">{{ session('error') }}</div>
+                    <button onclick="this.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #dc2626; cursor: pointer; font-size: 18px;">×</button>
                 </div>
             @endif
 
@@ -76,39 +90,71 @@
                 </div>
             </section>
 
-            @if($holiday)
-                <!-- Holiday Notice -->
-                <section class="stats-section mb-8">
-                    <div class="stat-card" style="border-left: 5px solid #ef4444; background: linear-gradient(135deg, #fee2e2, #fecaca);">
-                        <div class="stat-header">
-                            <div class="stat-icon" style="background: #fecaca; color: #dc2626;">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </div>
-                            <div class="stat-title">📅 Hari Libur / Hari Merah</div>
-                        </div>
-                        <div class="stat-value">{{ $holiday->note }}</div>
-                        <div class="stat-description">Dibuat oleh: {{ $holiday->creator->name ?? 'Sistem' }}</div>
-                        <div class="progress-container" style="margin-top: 16px;">
-                            <div class="flex gap-2 justify-end">
-                                <form action="{{ route('sekretaris.absensi.delete_holiday') }}" method="POST" style="display: inline;" onsubmit="return confirm('Hapus keterangan libur untuk {{ $selectedDate }}?')">
-                                    @csrf
-                                    <input type="hidden" name="date" value="{{ $selectedDate }}">
-                                    <button type="submit" class="logout-btn" style="width: auto; padding: 8px 16px; background: #ef4444; color: white;">Hapus Libur</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+            @php
+    // Cek apakah hari ini adalah weekend
+    $dayOfWeek = \Carbon\Carbon::parse($selectedDate)->dayOfWeek;
+    $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6); // Sunday or Saturday
+    $weekendName = $isWeekend ? ($dayOfWeek == 0 ? 'Minggu' : 'Sabtu') : '';
+@endphp
 
-                <!-- Holiday Message Card -->
-                <section class="stats-section mb-8">
-                    <div class="stat-card text-center py-12" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
-                        <div class="text-5xl mb-4">📅</div>
-                        <h2 class="greeting-title mb-2" style="font-size: 24px;">Hari Libur - Tidak Ada Absensi</h2>
-                        <p class="stat-description" style="font-size: 16px;">Siswa libur hari ini sesuai keterangan di atas.</p>
+    @if($holiday)
+        <!-- Holiday Notice -->
+        <section class="stats-section mb-8">
+            <div class="stat-card" style="border-left: 5px solid #ef4444; background: linear-gradient(135deg, #fee2e2, #fecaca);">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: #fecaca; color: #dc2626;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
-                </section>
-            @else
+                    <div class="stat-title">📅 Hari Libur / Hari Merah</div>
+                </div>
+                <div class="stat-value">{{ $holiday->note }}</div>
+                <div class="stat-description">Dibuat oleh: {{ $holiday->creator->name ?? 'Sistem' }}</div>
+                <div class="progress-container" style="margin-top: 16px;">
+                    <div class="flex gap-2 justify-end">
+                        @if(!$isWeekend) <!-- Hanya tampilkan tombol hapus jika bukan weekend -->
+                        <form action="{{ route('sekretaris.absensi.delete_holiday') }}" method="POST" style="display: inline;" onsubmit="return confirm('Hapus keterangan libur untuk {{ $selectedDate }}?')">
+                            @csrf
+                            <input type="hidden" name="date" value="{{ $selectedDate }}">
+                            <button type="submit" class="logout-btn" style="width: auto; padding: 8px 16px; background: #ef4444; color: white;">Hapus Libur</button>
+                        </form>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Holiday Message Card -->
+        <section class="stats-section mb-8">
+            <div class="stat-card text-center py-12" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+                <div class="text-5xl mb-4">📅</div>
+                <h2 class="greeting-title mb-2" style="font-size: 24px;">Hari Libur - Tidak Ada Absensi</h2>
+                <p class="stat-description" style="font-size: 16px;">Siswa libur hari ini sesuai keterangan di atas.</p>
+            </div>
+        </section>
+    @elseif($isWeekend)
+        <!-- Weekend Notice -->
+        <section class="stats-section mb-8">
+            <div class="stat-card" style="border-left: 5px solid #3b82f6; background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: #bfdbfe; color: #1d4ed8;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div class="stat-title">🎉 Hari {{ $weekendName }}</div>
+                </div>
+                <div class="stat-value">Hari Libur Akhir Pekan</div>
+                <div class="stat-description">Otomatis ditandai sebagai hari libur oleh sistem.</div>
+            </div>
+        </section>
+
+        <!-- Weekend Message Card -->
+        <section class="stats-section mb-8">
+            <div class="stat-card text-center py-12" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+                <div class="text-5xl mb-4">🎊</div>
+                <h2 class="greeting-title mb-2" style="font-size: 24px;">Hari {{ $weekendName }} - Libur</h2>
+                <p class="stat-description" style="font-size: 16px;">Tidak ada absensi pada hari {{ $weekendName }}. Hari ini otomatis ditandai sebagai libur oleh sistem.</p>
+            </div>
+        </section>
+    @else
                 <!-- Statistics Cards -->
                 <section class="stats-section mb-8">
                     <div class="stats-grid">
@@ -154,8 +200,22 @@
                 <section class="tables-section">
                     <div class="table-card">
                         <div class="table-header">
-                            <h2 class="table-title">Update Absensi Siswa</h2>
-                            <p class="stat-description" style="margin-top: 4px;">Pilih status untuk setiap siswa dan konfirmasi jam masuk jika ada.</p>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h2 class="table-title">Update Absensi Siswa</h2>
+                                    <p class="stat-description" style="margin-top: 4px;">Pilih status untuk setiap siswa dan konfirmasi jam masuk jika ada.</p>
+                                </div>
+                                <form action="{{ route('sekretaris.absensi.mark_all_present') }}" method="POST" id="markAllPresentForm">
+                                    @csrf
+                                    <input type="hidden" name="date" value="{{ $selectedDate }}">
+                                    <button type="submit" class="feature-btn" style="background: #10b981; white-space: nowrap;">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 6px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Hadir Semua
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                         <form action="{{ route('sekretaris.absensi.update') }}" method="POST" class="table-container">
                             @csrf
@@ -454,8 +514,271 @@ html, body { height: 100%; }
     .date-picker-inline { min-width: 100%; }
     .date-input-wrapper { max-width: 100%; }
     .quick-nav-buttons { justify-content: center; }
+    .table-header .flex { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .table-header form { width: 100%; }
+    .table-header button { width: 100%; justify-content: center; }
 }
+/* Alert Animations */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+.alert-fade-out {
+    animation: fadeOut 0.5s ease forwards;
+}
+
 </style>
 
+<script>
+// Auto refresh setelah submit form untuk update statistik
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-dismiss alerts setelah 5 detik
+    const successAlert = document.getElementById('successAlert');
+    const errorAlert = document.getElementById('errorAlert');
+    
+    if (successAlert) {
+        setTimeout(() => {
+            successAlert.classList.add('alert-fade-out');
+            setTimeout(() => {
+                successAlert.remove();
+            }, 500);
+        }, 5000);
+    }
+    
+    if (errorAlert) {
+        setTimeout(() => {
+            errorAlert.classList.add('alert-fade-out');
+            setTimeout(() => {
+                errorAlert.remove();
+            }, 500);
+        }, 8000); // Error alert stay longer
+    }
+
+    // Jika ada success message, refresh statistik cards
+    if (window.location.search.includes('success') || document.querySelector('.stat-value[style*="color: #166534"]')) {
+        // Highlight statistik cards
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.transform = 'scale(1.02)';
+                card.style.transition = 'transform 0.3s ease';
+                setTimeout(() => {
+                    card.style.transform = 'scale(1)';
+                }, 300);
+            }, index * 100);
+        });
+    }
+
+    // Konfirmasi untuk tombol Hadir Semua dengan custom confirm
+    const markAllForm = document.getElementById('markAllPresentForm');
+    if (markAllForm) {
+        markAllForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent form submission
+            
+            const date = this.querySelector('input[name="date"]').value;
+            
+            // Format tanggal Indonesia manual
+            const dateObj = new Date(date);
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            const dayName = days[dateObj.getDay()];
+            const dateNum = dateObj.getDate();
+            const monthName = months[dateObj.getMonth()];
+            const year = dateObj.getFullYear();
+            
+            const dateText = `${dayName}, ${dateNum} ${monthName} ${year}`;
+            
+            // Custom confirm dialog
+            const confirmDialog = document.createElement('div');
+            confirmDialog.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            confirmDialog.innerHTML = `
+                <div style="
+                    background: white;
+                    padding: 24px;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                    max-width: 400px;
+                    width: 90%;
+                    animation: slideInUp 0.3s ease;
+                ">
+                    <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                        <div style="
+                            width: 48px;
+                            height: 48px;
+                            background: #10b98133;
+                            color: #059669;
+                            border-radius: 12px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin-right: 16px;
+                        ">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; color: #1e293b; font-size: 18px; font-weight: 600;">Konfirmasi Hadir Semua</h3>
+                        </div>
+                    </div>
+                    <p style="margin: 0 0 24px 0; color: #64748b; line-height: 1.5;">
+                        Apakah Anda yakin ingin menandai semua siswa sebagai hadir untuk <strong>${dateText}</strong>?
+                    </p>
+                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                        <button id="cancelBtn" style="
+                            padding: 10px 20px;
+                            border: 1px solid #e2e8f0;
+                            background: white;
+                            color: #64748b;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-size: 14px;
+                            font-weight: 500;
+                        ">Batal</button>
+                        <button id="confirmBtn" style="
+                            padding: 10px 20px;
+                            border: none;
+                            background: #10b981;
+                            color: white;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-size: 14px;
+                            font-weight: 500;
+                        ">Ya, Hadir Semua</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(confirmDialog);
+            
+            // Add animations
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideInUp {
+                    from { 
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to { 
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Handle buttons
+            document.getElementById('cancelBtn').addEventListener('click', () => {
+                document.body.removeChild(confirmDialog);
+            });
+            
+            document.getElementById('confirmBtn').addEventListener('click', () => {
+                document.body.removeChild(confirmDialog);
+                // Show loading toast
+                showSuccessToast('Sedang memproses...');
+                
+                // Submit form
+                markAllForm.submit();
+            });
+        });
+    }
+});
+
+// Fungsi untuk menampilkan alert secara manual
+function showSuccessToast(message) {
+    const alertHtml = `
+        <div id="successAlert" class="stat-card mb-6" style="background: #dcfce7; border-left: 4px solid #10b981; position: relative; animation: slideInRight 0.5s ease;">
+            <div class="stat-header">
+                <div class="stat-icon" style="background: #10b98133; color: #059669;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <div class="stat-title" style="color: #166534;">✅ Berhasil</div>
+            </div>
+            <div class="stat-value" style="color: #166534;">${message}</div>
+            <button onclick="this.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #059669; cursor: pointer; font-size: 18px;">×</button>
+        </div>
+    `;
+    
+    const mainContent = document.querySelector('.main-content');
+    mainContent.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto-dismiss setelah 5 detik
+    setTimeout(() => {
+        const alert = document.getElementById('successAlert');
+        if (alert) {
+            alert.classList.add('alert-fade-out');
+            setTimeout(() => {
+                alert.remove();
+            }, 500);
+        }
+    }, 5000);
+}
+
+function showErrorToast(message) {
+    const alertHtml = `
+        <div id="errorAlert" class="stat-card mb-6" style="background: #fee2e2; border-left: 4px solid #ef4444; position: relative; animation: slideInRight 0.5s ease;">
+            <div class="stat-header">
+                <div class="stat-icon" style="background: #ef444433; color: #dc2626;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </div>
+                <div class="stat-title" style="color: #991b1b;">⚠️ Terjadi Kesalahan</div>
+            </div>
+            <div class="stat-value" style="color: #991b1b;">${message}</div>
+            <button onclick="this.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #dc2626; cursor: pointer; font-size: 18px;">×</button>
+        </div>
+    `;
+    
+    const mainContent = document.querySelector('.main-content');
+    mainContent.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto-dismiss setelah 8 detik
+    setTimeout(() => {
+        const alert = document.getElementById('errorAlert');
+        if (alert) {
+            alert.classList.add('alert-fade-out');
+            setTimeout(() => {
+                alert.remove();
+            }, 500);
+        }
+    }, 8000);
+}
+</script>
 
 @endsection

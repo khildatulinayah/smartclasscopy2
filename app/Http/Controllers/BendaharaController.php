@@ -82,7 +82,24 @@ class BendaharaController extends Controller
         $paidBills = $payments->where('status', 'paid')->count();
         $unpaidBills = $payments->where('status', 'unpaid')->count();
         $paidAmount = $payments->where('status', 'paid')->sum('amount');
-        $unpaidAmount = $payments->where('status', 'unpaid')->sum('amount');
+        
+        // Hitung unpaidAmount hanya untuk hari Rabu yang sudah lewat
+        $unpaidAmount = 0;
+        $now = Carbon::now();
+        
+        foreach($payments as $payment) {
+            if ($payment->status === 'unpaid') {
+                // Cek tanggal Rabu untuk minggu ini
+                $wednesdayDate = isset($wednesdayDates[$payment->week_number - 1]) 
+                    ? $wednesdayDates[$payment->week_number - 1] 
+                    : null;
+                
+                // Hanya hitung jika Rabu sudah lewat atau bukan bulan sekarang
+                if ($wednesdayDate && ($wednesdayDate->lt($now) || $currentMonth != $now->month || $currentYear != $now->year)) {
+                    $unpaidAmount += $payment->amount;
+                }
+            }
+        }
         
         // Riwayat pembayaran terbaru
         $recentPayments = WeeklyPayment::with('student')
@@ -443,7 +460,24 @@ class BendaharaController extends Controller
         $unpaidBills = $payments->where('status', 'unpaid')->count();
         $totalAmount = $payments->sum('amount');
         $paidAmount = $payments->where('status', 'paid')->sum('amount');
-        $unpaidAmount = $payments->where('status', 'unpaid')->sum('amount');
+        
+        // Hitung unpaidAmount hanya untuk hari Rabu yang sudah lewat
+        $unpaidAmount = 0;
+        $now = Carbon::now();
+        
+        foreach($payments as $payment) {
+            if ($payment->status === 'unpaid') {
+                // Cek tanggal Rabu untuk minggu ini
+                $wednesdayDate = isset($wednesdayDates[$payment->week_number - 1]) 
+                    ? $wednesdayDates[$payment->week_number - 1] 
+                    : null;
+                
+                // Hanya hitung jika Rabu sudah lewat atau bukan bulan sekarang
+                if ($wednesdayDate && ($wednesdayDate->lt($now) || $month != $now->month || $year != $now->year)) {
+                    $unpaidAmount += $payment->amount;
+                }
+            }
+        }
         
         return view('bendahara.weekly-payments', compact(
             'paymentsByStudent',
@@ -585,7 +619,25 @@ class BendaharaController extends Controller
         $unpaidBills = $payments->where('status', 'unpaid')->count();
         $totalAmount = $payments->sum('amount');
         $paidAmount = $payments->where('status', 'paid')->sum('amount');
-        $unpaidAmount = $payments->where('status', 'unpaid')->sum('amount');
+        
+        // Hitung unpaidAmount hanya untuk hari Rabu yang sudah lewat
+        $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($month, $year);
+        $unpaidAmount = 0;
+        $now = Carbon::now();
+        
+        foreach($payments as $payment) {
+            if ($payment->status === 'unpaid') {
+                // Cek tanggal Rabu untuk minggu ini
+                $wednesdayDate = isset($wednesdayDates[$payment->week_number - 1]) 
+                    ? $wednesdayDates[$payment->week_number - 1] 
+                    : null;
+                
+                // Hanya hitung jika Rabu sudah lewat atau bukan bulan sekarang
+                if ($wednesdayDate && ($wednesdayDate->lt($now) || $month != $now->month || $year != $now->year)) {
+                    $unpaidAmount += $payment->amount;
+                }
+            }
+        }
         
         return view('bendahara.simple-weekly-payments', compact(
             'paymentsByStudent',

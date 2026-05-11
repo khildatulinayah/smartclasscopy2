@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/absensi', [SekretarisController::class, 'simpleAttendance'])->name('absensi');
         Route::post('/absensi/update', [SekretarisController::class, 'batchUpdateAttendance'])->name('absensi.update');
         Route::post('/absensi/holiday', [SekretarisController::class, 'deleteHoliday'])->name('absensi.delete_holiday');
+        Route::post('/absensi/mark-all-present', [SekretarisController::class, 'markAllPresent'])->name('absensi.mark_all_present');
         Route::get('/tracker', [SekretarisController::class, 'simpleTracker'])->name('tracker');
         Route::get('/api/student-attendance/{studentId}', [SekretarisController::class, 'getStudentAttendance']);
         

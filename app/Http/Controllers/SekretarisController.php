@@ -93,10 +93,25 @@ class SekretarisController extends Controller
         $selectedDate = $request->input('date', now()->toDateString());
         $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name', 'asc')->get();
         
+        // Cek apakah hari ini adalah weekend
+        $dayOfWeek = \Carbon\Carbon::parse($selectedDate)->dayOfWeek;
+        $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6); // Sunday or Saturday
+        
+        // Cek holiday dari database
         $holiday = Holiday::where('date', $selectedDate)->first();
         
-        if ($holiday) {
-            // Hari libur - tidak perlu absensi
+        // Jika weekend, otomatis buat holiday record jika belum ada
+        if ($isWeekend && !$holiday) {
+            $weekendName = $dayOfWeek == 0 ? 'Minggu' : 'Sabtu';
+            $holiday = Holiday::create([
+                'date' => $selectedDate,
+                'note' => "Hari Libur {$weekendName}",
+                'created_by' => 1 // System ID
+            ]);
+        }
+        
+        if ($holiday || $isWeekend) {
+            // Hari libur/weekend - tidak perlu absensi manual
             $attendances = collect();
         } else {
             $attendances = Attendance::where('date', $selectedDate)->get()->keyBy('student_id');
@@ -165,6 +180,54 @@ class SekretarisController extends Controller
         Holiday::where('date', $date)->delete();
         return redirect()->route('sekretaris.absensi', ['date' => $date])
             ->with('success', 'Keterangan libur dihapus!');
+    }
+
+    /**
+     * Mark All Present - Tandai semua siswa sebagai hadir
+     */
+    public function markAllPresent(Request $request)
+    {
+        $date = $request->input('date', now()->toDateString());
+        
+        // Cek apakah hari ini adalah weekend
+        $dayOfWeek = \Carbon\Carbon::parse($date)->dayOfWeek;
+        $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6); // Sunday or Saturday
+        
+        if ($isWeekend) {
+            $weekendName = $dayOfWeek == 0 ? 'Minggu' : 'Sabtu';
+            return redirect()->route('sekretaris.absensi', ['date' => $date])
+                ->with('error', "Tidak dapat menandai hadir semua karena hari ini adalah hari {$weekendName} (hari libur)!");
+        }
+        
+        // Cek apakah hari ini adalah hari libur
+        $holiday = Holiday::where('date', $date)->first();
+        if ($holiday) {
+            return redirect()->route('sekretaris.absensi', ['date' => $date])
+                ->with('error', 'Tidak dapat menandai hadir semua karena hari ini adalah hari libur: ' . $holiday->note);
+        }
+        
+        // Ambil semua siswa aktif
+        $students = User::where('role', 'siswa')
+                        ->where('is_active', true)
+                        ->get();
+        
+        // Update semua siswa menjadi hadir
+        foreach ($students as $student) {
+            Attendance::updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'date' => $date
+                ],
+                [
+                    'status' => 'hadir',
+                    'attendance_time' => now()->format('H:i:s'),
+                    'created_by' => auth()->id()
+                ]
+            );
+        }
+        
+        return redirect()->route('sekretaris.absensi', ['date' => $date])
+            ->with('success', 'Semua siswa berhasil ditandai sebagai hadir!');
     }
 
     // ============= TRACKER =============
