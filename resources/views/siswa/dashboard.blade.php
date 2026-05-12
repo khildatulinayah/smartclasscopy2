@@ -144,18 +144,18 @@ stroke-dashoffset="{{ $totalDays > 0 ? 326.73 - ($totalHadir / $totalDays * 326.
                             </div>
                             <div class="stat-title">Status Pembayaran</div>
                         </div>
-<div class="payment-month">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</div>
+                        <div class="payment-month">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</div>
                         <div class="payment-progress">
                             <div class="progress-bar">
                                 <div class="progress-fill" style="width: 75%"></div>
                             </div>
                             <div class="progress-details">
-<span class="progress-label">Lunas {{ $paidWeeks }}/{{ $totalWeeks }} Minggu</span>
-<span class="progress-amount">Rp {{ number_format($kasSudahBayar, 0, ',', '.') }}</span>
+                                <span class="progress-label">Lunas {{ $paidWeeks }}/{{ $totalWeeks }} Minggu</span>
+                                <span class="progress-amount">Rp {{ number_format($kasSudahBayar, 0, ',', '.') }}</span>
                             </div>
                         </div>
                         <div class="payment-weeks">
-@foreach($weeklyPayments as $payment)
+                            @foreach($weeklyPayments as $payment)
                                 @php
                                     $paidClass = $payment->status == 'paid' ? 'paid' : 'unpaid';
                                     $statusIcon = $payment->status == 'paid' ? '✓' : '○';
@@ -169,70 +169,6 @@ stroke-dashoffset="{{ $totalDays > 0 ? 326.73 - ($totalHadir / $totalDays * 326.
                     </div>
                 </div>
             </section>
-
-            <!-- Announcements Section -->
-            <section class="announcements-section">
-                <div class="section-header">
-                    <h2 class="section-title">Pengumuman Terbaru</h2>
-                    <button class="view-all-btn">
-                        Lihat Semua
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </button>
-                </div>
-                <div class="announcements-grid">
-                    <div class="announcement-card">
-                        <div class="announcement-icon info">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="announcement-content">
-                            <h3 class="announcement-title">Libur Hari Raya</h3>
-                            <p class="announcement-description">Sekolah akan libur dari tanggal 10-15 April 2025 untuk merayakan Hari Raya Idul Fitri.</p>
-                            <div class="announcement-meta">
-                                <span class="announcement-date">2 hari yang lalu</span>
-                                <span class="announcement-category">Pengumuman</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="announcement-card">
-                        <div class="announcement-icon success">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="announcement-content">
-                            <h3 class="announcement-title">UTS Semester Genap</h3>
-                            <p class="announcement-description">Ujian Tengah Semester akan dimulai pada tanggal 20 April 2025. Persiapkan diri Anda dengan baik.</p>
-                            <div class="announcement-meta">
-                                <span class="announcement-date">5 hari yang lalu</span>
-                                <span class="announcement-category">Akademik</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="announcement-card">
-                        <div class="announcement-icon warning">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a2 2 0 01-2-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2a2 2 0 002-2v-4m0 0V6a2 2 0 012-2h2a2 2 0 012-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2a2 2 0 002-2v-4"></path>
-                            </svg>
-                        </div>
-                        <div class="announcement-content">
-                            <h3 class="announcement-title">Jam Masuk Ditunda</h3>
-                            <p class="announcement-description">Besok jam masuk sekolah ditunda menjadi pukul 08:00 karena rapat guru.</p>
-                            <div class="announcement-meta">
-                                <span class="announcement-date">1 hari yang lalu</span>
-                                <span class="announcement-category">Informasi</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
 </div>
 
         <style>
