@@ -595,7 +595,7 @@ class BendaharaController extends Controller
         $weeklyPaymentAmount = $monthlySetting ?? 0;
 
         // Sinkronkan tagihan untuk bulan yang dipilih (idempoten)
-        $this->generateMonthlyBills($month, $year, $weeklyPaymentAmount);
+        WeeklyPayment::syncMonthlyBills($month, $year, $weeklyPaymentAmount);
         
         $payments = WeeklyPayment::with(['student', 'transaction'])
             ->where('month', $month)
@@ -967,14 +967,5 @@ class BendaharaController extends Controller
                 'trace' => $e->getTraceAsString()
             ], 500);
         }
-    }
-
-    /**
-     * Buat tagihan bulanan - menggunakan syncMonthlyBills yang idempoten
-     */
-    private function generateMonthlyBills($month, $year, $amountPerWeek = null)
-    {
-        // Gunakan syncMonthlyBills yang idempoten
-        return WeeklyPayment::syncMonthlyBills($month, $year, $amountPerWeek);
     }
 }

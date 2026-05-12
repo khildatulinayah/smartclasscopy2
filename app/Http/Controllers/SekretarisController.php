@@ -16,6 +16,29 @@ use App\Models\Holiday;
 
 class SekretarisController extends Controller
 {
+    // ============= HELPER METHODS =============
+    
+    /**
+     * Check if date is weekend or holiday
+     */
+    private function isWeekendOrHoliday($date, $holidays = null)
+    {
+        $dateString = is_string($date) ? $date : $date->format('Y-m-d');
+        $carbonDate = is_string($date) ? \Carbon\Carbon::parse($date) : $date;
+        
+        // Check weekend
+        if ($carbonDate->isWeekend()) {
+            return true;
+        }
+        
+        // Check holiday if provided
+        if ($holidays && $holidays->has($dateString)) {
+            return true;
+        }
+        
+        return false;
+    }
+
     // ============= DASHBOARD =============
     /**
      * Dashboard - Halaman utama sekretaris
@@ -93,24 +116,10 @@ class SekretarisController extends Controller
         $selectedDate = $request->input('date', now()->toDateString());
         $students = User::where('role', 'siswa')->where('is_active', true)->orderBy('name', 'asc')->get();
         
-        // Cek apakah hari ini adalah weekend
-        $dayOfWeek = \Carbon\Carbon::parse($selectedDate)->dayOfWeek;
-        $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6); // Sunday or Saturday
-        
         // Cek holiday dari database
         $holiday = Holiday::where('date', $selectedDate)->first();
         
-        // Jika weekend, otomatis buat holiday record jika belum ada
-        if ($isWeekend && !$holiday) {
-            $weekendName = $dayOfWeek == 0 ? 'Minggu' : 'Sabtu';
-            $holiday = Holiday::create([
-                'date' => $selectedDate,
-                'note' => "Hari Libur {$weekendName}",
-                'created_by' => 1 // System ID
-            ]);
-        }
-        
-        if ($holiday || $isWeekend) {
+        if ($this->isWeekendOrHoliday($selectedDate)) {
             // Hari libur/weekend - tidak perlu absensi manual
             $attendances = collect();
         } else {
@@ -189,21 +198,16 @@ class SekretarisController extends Controller
     {
         $date = $request->input('date', now()->toDateString());
         
-        // Cek apakah hari ini adalah weekend
-        $dayOfWeek = \Carbon\Carbon::parse($date)->dayOfWeek;
-        $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6); // Sunday or Saturday
-        
-        if ($isWeekend) {
+        // Cek apakah hari ini adalah weekend atau libur
+        if ($this->isWeekendOrHoliday($date)) {
+            $holiday = Holiday::where('date', $date)->first();
+            $dayOfWeek = \Carbon\Carbon::parse($date)->dayOfWeek;
             $weekendName = $dayOfWeek == 0 ? 'Minggu' : 'Sabtu';
+            
+            $reason = $holiday ? 'hari libur: ' . $holiday->note : "hari {$weekendName} (hari libur)";
+            
             return redirect()->route('sekretaris.absensi', ['date' => $date])
-                ->with('error', "Tidak dapat menandai hadir semua karena hari ini adalah hari {$weekendName} (hari libur)!");
-        }
-        
-        // Cek apakah hari ini adalah hari libur
-        $holiday = Holiday::where('date', $date)->first();
-        if ($holiday) {
-            return redirect()->route('sekretaris.absensi', ['date' => $date])
-                ->with('error', 'Tidak dapat menandai hadir semua karena hari ini adalah hari libur: ' . $holiday->note);
+                ->with('error', "Tidak dapat menandai hadir semua karena hari ini adalah {$reason}!");
         }
         
         // Ambil semua siswa aktif
@@ -428,9 +432,9 @@ class SekretarisController extends Controller
     }
 
     /**
-     * Cetak Absensi - Cetak laporan absensi
+     * Prepare Laporan Data - Common data untuk cetak dan PDF
      */
-    public function cetakAbsensi($month, $year)
+    private function prepareLaporanData($month, $year)
     {
         // Validate month and year
         if ($month < 1 || $month > 12 || $year < 2020 || $year > 2030) {
@@ -457,9 +461,7 @@ class SekretarisController extends Controller
         
         // Filter holidays to exclude weekends for display
         $holidays = $allHolidays->filter(function ($holiday) {
-            $dayOfWeek = $holiday->date->dayOfWeek;
-            // 0 = Sunday, 6 = Saturday
-            return !in_array($dayOfWeek, [0, 6]);
+            return !$holiday->date->isWeekend();
         })->mapWithKeys(function ($holiday) {
             return [$holiday->date->format('Y-m-d') => $holiday->note];
         });
@@ -475,7 +477,7 @@ class SekretarisController extends Controller
         
         $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
         
-        return view('sekretaris.laporan-absensi-cetak', compact(
+        return compact(
             'students', 
             'attendancesByStudent', 
             'holidays', 
@@ -483,7 +485,17 @@ class SekretarisController extends Controller
             'month', 
             'year', 
             'monthName'
-        ));
+        );
+    }
+
+    /**
+     * Cetak Absensi - Cetak laporan absensi
+     */
+    public function cetakAbsensi($month, $year)
+    {
+        $data = $this->prepareLaporanData($month, $year);
+        
+        return view('sekretaris.laporan-absensi-cetak', $data);
     }
 
     /**
@@ -491,59 +503,10 @@ class SekretarisController extends Controller
      */
     public function laporanAbsensiPdf($month, $year)
     {
-        // Validate month and year
-        if ($month < 1 || $month > 12 || $year < 2020 || $year > 2030) {
-            abort(404, 'Invalid month or year');
-        }
-        
-        // Data absensi untuk PDF (sama seperti cetak)
-        $students = User::where('role', 'siswa')
-                        ->where('is_active', true)
-                        ->with('student')
-                        ->orderBy('name', 'asc')
-                        ->get();
-        
-        $attendances = Attendance::whereMonth('date', $month)
-                                ->whereYear('date', $year)
-                                ->with('student')
-                                ->orderBy('date')
-                                ->get();
-        
-        // Get holidays (exclude weekends from holiday info display)
-        $allHolidays = Holiday::whereMonth('date', $month)
-                             ->whereYear('date', $year)
-                             ->get();
-        
-        // Filter holidays to exclude weekends for display
-        $holidays = $allHolidays->filter(function ($holiday) {
-            $dayOfWeek = $holiday->date->dayOfWeek;
-            // 0 = Sunday, 6 = Saturday
-            return !in_array($dayOfWeek, [0, 6]);
-        })->mapWithKeys(function ($holiday) {
-            return [$holiday->date->format('Y-m-d') => $holiday->note];
-        });
-        
-        // Calculate statistics (use all holidays for calculation)
-        $allHolidaysForCalc = $allHolidays->mapWithKeys(function ($holiday) {
-            return [$holiday->date->format('Y-m-d') => $holiday->note];
-        });
-        $stats = $this->calculateAttendanceStats($students, $attendances, $allHolidaysForCalc, $month, $year);
-        
-        // Group attendances by student for easy display
-        $attendancesByStudent = $attendances->groupBy('student_id');
-        
-        $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
+        $data = $this->prepareLaporanData($month, $year);
         
         // Generate PDF
-        $pdf = Pdf::loadView('sekretaris.laporan-absensi-cetak', compact(
-            'students', 
-            'attendancesByStudent', 
-            'holidays', 
-            'stats', 
-            'month', 
-            'year', 
-            'monthName'
-        ));
+        $pdf = Pdf::loadView('sekretaris.laporan-absensi-cetak', $data);
         
         $pdf->setPaper('a4', 'landscape'); // Landscape untuk tabel
         $pdf->setOptions([
@@ -554,7 +517,7 @@ class SekretarisController extends Controller
             'dpi' => 150
         ]);
         
-        $filename = 'laporan-absensi-' . strtolower(str_replace(' ', '-', $monthName)) . '.pdf';
+        $filename = 'laporan-absensi-' . strtolower(str_replace(' ', '-', $data['monthName'])) . '.pdf';
         
         return response($pdf->output())
             ->header('Content-Type', 'application/pdf')
@@ -576,8 +539,8 @@ class SekretarisController extends Controller
             $dateString = $date->format('Y-m-d');
             $dayOfWeek = $date->dayOfWeek;
             
-            // Skip if Saturday (6) or Sunday (0) or holiday
-            if (!in_array($dayOfWeek, [0, 6]) && !$holidays->has($dateString)) {
+            // Skip if weekend or holiday
+            if (!$this->isWeekendOrHoliday($date, $holidays)) {
                 $workingDays++;
                 $workingDates[] = $dateString;
             }

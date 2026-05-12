@@ -17,6 +17,51 @@ use Carbon\Carbon;
 
 class SiswaController extends Controller
 {
+    // ============= HELPER METHODS =============
+    
+    /**
+     * Check if date is weekend or holiday
+     */
+    private function isWeekendOrHoliday($date, $holidays = null)
+    {
+        $dateString = is_string($date) ? $date : $date->format('Y-m-d');
+        $carbonDate = is_string($date) ? \Carbon\Carbon::parse($date) : $date;
+        
+        // Check weekend
+        if ($carbonDate->isWeekend()) {
+            return true;
+        }
+        
+        // Check holiday if provided
+        if ($holidays && $holidays->has($dateString)) {
+            return true;
+        }
+        
+        // Check holiday in database if no holidays collection provided
+        if (!$holidays && \App\Models\Holiday::where('date', $dateString)->exists()) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get status text for display
+     */
+    private function getStatusText($status)
+    {
+        $statusTexts = [
+            'hadir' => 'Hadir',
+            'sakit' => 'Sakit',
+            'izin' => 'Izin',
+            'alpha' => 'Alpha',
+            'libur' => 'Libur',
+            'belum_absen' => 'Belum Absen'
+        ];
+        
+        return $statusTexts[$status] ?? 'Hadir';
+    }
+
     // ============= DASHBOARD =============
     /**
      * Dashboard - Halaman utama siswa
@@ -45,10 +90,8 @@ class SiswaController extends Controller
             ->where('date', $today)
             ->first();
         
-        // Cek hari libur hari ini
-        $isHoliday = Holiday::where('date', $today)->exists();
-        
-        if ($isHoliday) {
+        // Cek apakah hari ini weekend atau libur
+        if ($this->isWeekendOrHoliday($today)) {
             $statusHariIni = 'libur';
         } else {
             $statusHariIni = $todayAttendance ? $todayAttendance->status : 'belum_absen';
@@ -150,15 +193,18 @@ class SiswaController extends Controller
             ->orderBy('date', 'desc')
             ->get();
         
-        // Transform data absensi untuk handle hari libur
+        // Transform data absensi untuk handle weekend/hari libur
         $attendances = $attendances->map(function ($attendance) use ($holidays) {
             $dateString = $attendance->date->format('Y-m-d');
             $holidayNote = $holidays[$dateString] ?? null;
             
-            // Ubah 'belum_absen' jadi 'libur' jika hari libur
+            // Ubah 'belum_absen' jadi 'libur' jika weekend atau hari libur
             $status = $attendance->status;
-            if ($holidayNote && $status === 'belum_absen') {
+            if ($this->isWeekendOrHoliday($attendance->date, $holidays) && $status === 'belum_absen') {
                 $status = 'libur';
+                if (!$holidayNote && $attendance->date->isWeekend()) {
+                    $holidayNote = 'Hari Libur Akhir Pekan';
+                }
             }
             
             $attendance->status = $status;
@@ -280,24 +326,7 @@ class SiswaController extends Controller
             'total_paid' => Transaction::where('student_id', $student->id)->where('type', 'income')->sum('amount')
         ]);
     }
-    
-    /**
-     * Get Status Text - Helper untuk teks status
-     */
-    private function getStatusText($status)
-    {
-        $statusTexts = [
-            'hadir' => 'Hadir',
-            'sakit' => 'Sakit',
-            'izin' => 'Izin',
-            'alpha' => 'Alpha',
-            'libur' => 'Libur',
-            'belum_absen' => 'Belum Absen'
-        ];
-        
-        return $statusTexts[$status] ?? 'Hadir';
-    }
-    
+
     // ============= PROFILE =============
     
     /**
@@ -334,8 +363,15 @@ class SiswaController extends Controller
         if ($request->hasFile('profile_photo')) {
             $file = $request->file('profile_photo');
             $filename = time() . '_' . $student->id . '.' . $file->getClientOriginalExtension();
-            $file->move(storage_path('app/public/storage/profile_photos'), $filename);
-            $updateData['profile_photo'] = $filename;
+            
+            // Create directory if not exists
+            $profilePath = public_path('profile_photos');
+            if (!file_exists($profilePath)) {
+                mkdir($profilePath, 0755, true);
+            }
+            
+            $file->move($profilePath, $filename);
+            $updateData['profile_photo'] = 'profile_photos/' . $filename;
         }
         
         $student->update($updateData);

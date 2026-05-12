@@ -65,18 +65,6 @@
                     <p class="feature-description">Lihat transaksi keuangan kelas</p>
                     <a href="{{ route('admin.monitor.keuangan') }}" class="feature-btn">Lihat Keuangan</a>
                 </div>
-                
-                <!-- Laporan -->
-                <div class="feature-card">
-                    <div class="feature-icon" style="background: #e0e7ff; color: #6366f1;">
-                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="feature-title">Laporan</h3>
-                    <p class="feature-description">Generate dan download laporan</p>
-                    <a href="{{ route('admin.reports') }}" class="feature-btn">Buat Laporan</a>
-                </div>
             </section>
 
             @php 
@@ -190,7 +178,7 @@
     margin-bottom: 32px; 
 }
 .greeting-subtitle { font-size: 16px; color: #64748b; }
-.feature-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px; }
+.feature-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
 .feature-card { background: white; padding: 32px 24px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: center; transition: all 0.2s ease; }
 .feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
 .feature-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }

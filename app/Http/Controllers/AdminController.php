@@ -87,38 +87,17 @@ class AdminController extends Controller
             'gender' => $request->gender,
         ]);
 
-        // Generate pembayaran mingguan untuk bulan ini
-        $this->generateStudentWeeklyPayments($user->id);
+        // Generate pembayaran mingguan untuk bulan ini (idempotent)
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+        $kasNominal = KasSetting::getNominal($currentMonth, $currentYear) ?? 0;
+        WeeklyPayment::syncMonthlyBills($currentMonth, $currentYear, $kasNominal);
 
         return redirect()->route('admin.students')->with('success', 'Student created successfully');
     }
 
 
-    /**
-     * Generate Student Weekly Payments - Buat tagihan mingguan
-     */
-    private function generateStudentWeeklyPayments($studentId)
-    {
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
-        $weeksInMonth = WeeklyPayment::getWeeksInMonth($currentMonth, $currentYear);
-        $kasNominal = KasSetting::getNominal($currentMonth, $currentYear) ?? 0;
-        
-        for ($week = 1; $week <= $weeksInMonth; $week++) {
-            WeeklyPayment::create([
-                'student_id' => $studentId,
-                'week_number' => $week,
-                'month' => $currentMonth,
-                'year' => $currentYear,
-                'amount' => $kasNominal,
-                'status' => 'unpaid',
-                'payment_date' => null,
-                'transaction_id' => null,
-                'created_by' => auth()->id(),
-            ]);
-        }
-    }
-
+    
     /**
      * Edit Student - Form edit siswa
      */
@@ -338,25 +317,5 @@ class AdminController extends Controller
             'isWeekend',
             'holiday'
         ));
-    }
-
-    // ============= REPORTS =============
-    
-    /**
-     * Reports - Redirect ke halaman monitoring
-     */
-    public function reports(Request $request)
-    {
-        // Redirect ke halaman monitoring (views reports tidak ada)
-        $type = $request->get('type', 'attendance');
-        
-        if ($type === 'attendance') {
-            return redirect()->route('admin.monitor.absensi');
-        } elseif ($type === 'financial') {
-            return redirect()->route('admin.monitor.kas');
-        }
-        
-        // Default redirect ke monitoring absensi
-        return redirect()->route('admin.monitor.absensi');
     }
 }
