@@ -319,24 +319,55 @@
                             $isPaid = $payment && $payment->status === 'paid';
                             $weekDate = $wednesdayDates[$week - 1] ?? null;
                             $dateLabel = $weekDate ? $weekDate->format('d M') : '';
+                            $now = Carbon::now();
+                            
+                            // Tentukan warna card berdasarkan kondisi
+                            if ($isPaid) {
+                                $cardClass = 'bg-green-50 border-green-300';
+                                $textClass = 'text-green-700';
+                            } else {
+                                // Cek apakah Rabu sudah lewat
+                                $wednesdayPassed = $weekDate && ($weekDate->lt($now) || $month != $now->month || $year != $now->year);
+                                
+                                if ($wednesdayPassed) {
+                                    // Rabu sudah lewat = tunggakan (merah)
+                                    $cardClass = 'bg-red-50 border-red-300';
+                                    $textClass = 'text-red-700';
+                                } else {
+                                    // Rabu belum lewat = belum waktunya (abu-abu)
+                                    $cardClass = 'bg-gray-50 border-gray-300';
+                                    $textClass = 'text-gray-700';
+                                }
+                            }
+                            
                             // Highlight current week only if viewing current month AND it's Wednesday
-                            $highlightClass = (isset($isCurrentMonth) && $isCurrentMonth && isset($isWednesday) && $isWednesday && $week == $currentWeek) ? 'ring-4 ring-red-400 bg-yellow-50' : '';
+                            $highlightClass = (isset($isCurrentMonth) && $isCurrentMonth && isset($isWednesday) && $isWednesday && $week == $currentWeek) ? 'ring-4 ring-yellow-400 bg-yellow-50' : '';
                         ?>
-                        <div class="text-center p-4 border-2 rounded-lg <?php echo e($isPaid ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'); ?> <?php echo e($highlightClass); ?>" data-week="<?php echo e($week); ?>">
+                        <div class="text-center p-4 border-2 rounded-lg <?php echo e($cardClass); ?> <?php echo e($highlightClass); ?>" data-week="<?php echo e($week); ?>">
                             <div class="font-bold text-sm mb-1">Minggu <?php echo e($week); ?></div>
                             <?php if($dateLabel): ?>
                                 <div class="text-xs text-gray-600 mb-2">Rabu, <?php echo e($dateLabel); ?></div>
                             <?php endif; ?>
                             <div class="font-bold mb-2">
                                 <?php if($isPaid): ?>
-                                    <span class="text-green-700">✓ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
+                                    <span class="<?php echo e($textClass); ?>">✓ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
                                 <?php else: ?>
-                                    <span class="text-red-700">✗ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
+                                    <span class="<?php echo e($textClass); ?>">✗ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
                                 <?php endif; ?>
                             </div>
                             <?php if(!$isPaid): ?>
+                                <?php
+                                    // Tentukan warna tombol berdasarkan kondisi
+                                    if ($wednesdayPassed) {
+                                        // Rabu sudah lewat = tunggakan (tombol merah)
+                                        $buttonClass = 'bg-red-500 hover:bg-red-600';
+                                    } else {
+                                        // Rabu belum lewat = belum waktunya (tombol hijau)
+                                        $buttonClass = 'bg-green-500 hover:bg-green-600';
+                                    }
+                                ?>
                                 <button onclick="console.log('Button clicked!'); showPaymentModal('<?php echo e($payment->id ?? 'new-'.$studentId.'-'.$week.'-'.$month.'-'.$year); ?>', '<?php echo e($payments->first()->student->name); ?>', <?php echo e($week); ?>, <?php echo e($studentId); ?>)" 
-                                        class="inline-flex items-center justify-center w-16 h-8 rounded bg-blue-500 hover:bg-blue-600 <?php echo e($highlightClass); ?> transition-colors text-white text-xs font-bold"
+                                        class="inline-flex items-center justify-center w-16 h-8 rounded <?php echo e($buttonClass); ?> <?php echo e($highlightClass); ?> transition-colors text-white text-xs font-bold"
                                         title="Bayar Minggu <?php echo e($week); ?> (<?php echo e($wednesdayDates[$week-1]->format('d M') ?? 'Tgl tidak diketahui'); ?>)">
                                     Bayar
                                 </button>

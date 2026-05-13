@@ -364,14 +364,9 @@ class SiswaController extends Controller
             $file = $request->file('profile_photo');
             $filename = time() . '_' . $student->id . '.' . $file->getClientOriginalExtension();
             
-            // Create directory if not exists
-            $profilePath = public_path('profile_photos');
-            if (!file_exists($profilePath)) {
-                mkdir($profilePath, 0755, true);
-            }
-            
-            $file->move($profilePath, $filename);
-            $updateData['profile_photo'] = 'profile_photos/' . $filename;
+            // Store using Laravel storage system
+            $path = $file->storeAs('profile_photos', $filename, 'public');
+            $updateData['profile_photo'] = $path;
         }
         
         $student->update($updateData);

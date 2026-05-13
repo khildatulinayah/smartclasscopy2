@@ -22,7 +22,18 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Foto Profil</label>
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=3b82f6&color=fff&size=120" class="avatar-preview" alt="{{ $student->name }}">
+                                <div class="avatar-upload-container">
+                                    <img src="{{ $student->profile_photo ? asset('storage/' . $student->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode($student->name) . '&background=3b82f6&color=fff&size=120' }}" class="avatar-preview" alt="{{ $student->name }}" id="avatarPreview">
+                                    <label for="profilePhoto" class="upload-btn">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 5.22L12.93 7.07A2 2 0 0115.07 8.93l-1.22.812A2 2 0 0113 7.07V9a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 5.22L12.93 7.07A2 2 0 0115.07 8.93l-1.22.812A2 2 0 0113 7.07V9z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13l-3-3m0 0l-3 3m3-3v12m0-8l3 3"></path>
+                                        </svg>
+                                        <span>Ubah Foto</span>
+                                    </label>
+                                    <input type="file" id="profilePhoto" name="profile_photo" accept="image/*" style="display: none;" onchange="previewImage(event)">
+                                </div>
+                                <small class="form-help">Format: JPG, PNG, GIF. Maksimal 2MB</small>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Nama Lengkap <span class="required">*</span></label>
@@ -405,21 +416,98 @@
         flex-direction: column; 
     } 
 }
+
+/* Avatar Upload Styles */
+.avatar-upload-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 16px;
+    border: 2px solid #e2e8f0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+}
+
+.upload-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #3b82f6;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.upload-btn:hover {
+    background: #2563eb;
+}
+
+.form-help {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const nameInput = document.getElementById('nameInput');
-    const emailInput = document.getElementById('emailInput');
-    const avatarPreview = document.querySelector('.avatar-preview');
+    const avatarPreview = document.getElementById('avatarPreview');
+    let hasCustomPhoto = !!'{{ $student->profile_photo }}';
     
     function updatePreview() {
-        const name = nameInput.value || '{{ $student->name }}';
-        avatarPreview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3b82f6&color=fff&size=120`;
+        if (!hasCustomPhoto) {
+            const name = nameInput.value || '{{ $student->name }}';
+            avatarPreview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3b82f6&color=fff&size=120`;
+        }
     }
     
+    // Image preview function
+    window.previewImage = function(event) {
+        const file = event.target.files[0];
+        
+        if (file) {
+            // Check file size (max 2MB)
+            if (file.size > 2097152) {
+                alert('Ukuran file terlalu besar. Maksimal 2MB.');
+                event.target.value = '';
+                return;
+            }
+            
+            // Check file type
+            if (!file.type.match('image.*')) {
+                alert('Hanya file gambar yang diperbolehkan.');
+                event.target.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                avatarPreview.src = e.target.result;
+                hasCustomPhoto = true;
+            }
+            reader.readAsDataURL(file);
+        }
+    };
+    
     nameInput.addEventListener('input', updatePreview);
-    emailInput.addEventListener('input', updatePreview);
+    updatePreview(); // Initial
 });
 </script>
 @endsection

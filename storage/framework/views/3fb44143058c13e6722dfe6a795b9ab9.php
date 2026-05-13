@@ -100,8 +100,8 @@
         }
         
         .logo-icon {
-            width: 140px;
-            height: 140px;
+            width: 80px;
+            height: 80px;
             object-fit: contain;
             display: block;
             margin: 0 auto 16px;

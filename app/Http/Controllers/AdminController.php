@@ -76,16 +76,29 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6',
             'gender' => 'nullable|in:L,P',
+            'profile_photo' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048',
         ]);
 
-        $user = User::create([
+        $userData = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
             'role' => 'siswa',
             'is_active' => true,
             'gender' => $request->gender,
-        ]);
+        ];
+
+        // Handle upload foto profil
+        if ($request->hasFile('profile_photo')) {
+            $file = $request->file('profile_photo');
+            $filename = time() . '_new.' . $file->getClientOriginalExtension();
+            
+            // Store using Laravel storage system
+            $path = $file->storeAs('profile_photos', $filename, 'public');
+            $userData['profile_photo'] = $path;
+        }
+
+        $user = User::create($userData);
 
         // Generate pembayaran mingguan untuk bulan ini (idempotent)
         $currentMonth = now()->month;
@@ -118,6 +131,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $student->id,
             'gender' => 'nullable|in:L,P',
+            'profile_photo' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048',
         ]);
 
         $updateData = [
@@ -128,6 +142,16 @@ class AdminController extends Controller
 
         if ($request->password) {
             $updateData['password'] = bcrypt($request->password);
+        }
+
+        // Handle upload foto profil
+        if ($request->hasFile('profile_photo')) {
+            $file = $request->file('profile_photo');
+            $filename = time() . '_' . $student->id . '.' . $file->getClientOriginalExtension();
+            
+            // Store using Laravel storage system
+            $path = $file->storeAs('profile_photos', $filename, 'public');
+            $updateData['profile_photo'] = $path;
         }
 
         $student->update($updateData);

@@ -79,7 +79,7 @@
                             <tr data-no="<?php echo e($index + 1); ?>" data-name="<?php echo e(strtolower($student->name)); ?>" data-email="<?php echo e(strtolower($student->email)); ?>" data-role="<?php echo e(strtolower($student->role)); ?>">
                                 <td class="text-center font-semibold"><?php echo e($index + 1); ?></td>
                                 <td>
-                                    <img src="https://ui-avatars.com/api/?name=<?php echo e(urlencode($student->name)); ?>&background=3b82f6&color=fff&size=40" alt="<?php echo e($student->name); ?>" class="avatar-img">
+                                    <img src="<?php echo e($student->profile_photo ? asset('storage/' . $student->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode($student->name) . '&background=3b82f6&color=fff&size=40'); ?>" alt="<?php echo e($student->name); ?>" class="avatar-img">
                                 </td>
                                 <td class="font-semibold"><?php echo e($student->name); ?></td>
                                 <td><?php echo e($student->email); ?></td>

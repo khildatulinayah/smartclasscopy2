@@ -24,7 +24,7 @@
                     <span class="notification-badge">3</span>
                 </button>
                 <div class="user-profile">
-                    <img src="https://picsum.photos/seed/student/40/40.jpg" alt="User" class="user-avatar">
+                    <img src="{{ auth()->user()->profile_photo ? asset('storage/' . auth()->user()->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=3b82f6&color=fff' }}" alt="User" class="user-avatar">
                     <div class="user-info">
                         <div class="user-name">{{ auth()->user()->name }}</div>
                         <div class="user-role">Siswa</div>
@@ -45,7 +45,7 @@
                 <div class="profile-card">
                     <div class="profile-info">
                         <div class="profile-avatar">
-                            <img src="{{ $student->profile_photo ? asset('storage/app/public/profile_photos/' . $student->profile_photo) : 'https://picsum.photos/seed/' . $student->id . '/120/120.jpg' }}" alt="{{ $student->name }}" class="avatar-img" id="avatarPreview">
+                            <img src="{{ $student->profile_photo ? asset('storage/' . $student->profile_photo) : 'https://picsum.photos/seed/' . $student->id . '/120/120.jpg' }}" alt="{{ $student->name }}" class="avatar-img" id="avatarPreview">
                             <div class="avatar-status online"></div>
                             <div class="avatar-upload">
                                 <label for="profilePhoto" class="upload-btn">

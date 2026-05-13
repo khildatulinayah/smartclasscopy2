@@ -24,7 +24,7 @@
                     <span class="notification-badge">3</span>
                 </button>
                 <div class="user-profile">
-                    <img src="https://picsum.photos/seed/student/40/40.jpg" alt="User" class="user-avatar">
+                    <img src="{{ auth()->user()->profile_photo ? asset('storage/' . auth()->user()->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=3b82f6&color=fff' }}" alt="User" class="user-avatar">
                     <div class="user-info">
                         <div class="user-name">{{ auth()->user()->name }}</div>
                         <div class="user-role">Siswa</div>

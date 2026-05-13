@@ -40,7 +40,7 @@
     </nav>
     <div class="sidebar-footer">
         <div class="user-profile-mini">
-            <img src="https://ui-avatars.com/api/?name=<?php echo e(urlencode(auth()->user()->name)); ?>&background=3b82f6&color=fff" alt="User" class="user-avatar-mini">
+            <img src="<?php echo e(auth()->user()->profile_photo ? asset('storage/' . auth()->user()->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=3b82f6&color=fff'); ?>" alt="User" class="user-avatar-mini">
             <div class="user-info-mini">
                 <div class="user-name-mini"><?php echo e(auth()->user()->name); ?></div>
                 <div class="user-role-mini"><?php echo e(ucfirst(auth()->user()->role)); ?></div>

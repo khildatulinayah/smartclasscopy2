@@ -81,7 +81,7 @@
                             <tr data-no="{{ $index + 1 }}" data-name="{{ strtolower($student->name) }}" data-email="{{ strtolower($student->email) }}" data-role="{{ strtolower($student->role) }}">
                                 <td class="text-center font-semibold">{{ $index + 1 }}</td>
                                 <td>
-                                    <img src="https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=3b82f6&color=fff&size=40" alt="{{ $student->name }}" class="avatar-img">
+                                    <img src="{{ $student->profile_photo ? asset('storage/' . $student->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode($student->name) . '&background=3b82f6&color=fff&size=40' }}" alt="{{ $student->name }}" class="avatar-img">
                                 </td>
                                 <td class="font-semibold">{{ $student->name }}</td>
                                 <td>{{ $student->email }}</td>

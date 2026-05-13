@@ -27,7 +27,7 @@
     </nav>
     <div class="sidebar-footer">
         <div class="user-profile-mini">
-            <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=3b82f6&color=fff" alt="User" class="user-avatar-mini">
+            <img src="{{ auth()->user()->profile_photo ? asset('storage/' . auth()->user()->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=3b82f6&color=fff' }}" alt="User" class="user-avatar-mini">
             <div class="user-info-mini">
                 <div class="user-name-mini">{{ auth()->user()->name }}</div>
                 <div class="user-role-mini">{{ ucfirst(auth()->user()->role) }}</div>
