@@ -274,6 +274,7 @@
                 $eligibleWeeks = 0;
                 $unpaidAmount = 0;
                 $now = Carbon::now();
+                $nowStart = $now->copy()->startOfDay();
                 
                 foreach($payments as $payment) {
                     // Cek tanggal Rabu untuk minggu ini
@@ -282,7 +283,11 @@
                         : null;
                     
                     // Hanya hitung jika Rabu sudah lewat atau bukan bulan sekarang
-                    if ($wednesdayDate && ($wednesdayDate->lt($now) || $month != $now->month || $year != $now->year)) {
+                    if ($wednesdayDate && (
+                        $wednesdayDate->copy()->startOfDay()->lt($nowStart)
+                        || $month != $now->month
+                        || $year != $now->year
+                    )) {
                         $eligibleWeeks++;
                         if ($payment->status === 'unpaid') {
                             $unpaidAmount += $payment->amount;
@@ -317,6 +322,8 @@
                         <?php
                             $payment = $payments->where('week_number', $week)->first();
                             $isPaid = $payment && $payment->status === 'paid';
+                            // Pastikan accessor paid_with_old_nominal dipanggil dengan benar
+                            $paidWithOld = $isPaid && $payment && $payment->paid_with_old_nominal;
                             $weekDate = $wednesdayDates[$week - 1] ?? null;
                             $dateLabel = $weekDate ? $weekDate->format('d M') : '';
                             $now = Carbon::now();
@@ -326,8 +333,8 @@
                                 $cardClass = 'bg-green-50 border-green-300';
                                 $textClass = 'text-green-700';
                             } else {
-                                // Cek apakah Rabu sudah lewat
-                                $wednesdayPassed = $weekDate && ($weekDate->lt($now) || $month != $now->month || $year != $now->year);
+                                // Cek apakah Rabu sudah lewat (tanggal saja, bukan jam)
+                                $wednesdayPassed = $weekDate && $weekDate->copy()->startOfDay()->lt($now->copy()->startOfDay());
                                 
                                 if ($wednesdayPassed) {
                                     // Rabu sudah lewat = tunggakan (merah)
@@ -350,7 +357,10 @@
                             <?php endif; ?>
                             <div class="font-bold mb-2">
                                 <?php if($isPaid): ?>
-                                    <span class="<?php echo e($textClass); ?>">✓ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
+                                    <span class="<?php echo e($textClass); ?>">✓ Rp <?php echo e(number_format($payment->amount, 0, ',', '.')); ?></span>
+                                    <?php if($paidWithOld): ?>
+                                        <div class="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded">Dibayar saat nominal lama</div>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span class="<?php echo e($textClass); ?>">✗ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
                                 <?php endif; ?>
@@ -453,8 +463,8 @@
                                     ? $wednesdayDates[$payment->week_number - 1] 
                                     : null;
                                 
-                                // Hanya hitung jika Rabu sudah lewat atau bukan bulan sekarang
-                                if ($wednesdayDate && ($wednesdayDate->lt($now) || $month != $now->month || $year != $now->year)) {
+                                // Hanya hitung jika Rabu sudah lewat (tanggal saja) atau bukan bulan/tahun sekarang
+                                if ($wednesdayDate && ($wednesdayDate->copy()->startOfDay()->lt($now->copy()->startOfDay()) || $month != $now->month || $year != $now->year)) {
                                     $totalEligibleArrears += $payment->amount;
                                 }
                             }
@@ -486,8 +496,8 @@
                                 ? $wednesdayDates[$payment->week_number - 1] 
                                 : null;
                             
-                            // Hanya hitung jika Rabu sudah lewat atau bukan bulan sekarang
-                            if ($wednesdayDate && ($wednesdayDate->lt($now) || $month != $now->month || $year != $now->year)) {
+                            // Hanya hitung jika Rabu sudah lewat (tanggal saja) atau bukan bulan/tahun sekarang
+                            if ($wednesdayDate && ($wednesdayDate->copy()->startOfDay()->lt($now->copy()->startOfDay()) || $month != $now->month || $year != $now->year)) {
                                 $eligibleUnpaidPayments->push($payment);
                             }
                         }

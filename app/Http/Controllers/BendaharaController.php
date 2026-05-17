@@ -464,18 +464,22 @@ class BendaharaController extends Controller
         // Hitung unpaidAmount hanya untuk hari Rabu yang sudah lewat
         $unpaidAmount = 0;
         $now = Carbon::now();
-        
-        foreach($payments as $payment) {
-            if ($payment->status === 'unpaid') {
-                // Cek tanggal Rabu untuk minggu ini
-                $wednesdayDate = isset($wednesdayDates[$payment->week_number - 1]) 
-                    ? $wednesdayDates[$payment->week_number - 1] 
-                    : null;
-                
-                // Hanya hitung jika Rabu sudah lewat atau bukan bulan sekarang
-                if ($wednesdayDate && ($wednesdayDate->lt($now) || $month != $now->month || $year != $now->year)) {
-                    $unpaidAmount += $payment->amount;
-                }
+        $nowStart = $now->copy()->startOfDay();
+
+        foreach ($payments as $payment) {
+            if ($payment->status !== 'unpaid') {
+                continue;
+            }
+
+            // Cek tanggal Rabu untuk minggu ini
+            $wednesdayDate = $wednesdayDates[$payment->week_number - 1] ?? null;
+            if (!$wednesdayDate) {
+                continue;
+            }
+
+            // Aturan baru: hanya hitung tunggakan jika tanggal Rabu sudah lewat
+            if ($wednesdayDate->copy()->startOfDay()->lt($nowStart)) {
+                $unpaidAmount += $payment->amount;
             }
         }
         
