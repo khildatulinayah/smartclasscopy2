@@ -28,6 +28,13 @@ class WeeklyPayment extends Model
         'payment_date' => 'date',
     ];
 
+    /**
+     * Append computed attributes to model JSON
+     */
+    protected $appends = [
+        'paid_with_old_nominal',
+    ];
+
     // Relasi ke siswa
     public function student()
     {
@@ -227,6 +234,21 @@ class WeeklyPayment extends Model
         $month = $month ?? now()->month;
         $year = $year ?? now()->year;
         return KasSetting::getNominal((int) $month, (int) $year) ?? 0;
+    }
+
+    /**
+     * Accessor: apakah pembayaran sudah dilakukan namun dengan nominal lama
+     * (mis. siswa bayar ketika nominal masih Rp 6000, sementara sekarang nominalnya Rp 7000)
+     */
+    public function getPaidWithOldNominalAttribute()
+    {
+        if ($this->status !== 'paid') {
+            return false;
+        }
+
+        $currentNominal = KasSetting::getNominal((int) $this->month, (int) $this->year) ?? 0;
+
+        return (float) $this->amount < (float) $currentNominal;
     }
 
     // Helper: hitung total tunggakan siswa

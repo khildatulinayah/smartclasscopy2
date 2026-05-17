@@ -315,6 +315,7 @@
                         @php
                             $payment = $payments->where('week_number', $week)->first();
                             $isPaid = $payment && $payment->status === 'paid';
+                            $paidWithOld = $payment && ($payment->paid_with_old_nominal ?? false);
                             $weekDate = $wednesdayDates[$week - 1] ?? null;
                             $dateLabel = $weekDate ? $weekDate->format('d M') : '';
                             $now = Carbon::now();
@@ -348,7 +349,10 @@
                             @endif
                             <div class="font-bold mb-2">
                                 @if($isPaid)
-                                    <span class="{{ $textClass }}">✓ Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}</span>
+                                    <span class="{{ $textClass }}">✓ Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
+                                    @if($paidWithOld)
+                                        <div class="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded">Dibayar saat nominal lama</div>
+                                    @endif
                                 @else
                                     <span class="{{ $textClass }}">✗ Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}</span>
                                 @endif
