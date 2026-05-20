@@ -536,6 +536,57 @@ class BendaharaController extends Controller
     }
 
     /**
+     * Process Weekly Difference (selisih nominal lama -> nominal baru)
+     * Skema: update record weekly_payments menjadi amount nominal baru setelah selisih dilunasi.
+     */
+    public function processWeeklyDifference(Request $request)
+    {
+        $request->validate([
+            'payment_id' => 'required|exists:weekly_payments,id',
+            'transaction_id' => 'required|exists:transactions,id',
+        ]);
+
+        $payment = WeeklyPayment::findOrFail($request->payment_id);
+        $transaction = Transaction::findOrFail($request->transaction_id);
+
+        // Nominal baru dari settings
+        $newNominal = KasSetting::getNominal((int)$payment->month, (int)$payment->year) ?? 0;
+        $oldNominal = (float) $payment->amount;
+
+        // Selisih
+        $difference = (float) $newNominal - (float) $oldNominal;
+        if ($difference <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada selisih untuk dilunasi.'
+            ], 422);
+        }
+
+        // Pastikan pembayaran sebelumnya memang paid, karena fungsi ini untuk kasus nominal lama
+        if ($payment->status !== 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pembayaran ini belum lunas nominal lama.'
+            ], 422);
+        }
+
+        // Update amount ke nominal baru (selisih dianggap terbayar)
+        $payment->update([
+            'amount' => $newNominal,
+            'payment_date' => $transaction->date,
+            'transaction_id' => $transaction->id,
+            'status' => 'paid',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Selisih nominal berhasil dilunasi',
+            'difference' => $difference
+        ]);
+    }
+
+
+    /**
      * Process Arrears - Lunasi tunggakan siswa
      */
     public function processArrears(Request $request)
