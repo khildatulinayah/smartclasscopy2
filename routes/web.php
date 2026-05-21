@@ -78,6 +78,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/api/process-arrears', [BendaharaController::class, 'processArrears'])->name('api.process_arrears');
         Route::post('/api/find-payment', [BendaharaController::class, 'findPayment'])->name('api.find_payment');
         
+        // Payment Difference Routes (Validasi Nominal)
+        Route::get('/api/payment-differences', [BendaharaController::class, 'getPaymentDifferences'])->name('api.payment_differences');
+        Route::post('/api/check-payment-difference', [BendaharaController::class, 'checkAndCreatePaymentDifference'])->name('api.check_payment_difference');
+        Route::post('/api/process-settlement', [BendaharaController::class, 'processSettlement'])->name('api.process_settlement');
+        Route::post('/api/process-refund', [BendaharaController::class, 'processRefund'])->name('api.process_refund');
+        Route::get('/api/payment-difference-summary', [BendaharaController::class, 'getPaymentDifferenceSummary'])->name('api.payment_difference_summary');
+        
         // Laporan Routes
         Route::get('/laporan', [BendaharaController::class, 'laporan'])->name('laporan');
         Route::get('/laporan/pembayaran', [BendaharaController::class, 'laporanPembayaran'])->name('laporan.pembayaran');
@@ -98,6 +105,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/absensi/mark-all-present', [SekretarisController::class, 'markAllPresent'])->name('absensi.mark_all_present');
         Route::get('/tracker', [SekretarisController::class, 'simpleTracker'])->name('tracker');
         Route::get('/api/student-attendance/{studentId}', [SekretarisController::class, 'getStudentAttendance']);
+        
+        // Holiday API Routes
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/holidays', [SekretarisController::class, 'getHolidays'])->name('holidays');
+            Route::get('/holidays/month/{month}/year/{year}', [SekretarisController::class, 'getHolidaysByMonth'])->name('holidays.month');
+            Route::post('/holidays', [SekretarisController::class, 'storeHoliday'])->name('holidays.store');
+            Route::get('/holidays/{id}', [SekretarisController::class, 'getHoliday'])->name('holidays.show');
+            Route::put('/holidays/{id}', [SekretarisController::class, 'updateHoliday'])->name('holidays.update');
+            Route::delete('/holidays/{id}', [SekretarisController::class, 'deleteHolidayApi'])->name('holidays.destroy');
+            Route::post('/holidays/bulk-add', [SekretarisController::class, 'bulkAddHolidays'])->name('holidays.bulk_add');
+            Route::get('/holidays-summary', [SekretarisController::class, 'getHolidaysSummary'])->name('holidays.summary');
+        });
         
         // Laporan Routes
         Route::get('/laporan', [SekretarisController::class, 'laporan'])->name('laporan');

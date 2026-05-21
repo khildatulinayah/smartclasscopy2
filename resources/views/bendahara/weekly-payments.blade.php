@@ -1453,6 +1453,9 @@ function updateStudentUI(studentId, weekNumber) {
     }
 }
 </script>
+
+@include('bendahara.payment-differences-modal')
+
 @endsection
 
 <!-- Dashboard CSS -->

@@ -33,6 +33,8 @@ class WeeklyPayment extends Model
      */
     protected $appends = [
         'paid_with_old_nominal',
+        'has_difference',
+        'difference_status',
     ];
 
     // Relasi ke siswa
@@ -51,6 +53,20 @@ class WeeklyPayment extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // Relasi ke payment differences
+    public function paymentDifferences()
+    {
+        return $this->hasMany(PaymentDifference::class, 'weekly_payment_id');
+    }
+
+    // Relasi ke payment difference aktif (pending/unsettled)
+    public function activeDifference()
+    {
+        return $this->hasOne(PaymentDifference::class, 'weekly_payment_id')
+                    ->where('status', 'pending')
+                    ->latest();
     }
 
     // Scope: yang sudah bayar
@@ -283,6 +299,113 @@ class WeeklyPayment extends Model
             'paid_amount' => $paidAmount,
             'unpaid_amount' => $unpaidAmount,
             'details' => $payments,
+        ];
+    }
+
+    /**
+     * ========== PAYMENT DIFFERENCE VALIDATION ==========
+     * Sistem untuk mendeteksi dan mengelola perubahan nominal kas
+     * setelah siswa melakukan pembayaran
+     */
+
+    /**
+     * Validator: Cek apakah ada perbedaan nominal antara yang dibayar dengan nominal saat ini
+     * Return: array dengan info difference atau null jika tidak ada perbedaan
+     */
+    public function checkPaymentDifference()
+    {
+        // Hanya check jika status pembayaran sudah 'paid'
+        if ($this->status !== 'paid') {
+            return null;
+        }
+
+        $currentNominal = KasSetting::getNominal((int)$this->month, (int)$this->year) ?? 0;
+        $paidNominal = (float)$this->amount;
+
+        // Tidak ada perbedaan jika nominal sama
+        if ($paidNominal === $currentNominal) {
+            return null;
+        }
+
+        $difference = (float)$currentNominal - (float)$paidNominal;
+        $actionType = $difference > 0 ? 'settlement' : 'refund';
+
+        return [
+            'has_difference' => true,
+            'old_nominal' => $paidNominal,
+            'new_nominal' => $currentNominal,
+            'difference' => abs($difference),
+            'difference_amount' => $difference,
+            'action_type' => $actionType,
+            'description' => $actionType === 'settlement'
+                ? "Siswa perlu melunasi kekurangan Rp " . number_format(abs($difference), 0, ',', '.')
+                : "Bendahara perlu mengembalikan Rp " . number_format(abs($difference), 0, ',', '.')
+        ];
+    }
+
+    /**
+     * Detect dan create payment difference record
+     * Dipanggil otomatis ketika nominal kas berubah atau manual verification
+     */
+    public function detectAndCreateDifference($createdBy = null)
+    {
+        $diffInfo = $this->checkPaymentDifference();
+
+        if (!$diffInfo || !$diffInfo['has_difference']) {
+            return null;
+        }
+
+        // Cek apakah sudah ada pending difference record
+        $existingDifference = $this->paymentDifferences()
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingDifference) {
+            return $existingDifference;
+        }
+
+        // Create new payment difference record
+        $paymentDifference = PaymentDifference::create([
+            'weekly_payment_id' => $this->id,
+            'student_id' => $this->student_id,
+            'old_nominal' => $diffInfo['old_nominal'],
+            'new_nominal' => $diffInfo['new_nominal'],
+            'difference' => $diffInfo['difference'],
+            'action_type' => $diffInfo['action_type'],
+            'status' => 'pending',
+            'notes' => $diffInfo['description'],
+            'created_by' => $createdBy ?? auth()->id() ?? 1,
+        ]);
+
+        return $paymentDifference;
+    }
+
+    /**
+     * Accessor: Apakah payment ini memiliki pending difference
+     */
+    public function getHasDifferenceAttribute()
+    {
+        return $this->paymentDifferences()
+            ->where('status', 'pending')
+            ->exists();
+    }
+
+    /**
+     * Accessor: Status difference (jika ada)
+     */
+    public function getDifferenceStatusAttribute()
+    {
+        $difference = $this->activeDifference;
+        if (!$difference) {
+            return null;
+        }
+
+        return [
+            'id' => $difference->id,
+            'action_type' => $difference->action_type,
+            'status' => $difference->status,
+            'difference_amount' => (float)$difference->difference,
+            'description' => $difference->notes,
         ];
     }
 }

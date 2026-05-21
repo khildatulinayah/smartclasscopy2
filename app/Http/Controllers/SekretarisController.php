@@ -598,4 +598,485 @@ class SekretarisController extends Controller
             'totalPossibleAttendances' => $students->count() * $workingDays
         ];
     }
+
+    // ============= HOLIDAY API =============
+
+    /**
+     * Get Holidays - Daftar hari libur dengan filter
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getHolidays(Request $request)
+    {
+        try {
+            $query = Holiday::query();
+
+            // Filter berdasarkan bulan dan tahun
+            if ($request->has('month') && $request->has('year')) {
+                $month = (int)$request->input('month');
+                $year = (int)$request->input('year');
+                $query->whereMonth('date', $month)->whereYear('date', $year);
+            }
+
+            // Filter berdasarkan range tanggal
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('date', [
+                    $request->input('start_date'),
+                    $request->input('end_date')
+                ]);
+            }
+
+            // Filter berdasarkan pencarian note
+            if ($request->has('search')) {
+                $query->where('note', 'like', '%' . $request->input('search') . '%');
+            }
+
+            // Sorting
+            $sortBy = $request->input('sort_by', 'date');
+            $sortOrder = $request->input('sort_order', 'asc');
+            $query->orderBy($sortBy, $sortOrder);
+
+            $holidays = $query->with('creator')
+                            ->paginate($request->input('per_page', 50));
+
+            return response()->json([
+                'success' => true,
+                'data' => $holidays->items(),
+                'pagination' => [
+                    'total' => $holidays->total(),
+                    'per_page' => $holidays->perPage(),
+                    'current_page' => $holidays->currentPage(),
+                    'last_page' => $holidays->lastPage(),
+                    'from' => $holidays->firstItem(),
+                    'to' => $holidays->lastItem(),
+                ],
+                'message' => 'Data hari libur berhasil diambil'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data hari libur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Holidays by Month and Year - Daftar hari libur berdasarkan bulan/tahun
+     * @param int $month
+     * @param int $year
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getHolidaysByMonth($month, $year)
+    {
+        try {
+            if ($month < 1 || $month > 12 || $year < 2020 || $year > 2030) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bulan atau tahun tidak valid'
+                ], 400);
+            }
+
+            $holidays = Holiday::whereMonth('date', $month)
+                              ->whereYear('date', $year)
+                              ->with('creator')
+                              ->orderBy('date', 'asc')
+                              ->get()
+                              ->map(function ($holiday) {
+                                  return [
+                                      'id' => $holiday->id,
+                                      'date' => $holiday->date->format('Y-m-d'),
+                                      'day_name' => $holiday->date->locale('id')->translatedFormat('l'),
+                                      'note' => $holiday->note,
+                                      'created_by' => $holiday->created_by,
+                                      'creator_name' => $holiday->creator ? $holiday->creator->name : '-',
+                                      'created_at' => $holiday->created_at->format('Y-m-d H:i:s'),
+                                  ];
+                              });
+
+            return response()->json([
+                'success' => true,
+                'data' => $holidays,
+                'count' => $holidays->count(),
+                'month' => $month,
+                'year' => $year,
+                'message' => 'Data hari libur berhasil diambil'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data hari libur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Store Holiday - Tambah hari libur baru
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function storeHoliday(Request $request)
+    {
+        try {
+            // Validasi input
+            $validated = $request->validate([
+                'date' => 'required|date|date_format:Y-m-d',
+                'note' => 'required|string|min:3|max:255'
+            ], [
+                'date.required' => 'Tanggal harus diisi',
+                'date.date' => 'Format tanggal harus Y-m-d',
+                'date.date_format' => 'Format tanggal harus Y-m-d',
+                'note.required' => 'Keterangan hari libur harus diisi',
+                'note.min' => 'Keterangan minimal 3 karakter',
+                'note.max' => 'Keterangan maksimal 255 karakter',
+            ]);
+
+            // Cek apakah tanggal sudah ada
+            $existingHoliday = Holiday::where('date', $validated['date'])->first();
+            if ($existingHoliday) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tanggal ' . $validated['date'] . ' sudah terdaftar sebagai hari libur: ' . $existingHoliday->note
+                ], 400);
+            }
+
+            // Buat holiday baru
+            $holiday = Holiday::create([
+                'date' => $validated['date'],
+                'note' => $validated['note'],
+                'created_by' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $holiday->id,
+                    'date' => $holiday->date->format('Y-m-d'),
+                    'day_name' => $holiday->date->locale('id')->translatedFormat('l'),
+                    'note' => $holiday->note,
+                    'created_by' => $holiday->created_by,
+                    'creator_name' => auth()->user()->name,
+                    'created_at' => $holiday->created_at->format('Y-m-d H:i:s'),
+                ],
+                'message' => 'Hari libur berhasil ditambahkan'
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan hari libur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update Holiday - Ubah hari libur
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateHoliday(Request $request, $id)
+    {
+        try {
+            // Cari holiday
+            $holiday = Holiday::find($id);
+            if (!$holiday) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hari libur tidak ditemukan'
+                ], 404);
+            }
+
+            // Validasi input
+            $validated = $request->validate([
+                'date' => 'required|date|date_format:Y-m-d',
+                'note' => 'required|string|min:3|max:255'
+            ], [
+                'date.required' => 'Tanggal harus diisi',
+                'date.date' => 'Format tanggal harus Y-m-d',
+                'date.date_format' => 'Format tanggal harus Y-m-d',
+                'note.required' => 'Keterangan hari libur harus diisi',
+                'note.min' => 'Keterangan minimal 3 karakter',
+                'note.max' => 'Keterangan maksimal 255 karakter',
+            ]);
+
+            // Cek apakah tanggal sudah ada (kecuali untuk holiday yang sedang di-update)
+            $duplicateHoliday = Holiday::where('date', $validated['date'])
+                                       ->where('id', '!=', $id)
+                                       ->first();
+            if ($duplicateHoliday) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tanggal ' . $validated['date'] . ' sudah terdaftar sebagai hari libur: ' . $duplicateHoliday->note
+                ], 400);
+            }
+
+            // Update holiday
+            $holiday->update([
+                'date' => $validated['date'],
+                'note' => $validated['note']
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $holiday->id,
+                    'date' => $holiday->date->format('Y-m-d'),
+                    'day_name' => $holiday->date->locale('id')->translatedFormat('l'),
+                    'note' => $holiday->note,
+                    'created_by' => $holiday->created_by,
+                    'updated_at' => $holiday->updated_at->format('Y-m-d H:i:s'),
+                ],
+                'message' => 'Hari libur berhasil diperbarui'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui hari libur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Holiday - Ambil detail hari libur
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getHoliday($id)
+    {
+        try {
+            $holiday = Holiday::with('creator')->find($id);
+            
+            if (!$holiday) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hari libur tidak ditemukan'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $holiday->id,
+                    'date' => $holiday->date->format('Y-m-d'),
+                    'day_name' => $holiday->date->locale('id')->translatedFormat('l'),
+                    'note' => $holiday->note,
+                    'created_by' => $holiday->created_by,
+                    'creator_name' => $holiday->creator ? $holiday->creator->name : '-',
+                    'created_at' => $holiday->created_at->format('Y-m-d H:i:s'),
+                ],
+                'message' => 'Data hari libur berhasil diambil'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data hari libur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete Holiday - Hapus hari libur
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteHolidayApi($id)
+    {
+        try {
+            $holiday = Holiday::find($id);
+            
+            if (!$holiday) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hari libur tidak ditemukan'
+                ], 404);
+            }
+
+            $holidayData = [
+                'id' => $holiday->id,
+                'date' => $holiday->date->format('Y-m-d'),
+                'note' => $holiday->note
+            ];
+
+            $holiday->delete();
+
+            return response()->json([
+                'success' => true,
+                'data' => $holidayData,
+                'message' => 'Hari libur berhasil dihapus'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus hari libur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk Add Holidays - Tambah banyak hari libur sekaligus
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkAddHolidays(Request $request)
+    {
+        try {
+            // Validasi input
+            $validated = $request->validate([
+                'holidays' => 'required|array|min:1',
+                'holidays.*.date' => 'required|date|date_format:Y-m-d',
+                'holidays.*.note' => 'required|string|min:3|max:255'
+            ], [
+                'holidays.required' => 'Data hari libur harus diisi',
+                'holidays.array' => 'Data hari libur harus berupa array',
+                'holidays.min' => 'Minimal 1 hari libur harus ditambahkan',
+                'holidays.*.date.required' => 'Tanggal harus diisi',
+                'holidays.*.date.date' => 'Format tanggal harus Y-m-d',
+                'holidays.*.date.date_format' => 'Format tanggal harus Y-m-d',
+                'holidays.*.note.required' => 'Keterangan hari libur harus diisi',
+                'holidays.*.note.min' => 'Keterangan minimal 3 karakter',
+                'holidays.*.note.max' => 'Keterangan maksimal 255 karakter',
+            ]);
+
+            $holidays = [];
+            $errors = [];
+            $userId = auth()->id();
+
+            foreach ($validated['holidays'] as $index => $holidayData) {
+                // Cek apakah tanggal sudah ada
+                $existingHoliday = Holiday::where('date', $holidayData['date'])->first();
+                
+                if ($existingHoliday) {
+                    $errors[] = [
+                        'index' => $index,
+                        'date' => $holidayData['date'],
+                        'message' => 'Tanggal sudah terdaftar: ' . $existingHoliday->note
+                    ];
+                    continue;
+                }
+
+                // Buat holiday
+                $holiday = Holiday::create([
+                    'date' => $holidayData['date'],
+                    'note' => $holidayData['note'],
+                    'created_by' => $userId
+                ]);
+
+                $holidays[] = [
+                    'id' => $holiday->id,
+                    'date' => $holiday->date->format('Y-m-d'),
+                    'day_name' => $holiday->date->locale('id')->translatedFormat('l'),
+                    'note' => $holiday->note,
+                    'created_at' => $holiday->created_at->format('Y-m-d H:i:s'),
+                ];
+            }
+
+            $status = empty($errors) ? true : false;
+            $message = count($holidays) . ' hari libur berhasil ditambahkan';
+            if (!empty($errors)) {
+                $message .= ', ' . count($errors) . ' hari libur gagal ditambahkan';
+            }
+
+            return response()->json([
+                'success' => $status,
+                'data' => $holidays,
+                'errors' => $errors,
+                'message' => $message,
+                'created_count' => count($holidays),
+                'failed_count' => count($errors)
+            ], $status ? 201 : 207);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan hari libur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Holidays Summary - Ringkasan hari libur
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getHolidaysSummary(Request $request)
+    {
+        try {
+            $month = $request->input('month', now()->month);
+            $year = $request->input('year', now()->year);
+
+            if ($month < 1 || $month > 12 || $year < 2020 || $year > 2030) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bulan atau tahun tidak valid'
+                ], 400);
+            }
+
+            // Total hari libur
+            $totalHolidays = Holiday::whereMonth('date', $month)
+                                    ->whereYear('date', $year)
+                                    ->count();
+
+            // Hari libur nasional vs hari libur lainnya (bisa ditambah logic untuk membedakan)
+            $holidays = Holiday::whereMonth('date', $month)
+                              ->whereYear('date', $year)
+                              ->with('creator')
+                              ->orderBy('date', 'asc')
+                              ->get();
+
+            // Hitung hari kerja (semua hari minus weekend minus holiday)
+            $daysInMonth = Carbon::create($year, $month)->daysInMonth;
+            $workingDays = 0;
+
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $date = Carbon::create($year, $month, $day);
+                if (!$date->isWeekend() && !$holidays->pluck('date')->map(function($d) { 
+                    return $d->format('Y-m-d'); 
+                })->contains($date->format('Y-m-d'))) {
+                    $workingDays++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'month' => $month,
+                    'year' => $year,
+                    'total_holidays' => $totalHolidays,
+                    'total_weekend_days' => $daysInMonth - $workingDays - $totalHolidays,
+                    'working_days' => $workingDays,
+                    'days_in_month' => $daysInMonth,
+                    'holidays_list' => $holidays->map(function ($holiday) {
+                        return [
+                            'id' => $holiday->id,
+                            'date' => $holiday->date->format('Y-m-d'),
+                            'day_name' => $holiday->date->locale('id')->translatedFormat('l'),
+                            'note' => $holiday->note,
+                        ];
+                    })
+                ],
+                'message' => 'Ringkasan hari libur berhasil diambil'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil ringkasan hari libur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -1460,6 +1460,9 @@ function updateStudentUI(studentId, weekNumber) {
     }
 }
 </script>
+
+<?php echo $__env->make('bendahara.payment-differences-modal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
 <?php $__env->stopSection(); ?>
 
 <!-- Dashboard CSS -->

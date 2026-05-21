@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Transaction;
 use App\Models\WeeklyPayment;
+use App\Models\PaymentDifference;
 use App\Models\KasSetting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -622,6 +623,323 @@ class BendaharaController extends Controller
                 'count' => $unpaidPayments->count()
             ]);
         } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ============= PAYMENT DIFFERENCE HANDLING =============
+
+    /**
+     * Get Payment Differences - Ambil daftar selisih nominal yang pending
+     */
+    public function getPaymentDifferences(Request $request)
+    {
+        try {
+            $status = $request->get('status', 'pending');
+            $studentId = $request->get('student_id');
+            $actionType = $request->get('action_type');
+
+            $query = PaymentDifference::with([
+                'weeklyPayment',
+                'student',
+                'settlementTransaction',
+                'creator',
+                'processor'
+            ]);
+
+            if ($status && $status !== 'all') {
+                $query->where('status', $status);
+            }
+
+            if ($studentId) {
+                $query->where('student_id', $studentId);
+            }
+
+            if ($actionType && in_array($actionType, ['settlement', 'refund'])) {
+                $query->where('action_type', $actionType);
+            }
+
+            $differences = $query->orderBy('created_at', 'desc')->get();
+
+            return response()->json([
+                'success' => true,
+                'count' => $differences->count(),
+                'data' => $differences
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting payment differences: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check & Create Payment Difference - Deteksi dan buat record selisih
+     * Dipanggil saat payment diproses jika ada perubahan nominal
+     */
+    public function checkAndCreatePaymentDifference(Request $request)
+    {
+        try {
+            $request->validate([
+                'payment_id' => 'required|exists:weekly_payments,id',
+            ]);
+
+            $payment = WeeklyPayment::findOrFail($request->payment_id);
+            
+            // Hanya bisa check jika payment sudah 'paid'
+            if ($payment->status !== 'paid') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pembayaran harus sudah terselesaikan untuk dapat diverifikasi selisih nominal.'
+                ], 422);
+            }
+
+            // Cek apakah ada perbedaan
+            $diffInfo = $payment->checkPaymentDifference();
+
+            if (!$diffInfo || !$diffInfo['has_difference']) {
+                return response()->json([
+                    'success' => true,
+                    'has_difference' => false,
+                    'message' => 'Tidak ada perbedaan nominal. Pembayaran sudah sesuai.'
+                ]);
+            }
+
+            // Deteksi dan buat record
+            $paymentDifference = $payment->detectAndCreateDifference(auth()->id());
+
+            return response()->json([
+                'success' => true,
+                'has_difference' => true,
+                'difference' => [
+                    'id' => $paymentDifference->id,
+                    'old_nominal' => (float)$paymentDifference->old_nominal,
+                    'new_nominal' => (float)$paymentDifference->new_nominal,
+                    'difference' => (float)$paymentDifference->difference,
+                    'action_type' => $paymentDifference->action_type,
+                    'status' => $paymentDifference->status,
+                    'description' => $paymentDifference->notes,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error checking payment difference: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Process Settlement - Proses pelunasan selisih positif (nominal baru lebih besar)
+     * Siswa melunasi kekurangan
+     */
+    public function processSettlement(Request $request)
+    {
+        try {
+            $request->validate([
+                'difference_id' => 'required|exists:payment_differences,id',
+                'transaction_id' => 'required|exists:transactions,id',
+            ]);
+
+            $difference = PaymentDifference::findOrFail($request->difference_id);
+            $transaction = Transaction::findOrFail($request->transaction_id);
+
+            // Validasi
+            if ($difference->status !== 'pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Selisih nominal ini sudah diproses.'
+                ], 422);
+            }
+
+            if ($difference->action_type !== 'settlement') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ini bukan pelunasan kekurangan. Silakan gunakan proses pengembalian dana.'
+                ], 422);
+            }
+
+            // Validasi nominal transaksi
+            $expectedAmount = (float)$difference->difference;
+            $transactionAmount = (float)$transaction->amount;
+
+            if (abs($transactionAmount - $expectedAmount) > 0.01) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Nominal transaksi tidak sesuai. Diharapkan Rp " . number_format($expectedAmount, 0, ',', '.') . 
+                                 " tetapi Rp " . number_format($transactionAmount, 0, ',', '.')
+                ], 422);
+            }
+
+            // Tandai sebagai settled
+            $difference->markAsSettled($transaction->id, auth()->id());
+
+            // Update weekly payment dengan nominal baru
+            $difference->weeklyPayment->update([
+                'amount' => $difference->new_nominal
+            ]);
+
+            Log::info('Settlement processed', [
+                'difference_id' => $difference->id,
+                'payment_id' => $difference->weekly_payment_id,
+                'student_id' => $difference->student_id,
+                'amount' => $difference->difference
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pelunasan selisih nominal berhasil diproses',
+                'difference' => [
+                    'id' => $difference->id,
+                    'status' => $difference->status,
+                    'settlement_date' => $difference->settlement_date
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error processing settlement: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Process Refund - Proses pengembalian dana ketika nominal baru lebih kecil
+     * Bendahara mengembalikan dana ke siswa
+     */
+    public function processRefund(Request $request)
+    {
+        try {
+            $request->validate([
+                'difference_id' => 'required|exists:payment_differences,id',
+                'transaction_id' => 'required|exists:transactions,id',
+                'notes' => 'nullable|string|max:500'
+            ]);
+
+            $difference = PaymentDifference::findOrFail($request->difference_id);
+            $transaction = Transaction::findOrFail($request->transaction_id);
+
+            // Validasi
+            if ($difference->status !== 'pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pengembalian dana ini sudah diproses.'
+                ], 422);
+            }
+
+            if ($difference->action_type !== 'refund') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ini bukan pengembalian dana. Silakan gunakan proses pelunasan.'
+                ], 422);
+            }
+
+            // Validasi nominal transaksi (expense/pengeluaran)
+            $expectedAmount = (float)$difference->difference;
+            $transactionAmount = (float)$transaction->amount;
+
+            if ($transaction->type !== 'expense') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaksi pengembalian harus berupa pengeluaran (expense).'
+                ], 422);
+            }
+
+            if (abs($transactionAmount - $expectedAmount) > 0.01) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Nominal pengembalian tidak sesuai. Diharapkan Rp " . number_format($expectedAmount, 0, ',', '.') . 
+                                 " tetapi Rp " . number_format($transactionAmount, 0, ',', '.')
+                ], 422);
+            }
+
+            // Tandai sebagai refunded
+            $difference->markAsRefunded($transaction->id, auth()->id());
+            
+            // Update notes jika ada
+            if ($request->filled('notes')) {
+                $difference->update(['notes' => $request->notes]);
+            }
+
+            // Update weekly payment dengan nominal baru
+            $difference->weeklyPayment->update([
+                'amount' => $difference->new_nominal
+            ]);
+
+            Log::info('Refund processed', [
+                'difference_id' => $difference->id,
+                'payment_id' => $difference->weekly_payment_id,
+                'student_id' => $difference->student_id,
+                'amount' => $difference->difference
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengembalian dana berhasil diproses',
+                'difference' => [
+                    'id' => $difference->id,
+                    'status' => $difference->status,
+                    'settlement_date' => $difference->settlement_date
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error processing refund: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Payment Difference Summary - Ringkasan selisih nominal per siswa
+     */
+    public function getPaymentDifferenceSummary(Request $request)
+    {
+        try {
+            $month = $request->get('month');
+            $year = $request->get('year');
+
+            $query = PaymentDifference::with(['student', 'weeklyPayment']);
+
+            if ($month && $year) {
+                $query->whereHas('weeklyPayment', function ($q) use ($month, $year) {
+                    $q->where('month', $month)->where('year', $year);
+                });
+            }
+
+            $differences = $query->where('status', 'pending')->get();
+
+            $summary = [
+                'total_pending' => $differences->count(),
+                'total_settlement' => (float)$differences->where('action_type', 'settlement')->sum('difference'),
+                'total_refund' => (float)$differences->where('action_type', 'refund')->sum('difference'),
+                'settlement_count' => $differences->where('action_type', 'settlement')->count(),
+                'refund_count' => $differences->where('action_type', 'refund')->count(),
+                'by_student' => $differences->groupBy('student_id')->map(function ($items) {
+                    return [
+                        'student_id' => $items[0]->student_id,
+                        'student_name' => $items[0]->student->name,
+                        'count' => $items->count(),
+                        'settlement_total' => (float)$items->where('action_type', 'settlement')->sum('difference'),
+                        'refund_total' => (float)$items->where('action_type', 'refund')->sum('difference'),
+                    ];
+                })->values()
+            ];
+
+            return response()->json([
+                'success' => true,
+                'summary' => $summary
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting payment difference summary: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
