@@ -196,6 +196,11 @@
         <table class="header-table">
             <tr>
 
+                <td width="15%">
+                    <img src="<?php echo e(public_path('images/logo2.png')); ?>" class="logo">
+                         class="logo">
+                </td>
+
                 <td width="70%" class="school-info">
 
                     <div class="school-name">
@@ -212,7 +217,8 @@
 
                     <div class="period">
                         Periode
-                        {{ \Carbon\Carbon::create($year, $month)->locale('id')->translatedFormat('F Y') }}
+                        <?php echo e(\Carbon\Carbon::create($year, $month)->locale('id')->translatedFormat('F Y')); ?>
+
                     </div>
 
                 </td>
@@ -226,7 +232,7 @@
 
     </div>
 
-    @if($payments->count() > 0)
+    <?php if($payments->count() > 0): ?>
 
     <!-- SUMMARY -->
     <div class="summary">
@@ -240,7 +246,8 @@
                     </div>
 
                     <div class="summary-value">
-                        Rp {{ number_format($totalBills,0,',','.') }}
+                        Rp <?php echo e(number_format($totalBills,0,',','.')); ?>
+
                     </div>
                 </td>
 
@@ -250,7 +257,8 @@
                     </div>
 
                     <div class="summary-value">
-                        Rp {{ number_format($totalPaid,0,',','.') }}
+                        Rp <?php echo e(number_format($totalPaid,0,',','.')); ?>
+
                     </div>
                 </td>
 
@@ -260,7 +268,8 @@
                     </div>
 
                     <div class="summary-value">
-                        Rp {{ number_format($totalBills - $totalPaid,0,',','.') }}
+                        Rp <?php echo e(number_format($totalBills - $totalPaid,0,',','.')); ?>
+
                     </div>
                 </td>
 
@@ -270,7 +279,8 @@
                     </div>
 
                     <div class="summary-value">
-                        {{ $paymentsByStudent->count() }}
+                        <?php echo e($paymentsByStudent->count()); ?>
+
                     </div>
                 </td>
 
@@ -292,7 +302,7 @@
                 Nama Siswa
             </th>
 
-            @php
+            <?php
                 $maxWeek = 0;
 
                 foreach($paymentsByStudent as $studentPayments){
@@ -302,15 +312,16 @@
                         }
                     }
                 }
-            @endphp
+            ?>
 
-            @for($week = 1; $week <= $maxWeek; $week++)
+            <?php for($week = 1; $week <= $maxWeek; $week++): ?>
 
                 <th width="10%">
-                    Minggu {{ $week }}
+                    Minggu <?php echo e($week); ?>
+
                 </th>
 
-            @endfor
+            <?php endfor; ?>
 
         </tr>
 
@@ -318,11 +329,11 @@
 
         <tbody>
 
-        @php $rowNumber = 1; @endphp
+        <?php $rowNumber = 1; ?>
 
-        @foreach($paymentsByStudent as $studentId => $studentPayments)
+        <?php $__currentLoopData = $paymentsByStudent; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $studentPayments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-            @php
+            <?php
 
                 $student = $studentPayments->first()->student;
 
@@ -332,67 +343,69 @@
                     $paymentsByWeek[$payment->week_number] = $payment;
                 }
 
-            @endphp
+            ?>
 
             <tr>
 
                 <td class="text-center">
-                    {{ $rowNumber }}
+                    <?php echo e($rowNumber); ?>
+
                 </td>
 
                 <td>
-                    {{ $student ? $student->name : '-' }}
+                    <?php echo e($student ? $student->name : '-'); ?>
+
                 </td>
 
-                @for($week = 1; $week <= $maxWeek; $week++)
+                <?php for($week = 1; $week <= $maxWeek; $week++): ?>
 
                     <td class="text-center">
 
-                        @if(isset($paymentsByWeek[$week]))
+                        <?php if(isset($paymentsByWeek[$week])): ?>
 
-                            @if($paymentsByWeek[$week]->status == 'paid')
+                            <?php if($paymentsByWeek[$week]->status == 'paid'): ?>
 
                                 <span class="status-paid">
                                     LUNAS
                                 </span>
 
-                            @else
+                            <?php else: ?>
 
                                 <span class="status-unpaid">
                                     BELUM
                                 </span>
 
-                            @endif
+                            <?php endif; ?>
 
-                        @else
+                        <?php else: ?>
 
                             <span class="empty">
                                 -
                             </span>
 
-                        @endif
+                        <?php endif; ?>
 
                     </td>
 
-                @endfor
+                <?php endfor; ?>
 
             </tr>
 
-            @php $rowNumber++; @endphp
+            <?php $rowNumber++; ?>
 
-        @endforeach
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
         </tbody>
 
     </table>
 
-    @else
+    <?php else: ?>
 
         <div class="no-data">
             Belum ada data pembayaran siswa.
         </div>
 
-    @endif
+    <?php endif; ?>
 
     <!-- FOOTER -->
     <div class="footer">
@@ -400,7 +413,8 @@
         <div class="signature">
 
             <div>
-                {{ now()->translatedFormat('d F Y') }}
+                <?php echo e(now()->translatedFormat('d F Y')); ?>
+
             </div>
 
             <div style="margin-top:5px;">
@@ -410,7 +424,8 @@
             <div class="signature-space"></div>
 
             <div class="signature-name">
-                {{ $userName ?? 'Administrator' }}
+                <?php echo e($userName ?? 'Administrator'); ?>
+
             </div>
 
         </div>
@@ -420,4 +435,4 @@
 </div>
 
 </body>
-</html>
+</html><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/laporan-pembayaran-siswa-cetak.blade.php ENDPATH**/ ?>

@@ -145,6 +145,37 @@ class Holiday extends Model
     }
 
     /**
+     * Get static list of Indonesian national public holidays for a given year.
+     */
+    public static function getIndonesianNationalHolidays($year = null)
+    {
+        $year = $year ?? now()->year;
+
+        return collect([
+            [
+                'date' => sprintf('%04d-01-01', $year),
+                'note' => 'Tahun Baru Masehi'
+            ],
+            [
+                'date' => sprintf('%04d-05-01', $year),
+                'note' => 'Hari Buruh Internasional'
+            ],
+            [
+                'date' => sprintf('%04d-06-01', $year),
+                'note' => 'Hari Lahir Pancasila'
+            ],
+            [
+                'date' => sprintf('%04d-08-17', $year),
+                'note' => 'Hari Kemerdekaan Republik Indonesia'
+            ],
+            [
+                'date' => sprintf('%04d-12-25', $year),
+                'note' => 'Hari Natal'
+            ],
+        ]);
+    }
+
+    /**
      * Hitung total hari libur dalam bulan tertentu
      */
     public static function countHolidaysInMonth($month, $year = null)

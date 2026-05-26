@@ -33,8 +33,6 @@ class WeeklyPayment extends Model
      */
     protected $appends = [
         'paid_with_old_nominal',
-        'has_difference',
-        'difference_status',
     ];
 
     // Relasi ke siswa
@@ -55,18 +53,10 @@ class WeeklyPayment extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // Relasi ke payment differences
-    public function paymentDifferences()
+    // Relasi ke payment adjustment (jika ada penyesuaian)
+    public function adjustment()
     {
-        return $this->hasMany(PaymentDifference::class, 'weekly_payment_id');
-    }
-
-    // Relasi ke payment difference aktif (pending/unsettled)
-    public function activeDifference()
-    {
-        return $this->hasOne(PaymentDifference::class, 'weekly_payment_id')
-                    ->where('status', 'pending')
-                    ->latest();
+        return $this->hasOne(PaymentAdjustment::class, 'weekly_payment_id');
     }
 
     // Scope: yang sudah bayar
@@ -302,110 +292,65 @@ class WeeklyPayment extends Model
         ];
     }
 
-    /**
-     * ========== PAYMENT DIFFERENCE VALIDATION ==========
-     * Sistem untuk mendeteksi dan mengelola perubahan nominal kas
-     * setelah siswa melakukan pembayaran
-     */
+    // ========== PAYMENT ADJUSTMENT HELPER METHODS ==========
 
     /**
-     * Validator: Cek apakah ada perbedaan nominal antara yang dibayar dengan nominal saat ini
-     * Return: array dengan info difference atau null jika tidak ada perbedaan
+     * Check apakah weekly payment ini memiliki adjustment
      */
-    public function checkPaymentDifference()
+    public function hasAdjustment(): bool
     {
-        // Hanya check jika status pembayaran sudah 'paid'
-        if ($this->status !== 'paid') {
-            return null;
-        }
-
-        $currentNominal = KasSetting::getNominal((int)$this->month, (int)$this->year) ?? 0;
-        $paidNominal = (float)$this->amount;
-
-        // Tidak ada perbedaan jika nominal sama
-        if ($paidNominal === $currentNominal) {
-            return null;
-        }
-
-        $difference = (float)$currentNominal - (float)$paidNominal;
-        $actionType = $difference > 0 ? 'settlement' : 'refund';
-
-        return [
-            'has_difference' => true,
-            'old_nominal' => $paidNominal,
-            'new_nominal' => $currentNominal,
-            'difference' => abs($difference),
-            'difference_amount' => $difference,
-            'action_type' => $actionType,
-            'description' => $actionType === 'settlement'
-                ? "Siswa perlu melunasi kekurangan Rp " . number_format(abs($difference), 0, ',', '.')
-                : "Bendahara perlu mengembalikan Rp " . number_format(abs($difference), 0, ',', '.')
-        ];
+        return $this->adjustment()->exists();
     }
 
     /**
-     * Detect dan create payment difference record
-     * Dipanggil otomatis ketika nominal kas berubah atau manual verification
+     * Check apakah ada adjustment yang masih pending
      */
-    public function detectAndCreateDifference($createdBy = null)
+    public function hasPendingAdjustment(): bool
     {
-        $diffInfo = $this->checkPaymentDifference();
-
-        if (!$diffInfo || !$diffInfo['has_difference']) {
-            return null;
-        }
-
-        // Cek apakah sudah ada pending difference record
-        $existingDifference = $this->paymentDifferences()
-            ->where('status', 'pending')
-            ->first();
-
-        if ($existingDifference) {
-            return $existingDifference;
-        }
-
-        // Create new payment difference record
-        $paymentDifference = PaymentDifference::create([
-            'weekly_payment_id' => $this->id,
-            'student_id' => $this->student_id,
-            'old_nominal' => $diffInfo['old_nominal'],
-            'new_nominal' => $diffInfo['new_nominal'],
-            'difference' => $diffInfo['difference'],
-            'action_type' => $diffInfo['action_type'],
-            'status' => 'pending',
-            'notes' => $diffInfo['description'],
-            'created_by' => $createdBy ?? auth()->id() ?? 1,
-        ]);
-
-        return $paymentDifference;
-    }
-
-    /**
-     * Accessor: Apakah payment ini memiliki pending difference
-     */
-    public function getHasDifferenceAttribute()
-    {
-        return $this->paymentDifferences()
+        return $this->adjustment()
             ->where('status', 'pending')
             ->exists();
     }
 
     /**
-     * Accessor: Status difference (jika ada)
+     * Get adjustment status jika ada
      */
-    public function getDifferenceStatusAttribute()
+    public function getAdjustmentStatus(): ?string
     {
-        $difference = $this->activeDifference;
-        if (!$difference) {
-            return null;
-        }
+        return $this->adjustment?->status;
+    }
 
-        return [
-            'id' => $difference->id,
-            'action_type' => $difference->action_type,
-            'status' => $difference->status,
-            'difference_amount' => (float)$difference->difference,
-            'description' => $difference->notes,
-        ];
+    /**
+     * Get adjustment type label jika ada
+     */
+    public function getAdjustmentTypeLabel(): ?string
+    {
+        return $this->adjustment?->adjustment_type_label;
+    }
+
+    /**
+     * Get adjustment amount jika ada
+     */
+    public function getAdjustmentAmount(): ?float
+    {
+        return $this->adjustment?->adjustment_amount;
+    }
+
+    /**
+     * Get effective amount (yang seharusnya dibayar saat ini)
+     * Ini adalah current nominal dari KasSetting, bukan amount yang di record
+     */
+    public function getEffectiveAmount(): float
+    {
+        $currentNominal = KasSetting::getNominal((int) $this->month, (int) $this->year) ?? 0;
+        return (float) $currentNominal;
+    }
+
+    /**
+     * Get difference amount (difference between recorded amount and current nominal)
+     */
+    public function getDifferenceAmount(): float
+    {
+        return $this->getEffectiveAmount() - (float) $this->amount;
     }
 }

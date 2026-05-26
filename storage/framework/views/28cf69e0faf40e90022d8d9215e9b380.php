@@ -358,26 +358,6 @@
                             <div class="font-bold mb-2">
                                 <?php if($isPaid): ?>
                                     <span class="<?php echo e($textClass); ?>">✓ Rp <?php echo e(number_format($payment->amount, 0, ',', '.')); ?></span>
-                                    <?php if($paidWithOld): ?>
-                                        <div class="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded">
-                                            Dibayar saat nominal lama
-                                        </div>
-                                        <?php
-                                            $selisih = (float) $weeklyPaymentAmount - (float) $payment->amount;
-                                        ?>
-                                        <?php if($selisih > 0): ?>
-                                            <?php
-                                                $paymentIdForBtn = $payment->id;
-                                            ?>
-                                            <button
-onclick="console.log('Difference button clicked', <?php echo e($paymentIdForBtn); ?>); showDifferenceModal(<?php echo e($paymentIdForBtn); ?>, <?php echo e($selisih); ?>, '<?php echo e(addslashes($payments->first()->student->name)); ?>', <?php echo e($week); ?>)"
-                                                class="mt-2 inline-flex items-center justify-center px-2 py-1 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold rounded transition-colors"
-                                                title="Lunasi selisih Rp <?php echo e(number_format($selisih, 0, ',', '.')); ?>"
-                                            >
-                                                Lunasi Selisih
-                                            </button>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span class="<?php echo e($textClass); ?>">✗ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
                                 <?php endif; ?>
@@ -738,7 +718,8 @@ function processPaymentWithTransaction(paymentId) {
             }
             return response.json();
         })
-        .then(transactions => {
+        .then(api => {
+            const transactions = api.transactions ?? api;
             console.log('Transactions received:', transactions);
             console.log('Payment amount from settings:', <?php echo e($weeklyPaymentAmount); ?>);
             
@@ -746,8 +727,8 @@ function processPaymentWithTransaction(paymentId) {
             const paymentAmount = <?php echo e($weeklyPaymentAmount); ?>;
             const availableTransaction = transactions.find(t => 
                 t.type === 'income' && 
-                t.amount === paymentAmount && 
-                !t.weekly_payment_id
+                Number(t.amount) === paymentAmount && 
+                !t.used_in_weekly_payment
             );
             
             console.log('Available transaction found:', availableTransaction);
@@ -955,84 +936,19 @@ function closePaymentModal() {
 }
 
 // Handle payment form submission
-// Catatan: jika title menunjukkan “Lunasi Selisih Nominal”, submit akan memanggil endpoint process-weekly-difference.
+
 document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
-    const modalTitleEl = document.querySelector('#paymentModal h3');
-    const isDifferenceFlow = modalTitleEl && modalTitleEl.textContent.includes('Selisih');
-
-    // Jika ini flow selisih nominal, kita proses ke endpoint khusus.
-    if (isDifferenceFlow) {
-        e.preventDefault();
-
-        const paymentId = document.getElementById('payment_id').value;
-        console.log('Processing difference flow for payment_id:', paymentId);
-
-        // Pilih transaksi income sebesar selisih menggunakan endpoint transactions.
-        fetch('/bendahara/api/transactions')
-            .then(r => {
-                console.log('Transactions API response status:', r.status);
-                return r.json();
-            })
-            .then(transactions => {
-                console.log('Available transactions:', transactions);
-                const currentNominal = <?php echo e($weeklyPaymentAmount); ?>;
-                // server menghitung selisih berdasarkan payment_id, jadi kita cari transaksi income yang belum digunakan untuk nominal selisih
-                const paymentRow = null;
-                // ambil amount yang paling cocok: nominal selisih yang tersedia dari server tidak dikirim, jadi kita pilih transaksi income yang belum dipakai dan amount > 0 dan type income.
-                const availableTransaction = transactions.find(t => t.type === 'income' && !t.weekly_payment_id && Number(t.amount) > 0);
-
-                console.log('Available transaction for difference:', availableTransaction);
-
-                if (!availableTransaction) {
-                    console.warn('No available transaction found');
-                    showWarningToast('Tidak ada transaksi selisih yang tersedia. Buat transaksi pemasukan dengan nominal selisih dulu.');
-                    return;
-                }
-
-                console.log('Calling process-weekly-difference with:', { payment_id: paymentId, transaction_id: availableTransaction.id });
-
-                fetch('/bendahara/process-weekly-difference', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        payment_id: paymentId,
-                        transaction_id: availableTransaction.id
-                    })
-                })
-                .then(res => {
-                    console.log('Process difference response status:', res.status);
-                    return res.json();
-                })
-                .then(data => {
-                    console.log('Process difference response:', data);
-                    if (data.success) {
-                        showSuccessToast('Selisih berhasil dilunasi!');
-                        closePaymentModal();
-                        location.reload();
-                    } else {
-                        showErrorToast(data.message || 'Gagal melunasi selisih');
-                    }
-                })
-                .catch(err => {
-                    console.error('Error processing difference:', err);
-                    showErrorToast('Terjadi kesalahan saat melunasi selisih');
-                });
-            })
-            .catch(err => {
-                console.error('Error fetching transactions:', err);
-                showErrorToast('Gagal mengambil data transaksi');
-            });
-
-        return;
-    }
-
     e.preventDefault();
-    e.preventDefault();
-    
+
     console.log('Payment form submission started');
+
+    // Flow: pembayaran normal
+    e.preventDefault();
+
+
+    console.log('Payment form submission started');
+
+    // Flow: pembayaran normal
     
     const paymentId = document.getElementById('payment_id').value;
     const paymentDate = document.getElementById('payment_date').value;
@@ -1042,7 +958,7 @@ document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
     const weekNumber = document.getElementById('week_number').textContent;
     
     console.log('Form data:', {paymentId, paymentDate, description});
-    
+
     // Get student_id from the payment data
     const studentId = document.getElementById('payment_id').dataset.studentId;
     
@@ -1158,59 +1074,6 @@ function closeArrearsList() {
     }
 }
 
-// Arrears Payment Modal Functions
-function showDifferenceModal(paymentId, differenceAmount, studentName, weekNumber) {
-    console.log('Opening difference modal', { paymentId, differenceAmount, studentName, weekNumber });
-
-
-    // Reuse payment modal UX sederhana
-    const modal = document.getElementById('paymentModal');
-    const modalTitle = document.querySelector('#paymentModal h3');
-    if (modalTitle) modalTitle.textContent = 'Lunasi Selisih Nominal';
-
-    const paymentIdInput = document.getElementById('payment_id');
-    const studentNameElement = document.getElementById('student_name');
-    const weekNumberElement = document.getElementById('week_number');
-    const descriptionElement = document.getElementById('description');
-
-    if (paymentIdInput) paymentIdInput.value = paymentId;
-
-    // Isi keterangan selisih
-    if (descriptionElement) descriptionElement.value = `PELUNASAN SELISIH NOMINAL - ${differenceAmount}`;
-
-    // Ambil data siswa & minggu dari parameter yang dikirim dari tombol (biar tidak '-' terus)
-    if (studentNameElement) studentNameElement.textContent = studentName || '-';
-    if (weekNumberElement) weekNumberElement.textContent = (weekNumber ?? '-') ;
-
-    // Coba isi dari dataset card minggu (saat ini tombol Lunasi Selisih memanggil dengan paymentId asli).
-    // Jika paymentId tidak ditemukan, tetap '-'.
-    try {
-        // Cari weekly card yang punya tombol dengan onclick paymentId ini.
-        const btn = document.querySelector(`button[onclick*="showDifferenceModal(${paymentId}"]`);
-        // DEBUG: untuk memastikan modal terpanggil
-        console.log('Difference modal resolve btn:', btn);
-
-
-        if (btn) {
-            // Dari DOM sekitar, ambil nama siswa dan minggu ke.
-            const studentCard = btn.closest('.student-card');
-            const weekCard = btn.closest('[data-week]');
-            if (studentCard && studentNameElement) {
-                const nameEl = studentCard.querySelector('.student-name');
-                if (nameEl && nameEl.textContent) studentNameElement.textContent = nameEl.textContent.trim();
-            }
-            if (weekCard && weekNumberElement) {
-                weekNumberElement.textContent = weekCard.getAttribute('data-week') || '-';
-            }
-        }
-    } catch (e) {
-        console.warn('Failed to resolve modal fields', e);
-    }
-
-    // Show modal
-    modal.classList.remove('hidden');
-    console.log('Difference modal should be visible now');
-}
 
 function showArrearsModal(studentId, studentName, totalArrears, weeks) {
     console.log('Opening arrears modal for:', {studentId, studentName, totalArrears, weeks});
@@ -1461,7 +1324,6 @@ function updateStudentUI(studentId, weekNumber) {
 }
 </script>
 
-<?php echo $__env->make('bendahara.payment-differences-modal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <?php $__env->stopSection(); ?>
 

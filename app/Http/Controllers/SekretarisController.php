@@ -661,6 +661,48 @@ class SekretarisController extends Controller
     }
 
     /**
+     * Get Indonesian national public holidays for a given year.
+     * @param Request $request
+     * @param int|null $year
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getIndonesianNationalHolidays(Request $request, $year = null)
+    {
+        try {
+            $year = $year ?? $request->input('year', now()->year);
+            $year = (int) $year;
+
+            if ($year < 2020 || $year > 2100) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tahun tidak valid. Pilih tahun antara 2020 dan 2100.'
+                ], 400);
+            }
+
+            $holidays = Holiday::getIndonesianNationalHolidays($year)
+                ->map(function ($holiday) {
+                    return [
+                        'date' => $holiday['date'],
+                        'day_name' => Carbon::parse($holiday['date'])->locale('id')->translatedFormat('l'),
+                        'note' => $holiday['note'],
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'year' => $year,
+                'data' => $holidays,
+                'message' => 'Data hari libur nasional Indonesia berhasil diambil'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data hari libur nasional: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get Holidays by Month and Year - Daftar hari libur berdasarkan bulan/tahun
      * @param int $month
      * @param int $year

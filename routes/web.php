@@ -73,17 +73,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/kas/settings', [BendaharaController::class, 'kasSettings'])->name('kas.settings');
         Route::post('/kas/settings', [BendaharaController::class, 'updateKasSettings'])->name('kas.settings.update');
         Route::post('/process-payment', [BendaharaController::class, 'processWeeklyPayment'])->name('process.payment');
-        Route::post('/process-weekly-difference', [BendaharaController::class, 'processWeeklyDifference'])->name('process.weekly_difference');
 
         Route::post('/api/process-arrears', [BendaharaController::class, 'processArrears'])->name('api.process_arrears');
         Route::post('/api/find-payment', [BendaharaController::class, 'findPayment'])->name('api.find_payment');
-        
-        // Payment Difference Routes (Validasi Nominal)
-        Route::get('/api/payment-differences', [BendaharaController::class, 'getPaymentDifferences'])->name('api.payment_differences');
-        Route::post('/api/check-payment-difference', [BendaharaController::class, 'checkAndCreatePaymentDifference'])->name('api.check_payment_difference');
-        Route::post('/api/process-settlement', [BendaharaController::class, 'processSettlement'])->name('api.process_settlement');
-        Route::post('/api/process-refund', [BendaharaController::class, 'processRefund'])->name('api.process_refund');
-        Route::get('/api/payment-difference-summary', [BendaharaController::class, 'getPaymentDifferenceSummary'])->name('api.payment_difference_summary');
         
         // Laporan Routes
         Route::get('/laporan', [BendaharaController::class, 'laporan'])->name('laporan');
@@ -115,6 +107,7 @@ Route::middleware('auth')->group(function () {
             Route::put('/holidays/{id}', [SekretarisController::class, 'updateHoliday'])->name('holidays.update');
             Route::delete('/holidays/{id}', [SekretarisController::class, 'deleteHolidayApi'])->name('holidays.destroy');
             Route::post('/holidays/bulk-add', [SekretarisController::class, 'bulkAddHolidays'])->name('holidays.bulk_add');
+            Route::get('/holidays/indo-national/{year?}', [SekretarisController::class, 'getIndonesianNationalHolidays'])->name('holidays.indo_national');
             Route::get('/holidays-summary', [SekretarisController::class, 'getHolidaysSummary'])->name('holidays.summary');
         });
         

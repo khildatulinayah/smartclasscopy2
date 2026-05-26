@@ -97,7 +97,8 @@
                     </div>
                 </div>
                 <div>
-                    <img src="{{ asset('images/logo2.png') }}" alt="Logo" class="logo-right" onerror="this.style.display='none'">
+@php $logoPath = public_path('images/logo2.png'); @endphp
+                <img src="file://{{ $logoPath }}" alt="Logo" class="logo-right" style="object-fit:contain;" onerror="this.style.display='none'">
                 </div>
             </div>
         </div>
