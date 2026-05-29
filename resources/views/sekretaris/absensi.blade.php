@@ -217,7 +217,17 @@
                                 </form>
                             </div>
                         </div>
-                        <form action="{{ route('sekretaris.absensi.update') }}" method="POST" class="table-container">
+                                <div class="flex items-center justify-end mb-4">
+                                    <form action="{{ route('sekretaris.api.holidays.sync_national') }}" method="POST">
+                                        @csrf
+                                        <input type="hidden" name="year" value="{{ \Carbon\Carbon::parse($selectedDate)->year }}">
+                                        <button type="submit" class="feature-btn" style="background:#f59e0b; min-width: 240px;">
+                                            🔄 Sync Hari Libur Nasional
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <form action="{{ route('sekretaris.absensi.update') }}" method="POST" class="table-container">
                             @csrf
                             <input type="hidden" name="date" value="{{ $selectedDate }}">
                             <div class="overflow-x-auto">

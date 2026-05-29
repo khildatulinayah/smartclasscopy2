@@ -109,6 +109,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/holidays/bulk-add', [SekretarisController::class, 'bulkAddHolidays'])->name('holidays.bulk_add');
             Route::get('/holidays/indo-national/{year?}', [SekretarisController::class, 'getIndonesianNationalHolidays'])->name('holidays.indo_national');
             Route::get('/holidays-summary', [SekretarisController::class, 'getHolidaysSummary'])->name('holidays.summary');
+            // Sync hari libur nasional ke tabel `holidays`
+            Route::post('/holidays/sync-national/{year?}', [SekretarisController::class, 'syncNationalHolidays'])->name('holidays.sync_national');
         });
         
         // Laporan Routes

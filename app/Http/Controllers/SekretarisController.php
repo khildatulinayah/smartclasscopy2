@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Holiday;
+use Illuminate\Support\Facades\Http;
 
 class SekretarisController extends Controller
 {
@@ -76,6 +77,8 @@ class SekretarisController extends Controller
                 $todayAttendances->put($student->id, $attendance);
             }
         }
+
+        
         
         // Hitung statistik absensi
         $stats = [
@@ -606,6 +609,7 @@ class SekretarisController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
+    
     public function getHolidays(Request $request)
     {
         try {
@@ -661,11 +665,109 @@ class SekretarisController extends Controller
     }
 
     /**
+     * Sync Indonesian National Holidays (from Holiday::getIndonesianNationalHolidays)
+     * to local database table `holidays`.
+     */
+    public function syncNationalHolidays($year = null)
+    {
+        try {
+            $year = $year ?? now()->year;
+            $year = (int) $year;
+            $source = 'api';
+            $holidays = collect();
+
+            try {
+                $response = Http::timeout(30)
+                    ->get('https://tanggalmerah.up.railway.app/api/holidays', [
+                        'year' => $year,
+                    ]);
+
+                if ($response->successful()) {
+                    $holidays = collect($response->json())->map(function ($holiday) {
+                        return [
+                            'date' => data_get($holiday, 'holiday_date', data_get($holiday, 'date', data_get($holiday, 'tanggal'))),
+                            'note' => data_get($holiday, 'holiday_name', data_get($holiday, 'name', data_get($holiday, 'title', 'Hari Libur'))),
+                            'is_national_holiday' => data_get($holiday, 'is_national_holiday', true),
+                        ];
+                    });
+                }
+            } catch (\Throwable $ex) {
+                $holidays = collect();
+            }
+
+            if ($holidays->isEmpty()) {
+                $source = 'static';
+                $holidays = Holiday::getIndonesianNationalHolidays($year)->map(function ($holiday) {
+                    return [
+                        'date' => $holiday['date'],
+                        'note' => $holiday['note'],
+                        'is_national_holiday' => true,
+                    ];
+                });
+            }
+
+            $inserted = 0;
+            $updated = 0;
+
+            foreach ($holidays as $holiday) {
+                if (empty($holiday['date']) || empty($holiday['note'])) {
+                    continue;
+                }
+
+                if ($source === 'api' && !$holiday['is_national_holiday']) {
+                    continue;
+                }
+
+                $holidayYear = Carbon::parse($holiday['date'])->year;
+                if ($holidayYear !== $year) {
+                    continue;
+                }
+
+                $existing = Holiday::where('date', $holiday['date'])->first();
+
+                if ($existing) {
+                    $existing->update([
+                        'note' => $holiday['note'],
+                        'is_national_holiday' => true,
+                        'created_by' => auth()->id(),
+                    ]);
+                    $updated++;
+                } else {
+                    Holiday::create([
+                        'date' => $holiday['date'],
+                        'note' => $holiday['note'],
+                        'is_national_holiday' => true,
+                        'created_by' => auth()->id(),
+                    ]);
+                    $inserted++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'year' => $year,
+                'source' => $source,
+                'inserted' => $inserted,
+                'updated' => $updated,
+                'message' => $source === 'api'
+                    ? 'Sinkronisasi hari libur nasional berhasil dari API.'
+                    : 'Sinkronisasi hari libur nasional berhasil dari daftar statis karena API tidak tersedia.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal sinkronisasi hari libur nasional: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get Indonesian national public holidays for a given year.
      * @param Request $request
      * @param int|null $year
      * @return \Illuminate\Http\JsonResponse
      */
+    
     public function getIndonesianNationalHolidays(Request $request, $year = null)
     {
         try {

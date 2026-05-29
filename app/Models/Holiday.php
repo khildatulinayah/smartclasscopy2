@@ -13,10 +13,12 @@ class Holiday extends Model
         'date',
         'note',
         'created_by',
+        'is_national_holiday',
     ];
 
     protected $casts = [
         'date' => 'date',
+        'is_national_holiday' => 'boolean',
     ];
 
     // ============= RELATIONSHIPS =============

@@ -215,7 +215,17 @@
                                 </form>
                             </div>
                         </div>
-                        <form action="<?php echo e(route('sekretaris.absensi.update')); ?>" method="POST" class="table-container">
+                                <div class="flex items-center justify-end mb-4">
+                                    <form action="<?php echo e(route('sekretaris.api.holidays.sync_national')); ?>" method="POST">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="year" value="<?php echo e(\Carbon\Carbon::parse($selectedDate)->year); ?>">
+                                        <button type="submit" class="feature-btn" style="background:#f59e0b; min-width: 240px;">
+                                            🔄 Sync Hari Libur Nasional
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <form action="<?php echo e(route('sekretaris.absensi.update')); ?>" method="POST" class="table-container">
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="date" value="<?php echo e($selectedDate); ?>">
                             <div class="overflow-x-auto">

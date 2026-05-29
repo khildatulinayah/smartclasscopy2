@@ -1,12 +1,7 @@
 # TODO
 
-## PDF Logo Tidak Tertampil
-- [ ] Ganti src logo di template PDF agar DomPDF bisa load gambar dari path lokal
-  - [ ] `resources/views/bendahara/laporan-keuangan-cetak.blade.php`
-  - [ ] `resources/views/bendahara/laporan-pembayaran-siswa-cetak.blade.php`
-  - [ ] `resources/views/sekretaris/laporan-absensi-cetak.blade.php`
-- [ ] Testing 3 endpoint PDF:
-  - [ ] `/laporan/pdf/keuangan/{month}/{year}`
-  - [ ] `/laporan/pdf/pembayaran/{month}/{year}`
-  - [ ] `/sekretaris/laporan/pdf/{month}/{year}`
+- [ ] Tambah `syncNationalHolidays($year)` di `SekretarisController` untuk menulis hasil `Holiday::getIndonesianNationalHolidays($year)` ke tabel `holidays`.
+- [ ] Tambah route untuk trigger sync.
+- [ ] Tambah tombol trigger sync di halaman absensi (`resources/views/sekretaris/absensi.blade.php`).
+- [ ] Jalankan sync untuk tahun berjalan dan verifikasi 1 Juni masuk tabel `holidays` (Pancasila).
 
