@@ -1,9 +1,7 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="dashboard-layout">
     <!-- Sidebar -->
-    @include('components.siswa-sidebar')
+    <?php echo $__env->make('components.siswa-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <!-- Main Content Area -->
     <div class="main-area">
@@ -24,9 +22,9 @@
                     <span class="notification-badge">3</span>
                 </button>
                 <div class="user-profile">
-                    <img src="{{ auth()->user()->profile_photo ? asset('storage/' . auth()->user()->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=3b82f6&color=fff' }}" alt="User" class="user-avatar">
+                    <img src="<?php echo e(auth()->user()->profile_photo ? asset('storage/' . auth()->user()->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=3b82f6&color=fff'); ?>" alt="User" class="user-avatar">
                     <div class="user-info">
-                        <div class="user-name">{{ auth()->user()->name }}</div>
+                        <div class="user-name"><?php echo e(auth()->user()->name); ?></div>
                         <div class="user-role">Siswa</div>
                     </div>
                     <button class="user-menu-btn">
@@ -48,7 +46,7 @@
                 </div>
                 <div class="page-actions">
                     <div class="month-navigation">
-                        <a href="{{ route('siswa.pembayaran.month', [$prevMonth->month, $prevMonth->year]) }}" class="nav-btn prev-btn">
+                        <a href="<?php echo e(route('siswa.pembayaran.month', [$prevMonth->month, $prevMonth->year])); ?>" class="nav-btn prev-btn">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                             </svg>
@@ -56,10 +54,10 @@
                         </a>
                         
                         <div class="current-month">
-                            <span class="month-label">{{ $currentDate->translatedFormat('F Y') }}</span>
+                            <span class="month-label"><?php echo e($currentDate->translatedFormat('F Y')); ?></span>
                         </div>
                         
-                        <a href="{{ route('siswa.pembayaran.month', [$nextMonth->month, $nextMonth->year]) }}" class="nav-btn next-btn">
+                        <a href="<?php echo e(route('siswa.pembayaran.month', [$nextMonth->month, $nextMonth->year])); ?>" class="nav-btn next-btn">
                             <span>Next</span>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -80,10 +78,10 @@
             <section class="payment-summary">
                 <div class="summary-card">
                     <div class="summary-header">
-                        <h2>Ringkasan Pembayaran {{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</h2>
+                        <h2>Ringkasan Pembayaran <?php echo e(\Carbon\Carbon::now()->translatedFormat('F Y')); ?></h2>
                         <div class="summary-period">
                             <span class="period-label">Periode:</span>
-                            <span class="period-value">Minggu 1-{{ $totalWeeks }}</span>
+                            <span class="period-value">Minggu 1-<?php echo e($totalWeeks); ?></span>
                         </div>
                     </div>
                     
@@ -92,27 +90,27 @@
                             <svg class="progress-ring" width="120" height="120">
                                 <circle class="progress-ring__background" stroke="#e2e8f0" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
                                 <circle class="progress-ring__progress" stroke="#3b82f6" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"
-                                    stroke-dasharray="326.73" stroke-dashoffset="{{ $totalWeeks > 0 ? 326.73 - ($paidWeeks / $totalWeeks * 326.73) : 326.73 }}"/>
+                                    stroke-dasharray="326.73" stroke-dashoffset="<?php echo e($totalWeeks > 0 ? 326.73 - ($paidWeeks / $totalWeeks * 326.73) : 326.73); ?>"/>
                             </svg>
-                            <div class="progress-text">{{ $totalWeeks > 0 ? round(($paidWeeks / $totalWeeks) * 100, 0) : 0 }}%</div>
+                            <div class="progress-text"><?php echo e($totalWeeks > 0 ? round(($paidWeeks / $totalWeeks) * 100, 0) : 0); ?>%</div>
                         </div>
                         
                         <div class="summary-details">
                             <div class="detail-row">
                                 <span class="detail-label">Total Minggu:</span>
-                                <span class="detail-value">{{ $totalWeeks ?? 0 }}</span>
+                                <span class="detail-value"><?php echo e($totalWeeks ?? 0); ?></span>
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Sudah Dibayar:</span>
-                                <span class="detail-value paid">{{ $paidWeeks ?? 0 }}</span>
+                                <span class="detail-value paid"><?php echo e($paidWeeks ?? 0); ?></span>
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Belum Dibayar:</span>
-                                <span class="detail-value unpaid">{{ max(($totalWeeks - $paidWeeks), 0) }}</span>
+                                <span class="detail-value unpaid"><?php echo e(max(($totalWeeks - $paidWeeks), 0)); ?></span>
                             </div>
                             <div class="detail-row total">
                                 <span class="detail-label">Total Pembayaran:</span>
-                                <span class="detail-value">Rp {{ number_format($kasSudahBayar ?? 0, 0, ',', '.') }}</span>
+                                <span class="detail-value">Rp <?php echo e(number_format($kasSudahBayar ?? 0, 0, ',', '.')); ?></span>
                             </div>
                         </div>
                     </div>
@@ -125,63 +123,67 @@
                     <h2>Detail Pembayaran Mingguan</h2>
                     <div class="month-selector">
                         <select class="month-select" id="monthSelect">
-                            <option value="">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</option>
+                            <option value=""><?php echo e(\Carbon\Carbon::now()->translatedFormat('F Y')); ?></option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="payments-grid">
-    @forelse($weeklyPayments ?? [] as $payment)
+    <?php $__empty_1 = true; $__currentLoopData = $weeklyPayments ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $payment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
 
-        <div class="payment-card {{ $payment->status == 'paid' ? 'paid' : 'unpaid' }}">
+        <div class="payment-card <?php echo e($payment->status == 'paid' ? 'paid' : 'unpaid'); ?>">
 
-            {{-- Header --}}
+            
             <div class="payment-header">
-                <h3>Minggu {{ $payment->week_number }}</h3>
+                <h3>Minggu <?php echo e($payment->week_number); ?></h3>
 
-                <span class="payment-status {{ $payment->status }}">
-                    {{ $payment->status == 'paid' ? 'Lunas' : 'Belum Lunas' }}
+                <span class="payment-status <?php echo e($payment->status); ?>">
+                    <?php echo e($payment->status == 'paid' ? 'Lunas' : 'Belum Lunas'); ?>
+
                 </span>
             </div>
 
-            {{-- Detail --}}
+            
             <div class="payment-details">
 
-                {{-- Jumlah --}}
+                
                 <div class="payment-amount">
                     <span class="amount-label">Jumlah:</span>
 
                     <span class="amount-value">
-                        Rp {{ number_format($payment->amount ?? $currentKasNominal, 0, ',', '.') }}
+                        Rp <?php echo e(number_format($payment->amount ?? $currentKasNominal, 0, ',', '.')); ?>
+
                     </span>
                 </div>
 
-                {{-- Jika Sudah Dibayar --}}
-                @if($payment->status == 'paid')
+                
+                <?php if($payment->status == 'paid'): ?>
 
-                    {{-- Tanggal --}}
+                    
                     <div class="payment-date">
                         <span class="date-label">Tanggal Bayar:</span>
 
                         <span class="date-value">
-                            {{ \Carbon\Carbon::parse($payment->paid_date)->format('d/m/Y') }}
+                            <?php echo e(\Carbon\Carbon::parse($payment->paid_date)->format('d/m/Y')); ?>
+
                         </span>
                     </div>
 
-                    {{-- Metode --}}
-                    @if($payment->payment_method)
+                    
+                    <?php if($payment->payment_method): ?>
                         <div class="payment-method">
                             <span class="method-label">Metode:</span>
 
                             <span class="method-value">
-                                {{ ucfirst($payment->payment_method) }}
+                                <?php echo e(ucfirst($payment->payment_method)); ?>
+
                             </span>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
-                @else
+                <?php else: ?>
 
-                    {{-- Jika Belum Dibayar --}}
+                    
                     <div class="payment-due">
                         <span class="due-label">Status:</span>
 
@@ -190,12 +192,12 @@
                         </span>
                     </div>
 
-                @endif
+                <?php endif; ?>
 
             </div>
         </div> 
 
-    @empty
+    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
 
         <div class="no-payments">
 
@@ -218,7 +220,7 @@
 
         </div>
 
-    @endforelse
+    <?php endif; ?>
 </div>
             </section>
 
@@ -247,24 +249,24 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($paymentHistory ?? [] as $history)
+                            <?php $__empty_1 = true; $__currentLoopData = $paymentHistory ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $history): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <tr>
-                                    <td>{{ \Carbon\Carbon::parse($history->date)->format('d/m/Y') }}</td>
-                                    <td>Minggu {{ ceil(\Carbon\Carbon::parse($history->date)->day / 7) }}</td>
-                                    <td>Rp {{ number_format($history->amount, 0, ',', '.') }}</td>
-                                    <td>{{ ucfirst($history->payment_method ?? 'cash') }}</td>
+                                    <td><?php echo e(\Carbon\Carbon::parse($history->date)->format('d/m/Y')); ?></td>
+                                    <td>Minggu <?php echo e(ceil(\Carbon\Carbon::parse($history->date)->day / 7)); ?></td>
+                                    <td>Rp <?php echo e(number_format($history->amount, 0, ',', '.')); ?></td>
+                                    <td><?php echo e(ucfirst($history->payment_method ?? 'cash')); ?></td>
                                     <td>
                                         <span class="status-badge paid">
                                             Lunas
                                         </span>
                                     </td>
-                                    <td>{{ $history->description ?? '-' }}</td>
+                                    <td><?php echo e($history->description ?? '-'); ?></td>
                                 </tr>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr>
                                     <td colspan="6" class="no-data">Belum ada riwayat pembayaran</td>
                                 </tr>
-                            @endforelse
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -1260,4 +1262,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/siswa/pembayaran.blade.php ENDPATH**/ ?>
