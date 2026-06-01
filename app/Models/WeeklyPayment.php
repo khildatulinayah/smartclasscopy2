@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use App\Models\KasSetting;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class WeeklyPayment extends Model
 {
@@ -53,10 +55,24 @@ class WeeklyPayment extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // Relasi ke payment adjustment (jika ada penyesuaian)
-    public function adjustment()
+    // Relasi ke semua payment adjustment untuk weekly payment ini
+    public function adjustments(): HasMany
     {
-        return $this->hasOne(PaymentAdjustment::class, 'weekly_payment_id');
+        return $this->hasMany(PaymentAdjustment::class, 'weekly_payment_id');
+    }
+
+    // Relasi ke payment adjustment terbaru untuk weekly payment ini
+    public function adjustment(): HasOne
+    {
+        return $this->hasOne(PaymentAdjustment::class, 'weekly_payment_id')->latestOfMany();
+    }
+
+    // Relasi ke pending adjustment jika ada
+    public function pendingAdjustment(): HasOne
+    {
+        return $this->hasOne(PaymentAdjustment::class, 'weekly_payment_id')
+            ->where('status', 'pending')
+            ->latestOfMany();
     }
 
     // Scope: yang sudah bayar
@@ -299,7 +315,7 @@ class WeeklyPayment extends Model
      */
     public function hasAdjustment(): bool
     {
-        return $this->adjustment()->exists();
+        return $this->adjustments()->exists();
     }
 
     /**
@@ -307,9 +323,7 @@ class WeeklyPayment extends Model
      */
     public function hasPendingAdjustment(): bool
     {
-        return $this->adjustment()
-            ->where('status', 'pending')
-            ->exists();
+        return $this->pendingAdjustment()->exists();
     }
 
     /**

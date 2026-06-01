@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Transaction;
+use App\Models\PaymentAdjustment;
 use App\Models\WeeklyPayment;
 use App\Models\KasSetting;
 use App\Services\PaymentAdjustmentService;
@@ -50,7 +51,7 @@ class BendaharaController extends Controller
         $currentMonthlyNominal = KasSetting::getNominal($currentMonth, $currentYear) ?? 0;
         WeeklyPayment::syncMonthlyBills($currentMonth, $currentYear, $currentMonthlyNominal);
         
-        $payments = WeeklyPayment::with(['student', 'transaction', 'adjustment'])
+        $payments = WeeklyPayment::with(['student', 'transaction', 'adjustment', 'pendingAdjustment'])
             ->where('month', $currentMonth)
             ->where('year', $currentYear)
             ->get();
@@ -187,12 +188,28 @@ class BendaharaController extends Controller
             ['nominal' => $request->nominal]
         );
 
+        $paymentAdjustmentService = app(PaymentAdjustmentService::class);
+
+        $createdAdjustments = $paymentAdjustmentService->syncAdjustments(
+            month: (int) $request->month,
+            year: (int) $request->year,
+            newNominal: (float) $request->nominal,
+            detectedBy: auth()->user(),
+        );
+
+        $successMessage = 'Nominal kas berhasil diperbarui.';
+        if ($createdAdjustments > 0) {
+            $successMessage .= " Terdeteksi {$createdAdjustments} penyesuaian pembayaran yang perlu ditindaklanjuti.";
+        } else {
+            $successMessage .= ' Tidak ada penyesuaian baru untuk pembayaran yang sudah lunas.';
+        }
+
         return redirect()
             ->route('bendahara.kas.settings', [
                 'month' => (int) $request->month,
                 'year' => (int) $request->year,
             ])
-            ->with('success', 'Nominal kas berhasil diperbarui.');
+            ->with('success', $successMessage);
     }
 
     /**
@@ -410,8 +427,18 @@ class BendaharaController extends Controller
 
         // Sinkronkan tagihan untuk bulan yang dipilih (idempoten - buat yang hilang, jangan duplikasi)
         WeeklyPayment::syncMonthlyBills($month, $year, $weeklyPaymentAmount);
+
+        if ($monthlySetting !== null) {
+            $paymentAdjustmentService = app(PaymentAdjustmentService::class);
+            $paymentAdjustmentService->reconcileAdjustments(
+                month: (int) $month,
+                year: (int) $year,
+                currentNominal: (float) $weeklyPaymentAmount,
+                detectedBy: auth()->user(),
+            );
+        }
         
-        $payments = WeeklyPayment::with(['student', 'transaction'])
+        $payments = WeeklyPayment::with(['student', 'transaction', 'adjustment', 'pendingAdjustment'])
             ->where('month', $month)
             ->where('year', $year)
             ->orderBy('week_number')
@@ -466,6 +493,10 @@ class BendaharaController extends Controller
         $totalAmount = $payments->sum('amount');
         $paidAmount = $payments->where('status', 'paid')->sum('amount');
         
+        $pendingAdjustmentCount = \App\Models\PaymentAdjustment::pending()
+            ->whereIn('weekly_payment_id', $payments->pluck('id'))
+            ->count();
+
         // Hitung unpaidAmount hanya untuk hari Rabu yang sudah lewat
         $unpaidAmount = 0;
         $now = Carbon::now();
@@ -501,6 +532,7 @@ class BendaharaController extends Controller
             'unpaidBills',
             'paidAmount',
             'unpaidAmount',
+            'pendingAdjustmentCount',
             'isWednesday',
             'isCurrentMonth',
             'currentWeek',
@@ -537,6 +569,7 @@ class BendaharaController extends Controller
             'status' => 'paid',
             'payment_date' => $transaction->date,
             'transaction_id' => $transaction->id,
+            'amount' => $transaction->amount,
         ]);
         
         return response()->json([
@@ -601,6 +634,51 @@ class BendaharaController extends Controller
         }
     }
 
+    /**
+     * Process Shortage Adjustment - Lunasi kekurangan melalui invoice
+     */
+    public function processShortage(PaymentAdjustment $adjustment)
+    {
+        $transaction = Transaction::create([
+            'student_id' => $adjustment->student_id,
+            'type' => 'income',
+            'amount' => $adjustment->adjustment_amount,
+            'description' => 'Pelunasan kekurangan kas',
+            'date' => now(),
+            'created_by' => auth()->id(),
+        ]);
+
+        $adjustment->update([
+            'invoice_transaction_id' => $transaction->id,
+        ]);
+
+        $adjustment->markAsProcessed(auth()->user());
+
+        return back()->with('success', 'Kekurangan berhasil dilunasi');
+    }
+
+    /**
+     * Process Refund Adjustment - Kembalikan kelebihan dana
+     */
+    public function processRefund(PaymentAdjustment $adjustment)
+    {
+        $transaction = Transaction::create([
+            'student_id' => $adjustment->student_id,
+            'type' => 'expense',
+            'amount' => abs($adjustment->adjustment_amount),
+            'description' => 'Pengembalian kelebihan kas',
+            'date' => now(),
+            'created_by' => auth()->id(),
+        ]);
+
+        $adjustment->update([
+            'refund_transaction_id' => $transaction->id,
+        ]);
+
+        $adjustment->markAsProcessed(auth()->user());
+
+        return back()->with('success', 'Pengembalian berhasil diproses');
+    }
 
     /**
      * Simple Weekly Payments - Halaman pembayaran sederhana
@@ -624,8 +702,18 @@ class BendaharaController extends Controller
 
         // Sinkronkan tagihan untuk bulan yang dipilih (idempoten)
         WeeklyPayment::syncMonthlyBills($month, $year, $weeklyPaymentAmount);
+
+        if ($monthlySetting !== null) {
+            $paymentAdjustmentService = app(PaymentAdjustmentService::class);
+            $paymentAdjustmentService->reconcileAdjustments(
+                month: (int) $month,
+                year: (int) $year,
+                currentNominal: (float) $weeklyPaymentAmount,
+                detectedBy: auth()->user(),
+            );
+        }
         
-        $payments = WeeklyPayment::with(['student', 'transaction'])
+        $payments = WeeklyPayment::with(['student', 'transaction', 'adjustment', 'pendingAdjustment'])
             ->where('month', $month)
             ->where('year', $year)
             ->orderBy('week_number')
@@ -647,6 +735,9 @@ class BendaharaController extends Controller
         $unpaidBills = $payments->where('status', 'unpaid')->count();
         $totalAmount = $payments->sum('amount');
         $paidAmount = $payments->where('status', 'paid')->sum('amount');
+        $pendingAdjustmentCount = \App\Models\PaymentAdjustment::pending()
+            ->whereIn('weekly_payment_id', $payments->pluck('id'))
+            ->count();
         
         // Hitung unpaidAmount hanya untuk hari Rabu yang sudah lewat
         $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($month, $year);
@@ -676,6 +767,7 @@ class BendaharaController extends Controller
             'totalAmount',
             'paidAmount',
             'unpaidAmount',
+            'pendingAdjustmentCount',
             'weeksInMonth',
             'weeklyPaymentAmount',
             'kasSettingWarning',
@@ -928,7 +1020,7 @@ class BendaharaController extends Controller
             WeeklyPayment::syncMonthlyBills($month, $year);
             
             // Data untuk PDF pembayaran
-            $payments = WeeklyPayment::with(['student', 'transaction'])
+            $payments = WeeklyPayment::with(['student', 'transaction', 'adjustment', 'pendingAdjustment'])
                 ->where('month', $month)
                 ->where('year', $year)
                 ->orderBy('student_id')

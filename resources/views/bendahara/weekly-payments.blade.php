@@ -90,6 +90,24 @@
         </div>
     @endif
 
+    @if(!empty($pendingAdjustmentCount) && $pendingAdjustmentCount > 0)
+        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <h3 class="text-lg font-semibold text-indigo-800">⚠️ Ada {{ $pendingAdjustmentCount }} penyesuaian pembayaran</h3>
+                    <p class="text-sm text-indigo-700 mt-1">
+                        Pembayaran lunas bulan ini membutuhkan tindakan koreksi kas. Gunakan tombol Lunasi/Kembalikan pada kartu minggu.
+                    </p>
+                </div>
+                <div class="text-right">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-sm font-semibold">
+                        Adjustment Pending
+                    </span>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Statistics Cards -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -353,13 +371,53 @@
                             @if($dateLabel)
                                 <div class="text-xs text-gray-600 mb-2">Rabu, {{ $dateLabel }}</div>
                             @endif
+                            @php $pendingAdjustment = $payment->pendingAdjustment; @endphp
                             <div class="font-bold mb-2">
                                 @if($isPaid)
                                     <span class="{{ $textClass }}">✓ Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
+                                    @if(!$pendingAdjustment && $payment->amount != $weeklyPaymentAmount)
+                                        <div class="text-xs text-yellow-800 mt-2">
+                                            Nominal baru: Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}
+                                        </div>
+                                    @endif
                                 @else
                                     <span class="{{ $textClass }}">✗ Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}</span>
                                 @endif
                             </div>
+                            @if($isPaid && $pendingAdjustment)
+                                <div class="space-y-2 mb-2">
+                                    @if($pendingAdjustment->isShortage())
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 text-yellow-900 text-xs font-semibold">
+                                            Kurang {{ $pendingAdjustment->formatted_amount }}
+                                        </span>
+
+                                        <form method="POST"
+                                              action="{{ route('bendahara.adjustment.shortage', $pendingAdjustment->id) }}">
+                                            @csrf
+
+                                            <button class="w-full px-2 py-1 bg-yellow-500 text-white rounded text-xs font-semibold hover:bg-yellow-600">
+                                                Lunasi
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if($pendingAdjustment->isOverpayment())
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">
+                                            Lebih {{ $pendingAdjustment->formatted_amount }}
+                                        </span>
+
+                                        <form method="POST"
+                                              action="{{ route('bendahara.adjustment.refund', $pendingAdjustment->id) }}">
+                                            @csrf
+
+                                            <button class="w-full px-2 py-1 bg-blue-500 text-white rounded text-xs font-semibold hover:bg-blue-600">
+                                                Kembalikan
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            @endif
+
                             @if(!$isPaid)
                                 @php
                                     // Tentukan warna tombol berdasarkan kondisi

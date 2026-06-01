@@ -60,8 +60,21 @@ class PaymentAdjustmentService
             $adjustments = collect([]);
 
             foreach ($paidPayments as $payment) {
-                // Skip jika adjustment sudah ada
-                if ($payment->adjustment()->exists()) {
+                $difference = $newNominal - $payment->amount;
+
+                if ($difference == 0) {
+                    continue;
+                }
+
+                $existingAdjustment = PaymentAdjustment::where('weekly_payment_id', $payment->id)->first();
+
+                // Jika ada pending adjustment lama, hapus dulu agar bisa diganti
+                if ($existingAdjustment && $existingAdjustment->status === 'pending') {
+                    $existingAdjustment->delete();
+                }
+
+                // Jika sudah ada adjustment yang sudah diproses atau dibatalkan, skip
+                if ($existingAdjustment && $existingAdjustment->status !== 'pending') {
                     continue;
                 }
 
@@ -82,6 +95,136 @@ class PaymentAdjustmentService
     }
 
     /**
+     * Sync adjustment records untuk semua pembayaran yang sudah dibayar ketika nominal berubah
+     *
+     * @param int $month
+     * @param int $year
+     * @param float $newNominal
+     * @param User $detectedBy
+     * @return int Jumlah adjustment yang dibuat
+     */
+    public function syncAdjustments(
+        int $month,
+        int $year,
+        float $newNominal,
+        User $detectedBy
+    ): int {
+        return DB::transaction(function () use ($month, $year, $newNominal, $detectedBy) {
+            $payments = WeeklyPayment::where('month', $month)
+                ->where('year', $year)
+                ->where('status', 'paid')
+                ->get();
+
+            $createdCount = 0;
+
+            foreach ($payments as $payment) {
+                $difference = $newNominal - $payment->amount;
+
+                // Jika tidak ada perubahan nominal, skip
+                if ($difference == 0) {
+                    continue;
+                }
+
+                $existingAdjustment = PaymentAdjustment::where('weekly_payment_id', $payment->id)->first();
+
+                // Jika sudah ada adjustment yang diproses atau dibatalkan, jangan buat adjustment baru
+                if ($existingAdjustment && $existingAdjustment->status !== 'pending') {
+                    continue;
+                }
+
+                // Hapus pending lama agar dapat membuat adjustment baru sesuai nominal terbaru
+                if ($existingAdjustment && $existingAdjustment->status === 'pending') {
+                    $existingAdjustment->delete();
+                }
+
+                PaymentAdjustment::create([
+                    'weekly_payment_id' => $payment->id,
+                    'student_id' => $payment->student_id,
+                    'original_amount' => $payment->amount,
+                    'current_nominal' => $newNominal,
+                    'adjustment_amount' => abs($difference),
+                    'adjustment_type' => $difference > 0
+                        ? 'shortage'
+                        : 'overpayment',
+                    'handling_method' => $difference > 0
+                        ? 'invoice'
+                        : 'refund',
+                    'status' => 'pending',
+                    'detected_by' => $detectedBy->id,
+                ]);
+
+                $createdCount++;
+            }
+
+            return $createdCount;
+        });
+    }
+
+    /**
+     * Reconcile paid weekly payments against current nominal.
+     *
+     * This is a fallback for cases where nominal has changed but adjustments
+     * were not created during the original update flow.
+     *
+     * @param int $month
+     * @param int $year
+     * @param float $currentNominal
+     * @param User $detectedBy
+     * @return int
+     */
+    public function reconcileAdjustments(
+        int $month,
+        int $year,
+        float $currentNominal,
+        User $detectedBy
+    ): int {
+        return DB::transaction(function () use ($month, $year, $currentNominal, $detectedBy) {
+            $payments = WeeklyPayment::where('month', $month)
+                ->where('year', $year)
+                ->where('status', 'paid')
+                ->get();
+
+            $createdCount = 0;
+
+            foreach ($payments as $payment) {
+                $difference = $currentNominal - $payment->amount;
+
+                // Only reconcile if actual paid amount differs from current nominal.
+                if ($difference == 0) {
+                    continue;
+                }
+
+                $existingAdjustment = PaymentAdjustment::where('weekly_payment_id', $payment->id)->first();
+
+                if ($existingAdjustment) {
+                    // Keep existing pending adjustment or skip if already processed/cancelled.
+                    continue;
+                }
+
+                PaymentAdjustment::create([
+                    'weekly_payment_id' => $payment->id,
+                    'student_id' => $payment->student_id,
+                    'original_amount' => $payment->amount,
+                    'current_nominal' => $currentNominal,
+                    'adjustment_amount' => abs($difference),
+                    'adjustment_type' => $difference > 0
+                        ? 'shortage'
+                        : 'overpayment',
+                    'handling_method' => $difference > 0
+                        ? 'invoice'
+                        : 'refund',
+                    'status' => 'pending',
+                    'detected_by' => $detectedBy->id,
+                ]);
+
+                $createdCount++;
+            }
+
+            return $createdCount;
+        });
+    }
+
+    /**
      * Buat payment adjustment record
      * 
      * @param WeeklyPayment $weeklyPayment
@@ -96,14 +239,15 @@ class PaymentAdjustmentService
         float $currentNominal,
         User $detectedBy
     ): ?PaymentAdjustment {
-        $adjustmentAmount = $currentNominal - $originalAmount;
+        $difference = $currentNominal - $originalAmount;
+        $adjustmentAmount = abs($difference);
 
         // Jika tidak ada selisih, return null
         if ($adjustmentAmount == 0) {
             return null;
         }
 
-        $adjustmentType = $adjustmentAmount > 0 ? 'shortage' : 'overpayment';
+        $adjustmentType = $difference > 0 ? 'shortage' : 'overpayment';
         $handlingMethod = $adjustmentType === 'shortage' ? 'unpaid' : 'credit_balance';
 
         return PaymentAdjustment::create([

@@ -74,7 +74,16 @@
                     </div>
                 </div>
             </section>
-
+            @if(!empty($pendingAdjustmentCount) && $pendingAdjustmentCount > 0)
+                <section class="mb-8">
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+                        <h3 class="text-lg font-semibold text-indigo-800">⚠️ Ada {{ $pendingAdjustmentCount }} penyesuaian pembayaran pending</h3>
+                        <p class="text-sm text-indigo-700 mt-2">
+                            Pembayaran lunas bulan ini memerlukan tindakan. Scroll ke tabel untuk melihat tombol Lunasi/Kembalikan.
+                        </p>
+                    </div>
+                </section>
+            @endif
             <!-- Payment Table -->
             <section class="tables-section">
                 <div class="table-card">
@@ -122,8 +131,35 @@
                                             {{ $paidCount }}/4
                                         </span>
                                     </td>
+                                    @php
+                                        $pendingAdjustments = $payments->filter(function ($payment) {
+                                            return $payment->status === 'paid' && $payment->pendingAdjustment;
+                                        })->map(function ($payment) {
+                                            return $payment->pendingAdjustment;
+                                        })->filter();
+                                    @endphp
                                     <td class="text-center">
-                                        @if($paidCount < 4)
+                                        @if($pendingAdjustments->isNotEmpty())
+                                            @foreach($pendingAdjustments as $adjustment)
+                                                <div class="mb-2">
+                                                    <span class="status-badge warning">
+                                                        {{ $adjustment->isShortage() ? 'Kurang' : 'Lebih' }} {{ $adjustment->formatted_amount }}
+                                                    </span>
+                                                    <form action="{{ route($adjustment->isShortage() ? 'bendahara.adjustment.shortage' : 'bendahara.adjustment.refund', $adjustment->id) }}" method="POST" class="inline-block mt-2">
+                                                        @csrf
+                                                        <button type="submit" class="action-btn">
+                                                            {{ $adjustment->isShortage() ? 'Lunasi' : 'Refund' }}
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            @endforeach
+                                            @if($paidCount < 4)
+                                                <button onclick="showPaymentModal({{ $payments->first()->student->id }}, '{{ $payments->first()->student->name }}', {{ $month ?? now()->month }}, {{ $year ?? now()->year }})" class="action-btn mt-2">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                    Bayar
+                                                </button>
+                                            @endif
+                                        @elseif($paidCount < 4)
                                             <button onclick="showPaymentModal({{ $payments->first()->student->id }}, '{{ $payments->first()->student->name }}', {{ $month ?? now()->month }}, {{ $year ?? now()->year }})" class="action-btn">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                                                 Bayar

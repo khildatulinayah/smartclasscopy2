@@ -74,6 +74,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/kas/settings', [BendaharaController::class, 'updateKasSettings'])->name('kas.settings.update');
         Route::post('/process-payment', [BendaharaController::class, 'processWeeklyPayment'])->name('process.payment');
 
+        Route::post('/adjustment/{adjustment}/shortage', [BendaharaController::class, 'processShortage'])
+            ->name('adjustment.shortage');
+
+        Route::post('/adjustment/{adjustment}/refund', [BendaharaController::class, 'processRefund'])
+            ->name('adjustment.refund');
+
         Route::post('/api/process-arrears', [BendaharaController::class, 'processArrears'])->name('api.process_arrears');
         Route::post('/api/find-payment', [BendaharaController::class, 'findPayment'])->name('api.find_payment');
         

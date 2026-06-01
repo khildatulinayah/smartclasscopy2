@@ -90,6 +90,24 @@
         </div>
     <?php endif; ?>
 
+    <?php if(!empty($pendingAdjustmentCount) && $pendingAdjustmentCount > 0): ?>
+        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <h3 class="text-lg font-semibold text-indigo-800">⚠️ Ada <?php echo e($pendingAdjustmentCount); ?> penyesuaian pembayaran</h3>
+                    <p class="text-sm text-indigo-700 mt-1">
+                        Pembayaran lunas bulan ini membutuhkan tindakan koreksi kas. Gunakan tombol Lunasi/Kembalikan pada kartu minggu.
+                    </p>
+                </div>
+                <div class="text-right">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-sm font-semibold">
+                        Adjustment Pending
+                    </span>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- Statistics Cards -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -355,13 +373,56 @@
                             <?php if($dateLabel): ?>
                                 <div class="text-xs text-gray-600 mb-2">Rabu, <?php echo e($dateLabel); ?></div>
                             <?php endif; ?>
+                            <?php $pendingAdjustment = $payment->pendingAdjustment; ?>
                             <div class="font-bold mb-2">
                                 <?php if($isPaid): ?>
                                     <span class="<?php echo e($textClass); ?>">✓ Rp <?php echo e(number_format($payment->amount, 0, ',', '.')); ?></span>
+                                    <?php if(!$pendingAdjustment && $payment->amount != $weeklyPaymentAmount): ?>
+                                        <div class="text-xs text-yellow-800 mt-2">
+                                            Nominal baru: Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?>
+
+                                        </div>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span class="<?php echo e($textClass); ?>">✗ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
                                 <?php endif; ?>
                             </div>
+                            <?php if($isPaid && $pendingAdjustment): ?>
+                                <div class="space-y-2 mb-2">
+                                    <?php if($pendingAdjustment->isShortage()): ?>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 text-yellow-900 text-xs font-semibold">
+                                            Kurang <?php echo e($pendingAdjustment->formatted_amount); ?>
+
+                                        </span>
+
+                                        <form method="POST"
+                                              action="<?php echo e(route('bendahara.adjustment.shortage', $pendingAdjustment->id)); ?>">
+                                            <?php echo csrf_field(); ?>
+
+                                            <button class="w-full px-2 py-1 bg-yellow-500 text-white rounded text-xs font-semibold hover:bg-yellow-600">
+                                                Lunasi
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+
+                                    <?php if($pendingAdjustment->isOverpayment()): ?>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">
+                                            Lebih <?php echo e($pendingAdjustment->formatted_amount); ?>
+
+                                        </span>
+
+                                        <form method="POST"
+                                              action="<?php echo e(route('bendahara.adjustment.refund', $pendingAdjustment->id)); ?>">
+                                            <?php echo csrf_field(); ?>
+
+                                            <button class="w-full px-2 py-1 bg-blue-500 text-white rounded text-xs font-semibold hover:bg-blue-600">
+                                                Kembalikan
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+
                             <?php if(!$isPaid): ?>
                                 <?php
                                     // Tentukan warna tombol berdasarkan kondisi
