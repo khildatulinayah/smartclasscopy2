@@ -47,7 +47,7 @@ class PaymentAdjustmentService
     ): Collection {
         // Jika nominal tidak berubah, jangan create adjustment
         if ($newNominal == $oldNominal) {
-            return collect([]);
+            return new Collection();
         }
 
         return DB::transaction(function () use ($month, $year, $newNominal, $oldNominal, $detectedBy) {
@@ -62,20 +62,52 @@ class PaymentAdjustmentService
             foreach ($paidPayments as $payment) {
                 $difference = $newNominal - $payment->amount;
 
-                if ($difference == 0) {
-                    continue;
-                }
-
                 $existingAdjustment = PaymentAdjustment::where('weekly_payment_id', $payment->id)->first();
 
-                // Jika ada pending adjustment lama, hapus dulu agar bisa diganti
-                if ($existingAdjustment && $existingAdjustment->status === 'pending') {
-                    $existingAdjustment->delete();
+                if ($difference == 0) {
+                    if ($existingAdjustment && $existingAdjustment->status === 'pending') {
+                        $existingAdjustment->delete();
+                    }
+                    continue;
                 }
 
-                // Jika sudah ada adjustment yang sudah diproses atau dibatalkan, skip
-                if ($existingAdjustment && $existingAdjustment->status !== 'pending') {
-                    continue;
+                $adjustmentType = $difference > 0 ? 'shortage' : 'overpayment';
+                $adjustmentAmount = abs($difference);
+
+                if ($existingAdjustment) {
+                    if ($existingAdjustment->status === 'pending') {
+                        $existingAdjustment->delete();
+                        $existingAdjustment = null;
+                    } else {
+                        $shouldUpdate = (
+                            (float) $existingAdjustment->current_nominal !== (float) $newNominal ||
+                            (float) $existingAdjustment->adjustment_amount !== $adjustmentAmount ||
+                            $existingAdjustment->adjustment_type !== $adjustmentType
+                        );
+
+                        if (!$shouldUpdate) {
+                            continue;
+                        }
+
+                        $existingAdjustment->update([
+                            'original_amount' => $payment->amount,
+                            'current_nominal' => $newNominal,
+                            'adjustment_amount' => $adjustmentAmount,
+                            'adjustment_type' => $adjustmentType,
+                            'handling_method' => $adjustmentType === 'shortage' ? 'invoice' : 'refund',
+                            'status' => 'pending',
+                            'invoice_transaction_id' => null,
+                            'refund_transaction_id' => null,
+                            'credit_transaction_id' => null,
+                            'processed_by' => null,
+                            'processed_at' => null,
+                            'notes' => null,
+                            'detected_by' => $detectedBy->id,
+                        ]);
+
+                        $adjustments->push($existingAdjustment);
+                        continue;
+                    }
                 }
 
                 $adjustment = $this->createAdjustment(
@@ -120,21 +152,53 @@ class PaymentAdjustmentService
             foreach ($payments as $payment) {
                 $difference = $newNominal - $payment->amount;
 
-                // Jika tidak ada perubahan nominal, skip
                 if ($difference == 0) {
+                    $existingAdjustment = PaymentAdjustment::where('weekly_payment_id', $payment->id)->first();
+                    if ($existingAdjustment && $existingAdjustment->status === 'pending') {
+                        $existingAdjustment->delete();
+                    }
                     continue;
                 }
 
                 $existingAdjustment = PaymentAdjustment::where('weekly_payment_id', $payment->id)->first();
+                $adjustmentAmount = abs($difference);
+                $adjustmentType = $difference > 0 ? 'shortage' : 'overpayment';
+                $handlingMethod = $adjustmentType === 'shortage' ? 'invoice' : 'refund';
 
-                // Jika sudah ada adjustment yang diproses atau dibatalkan, jangan buat adjustment baru
-                if ($existingAdjustment && $existingAdjustment->status !== 'pending') {
-                    continue;
-                }
+                if ($existingAdjustment) {
+                    if ($existingAdjustment->status === 'pending') {
+                        $existingAdjustment->delete();
+                        $existingAdjustment = null;
+                    } else {
+                        $shouldUpdate = (
+                            (float) $existingAdjustment->current_nominal !== (float) $newNominal ||
+                            (float) $existingAdjustment->adjustment_amount !== $adjustmentAmount ||
+                            $existingAdjustment->adjustment_type !== $adjustmentType
+                        );
 
-                // Hapus pending lama agar dapat membuat adjustment baru sesuai nominal terbaru
-                if ($existingAdjustment && $existingAdjustment->status === 'pending') {
-                    $existingAdjustment->delete();
+                        if (!$shouldUpdate) {
+                            continue;
+                        }
+
+                        $existingAdjustment->update([
+                            'original_amount' => $payment->amount,
+                            'current_nominal' => $newNominal,
+                            'adjustment_amount' => $adjustmentAmount,
+                            'adjustment_type' => $adjustmentType,
+                            'handling_method' => $handlingMethod,
+                            'status' => 'pending',
+                            'invoice_transaction_id' => null,
+                            'refund_transaction_id' => null,
+                            'credit_transaction_id' => null,
+                            'processed_by' => null,
+                            'processed_at' => null,
+                            'notes' => null,
+                            'detected_by' => $detectedBy->id,
+                        ]);
+
+                        $createdCount++;
+                        continue;
+                    }
                 }
 
                 PaymentAdjustment::create([
@@ -142,13 +206,9 @@ class PaymentAdjustmentService
                     'student_id' => $payment->student_id,
                     'original_amount' => $payment->amount,
                     'current_nominal' => $newNominal,
-                    'adjustment_amount' => abs($difference),
-                    'adjustment_type' => $difference > 0
-                        ? 'shortage'
-                        : 'overpayment',
-                    'handling_method' => $difference > 0
-                        ? 'invoice'
-                        : 'refund',
+                    'adjustment_amount' => $adjustmentAmount,
+                    'adjustment_type' => $adjustmentType,
+                    'handling_method' => $handlingMethod,
                     'status' => 'pending',
                     'detected_by' => $detectedBy->id,
                 ]);
