@@ -79,6 +79,10 @@
     </style>
 </head>
 <body>
+    @php
+        // Pastikan variabel tersedia untuk seluruh bagian view
+        $daysInMonth = \Carbon\Carbon::create($year, $month)->daysInMonth;
+    @endphp
     <div class="container">
         <div class="header">
             <div class="header-top">

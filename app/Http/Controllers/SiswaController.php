@@ -187,20 +187,28 @@ class SiswaController extends Controller
                           });
         
         // Data absensi untuk bulan yang dipilih
+        // Pastikan urutan tanggal dari awal bulan sampai akhir bulan
         $attendances = Attendance::where('student_id', $student->id)
             ->whereMonth('date', $month)
             ->whereYear('date', $year)
-            ->orderBy('date', 'desc')
+            ->orderBy('date', 'asc')
             ->get();
+
+        // Pastikan urutan dan tipe date konsisten untuk tampilan tabel
+        $attendances = $attendances->sortBy(function ($attendance) {
+            return $attendance->date ? Carbon::parse($attendance->date)->format('Y-m-d') : '';
+        })->values();
         
         // Transform data absensi untuk handle weekend/hari libur
         $attendances = $attendances->map(function ($attendance) use ($holidays) {
-            $dateString = $attendance->date->format('Y-m-d');
+            // Kuatkan tipe date agar Carbon parsing konsisten
+            $attendance->date = $attendance->date ? Carbon::parse($attendance->date) : null;
+            $dateString = $attendance->date ? $attendance->date->format('Y-m-d') : null;
             $holidayNote = $holidays[$dateString] ?? null;
             
             // Ubah 'belum_absen' jadi 'libur' jika weekend atau hari libur
             $status = $attendance->status;
-            if ($this->isWeekendOrHoliday($attendance->date, $holidays) && $status === 'belum_absen') {
+            if ($attendance->date && $this->isWeekendOrHoliday($attendance->date, $holidays) && $status === 'belum_absen') {
                 $status = 'libur';
                 if (!$holidayNote && $attendance->date->isWeekend()) {
                     $holidayNote = 'Hari Libur Akhir Pekan';

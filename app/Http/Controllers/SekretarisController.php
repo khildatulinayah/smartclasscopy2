@@ -355,58 +355,67 @@ class SekretarisController extends Controller
     {
         $month = request('month', now()->month);
         $year = request('year', now()->year);
-        
+
         $attendances = Attendance::where('student_id', $studentId)
-                                ->whereMonth('date', $month)
-                                ->whereYear('date', $year)
-                                ->orderBy('date')
-                                ->get();
-        
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->orderBy('date')
+            ->get();
+
         // Format date untuk key array
         $holidays = Holiday::whereMonth('date', $month)
-                          ->whereYear('date', $year)
-                          ->get()
-                          ->mapWithKeys(function ($holiday) {
-                              return [$holiday->date->format('Y-m-d') => $holiday->note];
-                          });
-        
-        // Transform data untuk JSON response
-        $data = $attendances->map(function ($attendance) use ($holidays, $month, $year) {
-            $dateString = $attendance->date ? $attendance->date->format('Y-m-d') : null;
+            ->whereYear('date', $year)
+            ->get()
+            ->mapWithKeys(function ($holiday) {
+                return [$holiday->date->format('Y-m-d') => $holiday->note];
+            });
+
+        // Map attendance by date for quick lookup
+        $attendanceByDate = $attendances->keyBy(function ($a) {
+            return $a->date ? $a->date->format('Y-m-d') : null;
+        });
+
+        // Pastikan weekend + holiday tetap tercantum meskipun belum ada record attendance
+        $daysInMonth = \Carbon\Carbon::create($year, $month)->daysInMonth;
+        $data = collect();
+
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $currentDate = \Carbon\Carbon::create($year, $month, $day);
+            $dateString = $currentDate->format('Y-m-d');
+
+            $isWeekend = ($currentDate->dayOfWeek == 0 || $currentDate->dayOfWeek == 6);
             $holidayNote = $holidays[$dateString] ?? null;
-            
-            // Cek apakah weekend
-            $date = \Carbon\Carbon::create($year, $month, $attendance->date->day);
-            $dayOfWeek = $date->dayOfWeek;
-            $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6);
-            
-            // Ubah 'belum_absen' jadi 'libur' jika hari libur
-            $status = $attendance->status;
+
+            $attendance = $attendanceByDate[$dateString] ?? null;
+
+            $status = $attendance ? $attendance->status : 'belum_absen';
+            $attendanceTime = $attendance && $attendance->attendance_time
+                ? $attendance->attendance_time->format('H:i:s')
+                : null;
+
+            // Ubah 'belum_absen' jadi 'libur' jika weekend/holiday
             $holidayNoteToUse = $holidayNote;
-            
-            if ($isWeekend && $status === 'belum_absen') {
+            if ($status === 'belum_absen' && ($isWeekend || $holidayNote)) {
                 $status = 'libur';
-                $holidayNoteToUse = 'Hari Libur Sabtu/Minggu';
-            } elseif ($holidayNote && $status === 'belum_absen') {
-                $status = 'libur';
-                $holidayNoteToUse = 'Hari Libur';
+                $holidayNoteToUse = $holidayNote ? $holidayNote : 'Hari Libur Sabtu/Minggu';
             }
-            
-            return [
-                'id' => $attendance->id,
-                'student_id' => $attendance->student_id,
+
+            $data->push([
+                'id' => $attendance?->id,
+                'student_id' => $studentId,
                 'date' => $dateString,
                 'status' => $status,
-                'attendance_time' => $attendance->attendance_time ? $attendance->attendance_time->format('H:i:s') : null,
-                'created_by' => $attendance->created_by,
-                'created_at' => $attendance->created_at,
-                'updated_at' => $attendance->updated_at,
+                'attendance_time' => $attendanceTime,
+                'created_by' => $attendance?->created_by,
+                'created_at' => $attendance?->created_at,
+                'updated_at' => $attendance?->updated_at,
                 'holiday_note' => $holidayNoteToUse,
-            ];
-        });
-        
-        return response()->json($data);
+            ]);
+        }
+
+        return response()->json($data->values());
     }
+
 
     // ============= LAPORAN =============
     
@@ -677,8 +686,8 @@ class SekretarisController extends Controller
             $holidays = collect();
 
             try {
-                $response = Http::timeout(30)
-                    ->get('https://tanggalmerah.up.railway.app/api/holidays', [
+                    $response = Http::timeout(30)
+                    ->get('https://api-hari-libur.vercel.app/api', [
                         'year' => $year,
                     ]);
 

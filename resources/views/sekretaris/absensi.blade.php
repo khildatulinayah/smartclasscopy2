@@ -39,7 +39,8 @@
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h1 class="greeting-title">Absensi Harian</h1>
-                            <p class="greeting-subtitle">Update kehadiran siswa untuk {{ \Carbon\Carbon::parse($selectedDate)->locale('id')->format('l, d F Y') }}</p>
+                            <p class="greeting-subtitle">Update kehadiran siswa untuk {{ \Carbon\Carbon::parse($selectedDate)->locale('id')->translatedFormat('l, d F Y') }}</p>
+
                         </div>
                         <a href="{{ route('sekretaris.dashboard') }}" class="feature-btn" style="background: #6b7280; padding: 8px 16px; font-size: 14px;">
                             ← Kembali ke Dashboard
