@@ -157,25 +157,106 @@
             scroll-behavior: smooth; 
         }
 
-        /* Responsive Design */
+        /* Responsive Design - Sidebar tetap terlihat di mobile */
         @media (max-width: 768px) { 
             .sidebar { 
-                width: 100%; 
-                position: absolute; 
-                z-index: 50; 
-                transform: translateX(-100%); 
-            } 
-            .sidebar.open { 
-                transform: translateX(0); 
+                width: 200px; 
+                position: relative; 
+                z-index: 40; 
+                overflow-y: auto;
+                flex-shrink: 0;
+            }
+            .sidebar-header { 
+                padding: 1rem; 
+            }
+            .logo-img { 
+                width: 2rem; 
+                height: 2rem; 
+            }
+            .logo-text { 
+                font-size: 1rem; 
+            }
+            .nav-item { 
+                padding: 0.75rem 1rem; 
+                gap: 0.5rem;
+            }
+            .nav-item span { 
+                font-size: 0.9rem; 
+            }
+            .nav-icon { 
+                width: 1rem; 
+                height: 1rem; 
+            }
+            .sidebar-footer { 
+                padding: 0.75rem 1rem; 
+            }
+            .user-avatar-mini { 
+                width: 1.5rem; 
+                height: 1.5rem; 
+            }
+            .user-name-mini { 
+                font-size: 0.7rem; 
+            }
+            .user-role-mini { 
+                font-size: 0.625rem; 
+            }
+            .logout-btn { 
+                padding: 0.375rem 0.5rem;
+                font-size: 0.7rem;
             }
             .main-content { 
                 padding: 1rem; 
             }
+            .mobile-topbar{ display:none; }
+            .sidebar-overlay{ display:none; }
         }
+
+        @media (max-width: 640px) { 
+            .sidebar { 
+                width: 160px; 
+            }
+            .logo-text { 
+                display: none; 
+            }
+            .nav-item span { 
+                display: none; 
+            }
+            .nav-item { 
+                justify-content: center;
+            }
+            .user-info-mini { 
+                display: none; 
+            }
+            .logout-btn { 
+                padding: 0.25rem;
+                border-radius: 0.25rem;
+            }
+        }
+
+        /* Mobile topbar + overlay styles */
+        .mobile-topbar{ display:none; align-items:center; gap:12px; padding: 12px 16px; background:#ffffff; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 55; }
+        .mobile-topbar-title{ font-weight:800; color:#1f2937; }
+        .sidebar-overlay{ position: fixed; top:0; right:0; bottom:0; left:0; z-index:55; background: rgba(0,0,0,0.3); }
+
+        /* Mobile menu button style (reuse existing menu-toggle class) */
+        .menu-toggle{ border:none; background:transparent; padding:8px; border-radius:10px; cursor:pointer; color:#6b7280; }
+        .menu-toggle:hover{ background:#f3f4f6; color:#3b82f6; }
+
+
     </style>
 </head>
 <body>
-    <div class="dashboard-layout">
+<div class="dashboard-layout">
+        <!-- Mobile topbar (toggle sidebar) -->
+        <div class="mobile-topbar">
+            <button id="sidebarToggle" type="button" class="menu-toggle" aria-label="Buka Sidebar">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <div class="mobile-topbar-title">SMARTCLASS</div>
+        </div>
+
         <!-- Sidebar -->
         @include('components.bendahara-sidebar')
 
@@ -185,7 +266,11 @@
                 @yield('content')
             </main>
         </div>
+
+        <!-- Overlay (only mobile) -->
+        <div id="sidebarOverlay" class="hidden sidebar-overlay" aria-hidden="true"></div>
     </div>
+
 
     @stack('scripts')
 </body>

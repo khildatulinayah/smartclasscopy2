@@ -196,11 +196,6 @@
         <table class="header-table">
             <tr>
 
-                <td width="15%">
-                    <img src="<?php echo e(public_path('images/logo2.png')); ?>" class="logo">
-                         class="logo">
-                </td>
-
                 <td width="70%" class="school-info">
 
                     <div class="school-name">

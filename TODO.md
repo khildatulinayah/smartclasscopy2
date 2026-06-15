@@ -1,23 +1,34 @@
-# TODO
+# TODO - Perbaikan UI/UX Mobile Friendly (tanpa mengubah logika)
 
-## Goal
-Koneksi sumber hari libur ke `https://api-hari-libur.vercel.app/api?year={year}` dan pastikan hasilnya dipakai oleh:
-- `resources/views/sekretaris/tracker.blade.php`
-- `resources/views/sekretaris/laporan-absensi-cetak.blade.php`
-- `resources/views/siswa/absensi.blade.php`
-- `resources/views/admin/monitor_absensi.blade.php`
+## Step 1 — Identifikasi masalah
+- [x] Memeriksa layout utama dan komponen sidebar (app/bendahara/app) untuk melihat behavior di mobile.
+- [x] Menentukan sumber utama masalah: sidebar/struktur layout tidak menyediakan kontrol "hide/show" atau topbar untuk mobile.
 
-## Steps
-1. [DONE] Audit backend yang mengisi `$holidays`, `$isHoliday`, dan `$workingDays`.
-2. [TODO] Implementasi fetch hari libur eksternal dari `api-hari-libur.vercel.app` dan sync ke tabel `holidays`.
-   - Update/extend method sync di `app/Http/Controllers/SekretarisController.php` (gantikan sumber API lama `tanggalmerah.up.railway.app`).
-3. Pastikan `simpleTracker()` memakai `$holidays` hasil sync eksternal (bukan hanya tanggal merah internal).
-4. Pastikan `simpleAttendance()` dan API `getStudentAttendance()` memakai `$holiday`/`$holidays` hasil sync eksternal.
-5. Pastikan alur admin monitor (`admin.monitor.absensi`) memanfaatkan tabel `holidays` yang sudah di-sync.
-6. Tes manual:
-   - Jalankan sync untuk tahun tertentu
-   - Buka halaman tracker rekap per bulan
-   - Cetak laporan absensi
-   - Cek halaman absensi siswa dan monitor absensi
+## Step 2 — Rencana edit UI/UX
+- [ ] Tambahkan tombol toggle sidebar dan overlay di tampilan mobile.
+- [ ] Sidebar ditampilkan sebagai off-canvas (slide-in) pada layar kecil.
+- [ ] Pastikan main content tidak tertutup sidebar saat mobile.
+- [ ] Tetap mempertahankan tampilan desktop.
 
+## Step 3 — Implementasi perubahan
+- [x] Edit file `resources/views/layouts/bendahara.blade.php` untuk:
+  - [x] menambahkan tombol toggle di mobile
+  - [x] menambahkan overlay + state sidebar `.open`
+
+
+- [ ] Edit file `resources/views/layouts/app.blade.php` untuk:
+  - [ ] menambahkan wrapper/topbar mobile bila diperlukan agar halaman user juga off-canvas
+- [ ] Edit komponen sidebar:
+  - [ ] menambahkan class/attribute agar off-canvas bisa dikontrol konsisten di mobile.
+
+
+
+## Step 4 — Validasi
+- [ ] Buka halaman terkait (admin/siswa/bendahara/sekretaris) di mobile emulator.
+- [ ] Cek sidebar bisa hide/show.
+- [ ] Cek table/scroll horizontal tidak pecah.
+
+## Step 5 — Dokumentasi
+- [ ] Catat perubahan styling/komponen yang dilakukan.
+- [ ] Pastikan tidak ada perubahan controller/routes.
 

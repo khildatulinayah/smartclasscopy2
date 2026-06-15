@@ -253,86 +253,167 @@
 
     </div>
 
-    <!-- TABLE -->
-    <table class="main-table">
 
+
+    <!-- TABLE PENGANTAR: Kas Siswa (dirangkum per minggu) -->
+    <div style="margin-top:20px; font-weight:bold; text-transform:uppercase;">A. Tabel Pemasukan</div>
+
+    <table class="main-table">
         <thead>
             <tr>
                 <th width="5%">No</th>
                 <th width="15%">Tanggal</th>
                 <th width="35%">Keterangan</th>
-                <th width="20%">Siswa</th>
-                <th width="10%">Jenis</th>
-                <th width="15%">Nominal</th>
+                <th width="20%">Jenis</th>
+                <th width="25%">Nominal</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        <?php
+            $incomeRows = collect($incomeRows ?? []);
+        ?>
+
+<?php
+            if ($incomeRows->count() === 0 && isset($transactions)) {
+                // Ringkasan pemasukan per minggu (maks 1 baris per minggu)
+                $txIncome = collect($transactions)
+                    ->where('type', 'income')
+                    ->sortBy('date')
+                    ->values();
+
+                // Bagi transaksi menjadi 6 minggu (fallback jika week_number tidak tersedia)
+                $incomeBuckets = collect();
+                $incomeFirstDateByWeek = [];
+
+                $cnt = max(1, $txIncome->count());
+                foreach ($txIncome as $i => $tx) {
+                    $week = (isset($tx->week_number) && $tx->week_number) ? (int)$tx->week_number : ((int) floor(($i / $cnt) * 6) + 1);
+                    $week = max(1, min(6, $week));
+
+                    $incomeBuckets[$week] = ($incomeBuckets[$week] ?? 0) + (float)($tx->amount ?? 0);
+                    if (!isset($incomeFirstDateByWeek[$week])) {
+                        $incomeFirstDateByWeek[$week] = $tx->date;
+                    }
+                }
+
+                $weeksRange = range(1, 6);
+                $incomeRows = collect($weeksRange)
+                    ->map(function($w) use ($incomeBuckets, $incomeFirstDateByWeek) {
+                        $date = $incomeFirstDateByWeek[$w] ?? null;
+                        $label = $date ? \Carbon\Carbon::parse($date)->translatedFormat('d F Y') : ('Minggu ke-' . $w);
+                        $amount = (float)($incomeBuckets[$w] ?? 0);
+
+                        return [
+                            'label' => $label,
+                            'amount' => $amount,
+                        ];
+                    })
+                    ->filter(fn($r) => $r['amount'] != 0)
+                    ->values();
+            }
+        ?>
+
+        <?php if($incomeRows->count() > 0): ?>
+            <?php $__currentLoopData = $incomeRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <tr>
+                    <td class="text-center"><?php echo e($index + 1); ?></td>
+                    <td><?php echo e($row['label']); ?></td>
+                    <td>PEMASUKAN DARI KAS SISWA</td>
+                    <td class="text-center">Masuk</td>
+                    <td class="text-right income">
+                        + Rp <?php echo e(number_format($row['amount'] ?? 0, 0, ',', '.')); ?>
+
+                    </td>
+                </tr>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="5" class="text-center">Tidak ada pemasukan.</td>
+            </tr>
+        <?php endif; ?>
+
+
+
+
+
+        </tbody>
+    </table>
+
+    <div style="margin-top:20px; font-weight:bold; text-transform:uppercase;">B. Tabel Pengeluaran</div>
+
+        <!-- TABLE PENGELUARAN -->
+
+        <!-- TABLE PENGELUARAN -->
+    <table class="main-table">
+        <thead>
+            <tr>
+                <th width="5%">No</th>
+                <th width="15%">Tanggal</th>
+                <th width="35%">Keterangan</th>
+                <th width="20%">Jenis</th>
+                <th width="25%">Nominal</th>
             </tr>
         </thead>
 
         <tbody>
 
-        <?php $__empty_1 = true; $__currentLoopData = $transactions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+        <?php
+            $expenseRows = collect($expenseRows ?? []);
+        ?>
 
+        <?php
+            if ($expenseRows->count() === 0 && isset($transactions)) {
+                $expenseRows = collect($transactions)
+                    ->where('type', 'expense')
+                    ->sortBy('date')
+                    ->map(function ($tx) {
+                        return [
+                            'label' => \Carbon\Carbon::parse($tx->date)->translatedFormat('d F Y'),
+                            'amount' => (float)($tx->amount ?? 0),
+                            'description' => $tx->description ?? 'PENGELUARAN',
+                            'receipt_path' => $tx->receipt_path ?? null,
+                        ];
+                    })
+                    ->values();
+            }
+        ?>
+
+        <?php if($expenseRows->count() > 0): ?>
+            <?php $__currentLoopData = $expenseRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <tr>
+                    <td class="text-center"><?php echo e($index + 1); ?></td>
+                    <td><?php echo e($row['label']); ?></td>
+                    <td><?php echo e($row['description'] ?? 'PENGELUARAN'); ?></td>
+                    <td class="text-center">Keluar</td>
+                    <td class="text-right expense">
+                        - Rp <?php echo e(number_format($row['amount'] ?? 0, 0, ',', '.')); ?>
+
+                        <?php if(!empty($row['receipt_path'])): ?>
+                            <div style="margin-top:6px;">
+                                <img src="<?php echo e(asset('public/' . $row['receipt_path'])); ?>" alt="Bukti" style="max-height:60px; max-width:160px; object-fit:contain;" />
+                            </div>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        <?php else: ?>
             <tr>
-
-                <td class="text-center">
-                    <?php echo e($index + 1); ?>
-
-                </td>
-
-                <td>
-                    <?php echo e(\Carbon\Carbon::parse($t->date)->translatedFormat('d F Y')); ?>
-
-                </td>
-
-                <td>
-                    <?php echo e($t->description); ?>
-
-                </td>
-
-                <td>
-                    <?php echo e($t->student->name ?? '-'); ?>
-
-                </td>
-
-                <td class="text-center">
-                    <?php echo e($t->type == 'income' ? 'Masuk' : 'Keluar'); ?>
-
-                </td>
-
-                <td class="text-right <?php echo e($t->type == 'income' ? 'income' : 'expense'); ?>">
-                    <?php echo e($t->type == 'income' ? '+' : '-'); ?>
-
-                    Rp <?php echo e(number_format($t->amount,0,',','.')); ?>
-
-                </td>
-
+                <td colspan="5" class="text-center">Tidak ada pengeluaran.</td>
             </tr>
-
-        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-
-            <tr>
-                <td colspan="6" class="text-center">
-                    Tidak ada transaksi.
-                </td>
-            </tr>
-
         <?php endif; ?>
 
-            <tr class="total-row">
 
-                <td colspan="5" class="text-right">
-                    SALDO AKHIR
-                </td>
+        <tr class="total-row">
+            <td colspan="3" class="text-right">SALDO AKHIR</td>
+            <td colspan="2" class="text-right">Rp <?php echo e(number_format($balance,0,',','.')); ?></td>
+        </tr>
 
-                <td class="text-right">
-                    Rp <?php echo e(number_format($balance,0,',','.')); ?>
-
-                </td>
-
-            </tr>
 
         </tbody>
 
     </table>
+
 
     <!-- FOOTER -->
     <div class="footer">
