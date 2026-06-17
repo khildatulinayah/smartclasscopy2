@@ -1,7 +1,9 @@
 <?php $__env->startSection('content'); ?>
 <div class="dashboard-layout">
+    <!-- Sidebar -->
     <?php echo $__env->make('components.bendahara-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
+    <!-- Main Content Area -->
     <div class="main-area">
         <main class="main-content">
 <section class="greeting-section">

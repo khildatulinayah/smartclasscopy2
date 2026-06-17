@@ -195,13 +195,43 @@
                 max-width: 90vw !important;
             }
         }
+
+        /* Mobile off-canvas Sidebar (do not affect desktop) */
+        @media (max-width: 640px) {
+            /* Hide all sidebars by default on mobile */
+            aside.sidebar {
+                transform: translateX(-100%);
+                transition: transform 260ms ease;
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                z-index: 60;
+                will-change: transform;
+            }
+
+            /* Show sidebar when open */
+            aside.sidebar.open {
+                transform: translateX(0);
+            }
+
+            /* Overlay */
+            #sidebarOverlay {
+                transition: opacity 200ms ease;
+            }
+
+            /* Ensure page content stays scrollable; sidebar handles its own overflow if needed */
+            body.sidebar-open {
+                overflow: hidden;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
     
-    <?php echo $__env->yieldContent('content'); ?>
+<?php echo $__env->yieldContent('content'); ?>
     
     <!-- Logout Confirmation Modal -->
     <div id="logoutModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
@@ -353,6 +383,49 @@
             const logoutForm = document.querySelector('.logout-form');
             logoutForm.submit();
         }
+
+        /* Mobile sidebar off-canvas controller */
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            // We allow multiple sidebars across roles; we control those that match `.sidebar`.
+            // If current page has a specific sidebar id (e.g. appSidebar), we use it; otherwise first `.sidebar`.
+            const sidebar = document.querySelector('aside.sidebar');
+
+            if (!toggleBtn || !overlay || !sidebar) {
+                return;
+            }
+
+            const openSidebar = () => {
+                sidebar.classList.add('open');
+                overlay.classList.remove('hidden');
+                document.body.classList.add('sidebar-open');
+                document.body.style.overflow = 'hidden';
+            };
+
+            const closeSidebar = () => {
+                sidebar.classList.remove('open');
+                overlay.classList.add('hidden');
+                document.body.classList.remove('sidebar-open');
+                document.body.style.overflow = '';
+            };
+
+            toggleBtn.addEventListener('click', function(e) {
+                // Do not prevent navigation; but toggle is expected to be a button.
+                e.preventDefault();
+                // Only enable behavior on mobile width (CSS already scopes visibility)
+                openSidebar();
+            });
+
+            overlay.addEventListener('click', closeSidebar);
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeSidebar();
+                }
+            });
+        });
         
         // Event listeners for logout modal
         document.addEventListener('DOMContentLoaded', function() {

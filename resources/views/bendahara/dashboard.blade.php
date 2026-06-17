@@ -2,8 +2,10 @@
 
 @section('content')
 <div class="dashboard-layout">
+    <!-- Sidebar -->
     @include('components.bendahara-sidebar')
 
+    <!-- Main Content Area -->
     <div class="main-area">
         <main class="main-content">
 <section class="greeting-section">
