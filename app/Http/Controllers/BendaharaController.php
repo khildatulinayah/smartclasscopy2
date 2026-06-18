@@ -15,6 +15,138 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class BendaharaController extends Controller
 {
+    // ============= LAPORAN TAHUNAN (Jan s/d bulan sekarang) =============
+
+    /**
+     * Cetak Keuangan Tahunan (HTML)
+     */
+    public function cetakLaporanTahunanKeuangan($year)
+    {
+        $year = (int) $year;
+
+        $now = Carbon::now();
+        $currentMonth = $now->month;
+
+        $startDate = Carbon::create($year, 1, 1)->startOfDay();
+        $endDate = Carbon::create($year, $currentMonth, 1)->endOfMonth()->endOfDay();
+
+        $endMonthName = Carbon::create($year, $currentMonth)->locale('id')->translatedFormat('F');
+
+        // Rekap per bulan
+        $monthly = [];
+        $incomeTotal = 0;
+        $expenseTotal = 0;
+
+        for ($m = 1; $m <= $currentMonth; $m++) {
+            $incomeM = (float) Transaction::where('type', 'income')
+                ->whereMonth('date', $m)
+                ->whereYear('date', $year)
+                ->sum('amount');
+
+            $expenseM = (float) Transaction::where('type', 'expense')
+                ->whereMonth('date', $m)
+                ->whereYear('date', $year)
+                ->sum('amount');
+
+            $balanceM = $incomeM - $expenseM;
+
+            $monthNameM = Carbon::create($year, $m)->locale('id')->translatedFormat('F');
+
+            $monthly[] = [
+                'monthName' => $monthNameM,
+                'income' => $incomeM,
+                'expense' => $expenseM,
+                'balance' => $balanceM,
+            ];
+
+            $incomeTotal += $incomeM;
+            $expenseTotal += $expenseM;
+        }
+
+        $balanceTotal = $incomeTotal - $expenseTotal;
+
+        return view('bendahara.laporan-keuangan-tahunan-perbulan-cetak', compact(
+            'monthly', 'incomeTotal', 'expenseTotal', 'balanceTotal', 'year', 'currentMonth', 'endMonthName'
+        ));
+    }
+
+    /**
+     * PDF Keuangan Tahunan
+     */
+    public function laporanKeuanganTahunanPdf($year)
+    {
+        $year = (int) $year;
+        $now = Carbon::now();
+        $currentMonth = $now->month;
+
+        $startDate = Carbon::create($year, 1, 1)->startOfDay();
+        $endDate = Carbon::create($year, $currentMonth, 1)->endOfMonth()->endOfDay();
+
+        $endMonthName = Carbon::create($year, $currentMonth)->locale('id')->translatedFormat('F');
+
+        $transactions = Transaction::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereYear('date', $year)
+            ->orderBy('date', 'desc')
+            ->get();
+
+        $income = (float) $transactions->where('type', 'income')->sum('amount');
+        $expense = (float) $transactions->where('type', 'expense')->sum('amount');
+        $balance = $income - $expense;
+
+        // Rekap per bulan
+        $monthly = [];
+        $incomeTotal = 0;
+        $expenseTotal = 0;
+
+        for ($m = 1; $m <= $currentMonth; $m++) {
+            $incomeM = (float) Transaction::where('type', 'income')
+                ->whereMonth('date', $m)
+                ->whereYear('date', $year)
+                ->sum('amount');
+
+            $expenseM = (float) Transaction::where('type', 'expense')
+                ->whereMonth('date', $m)
+                ->whereYear('date', $year)
+                ->sum('amount');
+
+            $balanceM = $incomeM - $expenseM;
+
+            $monthNameM = Carbon::create($year, $m)->locale('id')->translatedFormat('F');
+
+            $monthly[] = [
+                'monthName' => $monthNameM,
+                'income' => $incomeM,
+                'expense' => $expenseM,
+                'balance' => $balanceM,
+            ];
+
+            $incomeTotal += $incomeM;
+            $expenseTotal += $expenseM;
+        }
+
+        $balanceTotal = $incomeTotal - $expenseTotal;
+
+        $pdf = Pdf::loadView('bendahara.laporan-keuangan-tahunan-perbulan-cetak', compact(
+            'monthly', 'incomeTotal', 'expenseTotal', 'balanceTotal', 'year', 'currentMonth', 'endMonthName'
+        ));
+
+        $pdf->setPaper('a4', 'landscape');
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'Arial',
+            'isFontSubsettingEnabled' => true,
+            'dpi' => 150
+        ]);
+
+        return response($pdf->output())
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="laporan-keuangan-tahunan-' . $year . '.pdf"')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
+    }
+
     // ============= DASHBOARD =============
     /**
      * Dashboard - Halaman utama bendahara
@@ -1011,6 +1143,7 @@ class BendaharaController extends Controller
         $year = $year ?? now()->year;
         
         try {
+
             // Cek autentikasi user untuk PDF
             if (!auth()->check()) {
                 // Coba dapatkan user default untuk pembuatan PDF

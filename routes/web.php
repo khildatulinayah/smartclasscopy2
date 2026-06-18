@@ -90,6 +90,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/laporan/pdf/pembayaran/{month}/{year}', [BendaharaController::class, 'laporanPembayaranPdf'])->name('laporan.pdf.pembayaran');
         Route::get('/laporan/keuangan/cetak/{month}/{year?}', [BendaharaController::class, 'cetakKeuangan'])->name('cetak.keuangan');
         Route::get('/laporan/pembayaran-siswa/cetak/{month}/{year?}', [BendaharaController::class, 'cetakPembayaranSiswa'])->name('cetak.pembayaran.siswa');
+
+        // Laporan Tahunan (Jan s/d bulan sekarang) - bendahara
+        Route::get('/laporan/keuangan/tahunan/cetak/{year}', [BendaharaController::class, 'cetakLaporanTahunanKeuangan'])->name('cetak.keuangan.tahunan');
+        Route::get('/laporan/pdf/keuangan/tahunan/{year}', [BendaharaController::class, 'laporanKeuanganTahunanPdf'])->name('laporan.pdf.keuangan.tahunan');
     });
     
     // Sekretaris routes

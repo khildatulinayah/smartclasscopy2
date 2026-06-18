@@ -1,10 +1,10 @@
-@extends('layouts.app')
 
-@section('title', 'Cetak Laporan Keuangan')
 
-@section('content')
+<?php $__env->startSection('title', 'Cetak Laporan Keuangan'); ?>
+
+<?php $__env->startSection('content'); ?>
 <div class="dashboard-layout">
-    @include('components.bendahara-sidebar')
+    <?php echo $__env->make('components.bendahara-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="main-area">
         <main class="main-content">
@@ -38,9 +38,9 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <select name="year" id="tahunan-year" class="form-select" required>
                                     <option value="">Pilih Tahun</option>
-                                    @foreach($years as $y)
-                                        <option value="{{ $y }}" {{ $currentYear == $y ? 'selected' : '' }}>{{ $y }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $years; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $y): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($y); ?>" <?php echo e($currentYear == $y ? 'selected' : ''); ?>><?php echo e($y); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
                         </div>
@@ -86,15 +86,15 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <select name="month" id="keuangan-month" class="form-select" required>
                                     <option value="">Pilih Bulan</option>
-                                    @foreach($months as $num => $name)
-                                        <option value="{{ $num }}" {{ $currentMonth == $num ? 'selected' : '' }}>{{ $name }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $months; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $num => $name): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($num); ?>" <?php echo e($currentMonth == $num ? 'selected' : ''); ?>><?php echo e($name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <select name="year" id="keuangan-year" class="form-select" required>
                                     <option value="">Pilih Tahun</option>
-                                    @foreach($years as $y)
-                                        <option value="{{ $y }}" {{ $currentYear == $y ? 'selected' : '' }}>{{ $y }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $years; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $y): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($y); ?>" <?php echo e($currentYear == $y ? 'selected' : ''); ?>><?php echo e($y); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
                         </div>
@@ -136,15 +136,15 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <select name="month" id="pembayaran-month" class="form-select" required>
                                     <option value="">Pilih Bulan</option>
-                                    @foreach($months as $num => $name)
-                                        <option value="{{ $num }}" {{ $currentMonth == $num ? 'selected' : '' }}>{{ $name }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $months; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $num => $name): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($num); ?>" <?php echo e($currentMonth == $num ? 'selected' : ''); ?>><?php echo e($name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <select name="year" id="pembayaran-year" class="form-select" required>
                                     <option value="">Pilih Tahun</option>
-                                    @foreach($years as $y)
-                                        <option value="{{ $y }}" {{ $currentYear == $y ? 'selected' : '' }}>{{ $y }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $years; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $y): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($y); ?>" <?php echo e($currentYear == $y ? 'selected' : ''); ?>><?php echo e($y); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
                         </div>
@@ -284,7 +284,7 @@
 function cetakTahunan() {
     const year = document.getElementById('tahunan-year').value;
     if (year) {
-        window.open(`{{ route('bendahara.cetak.keuangan.tahunan', ['year' => ':year']) }}`.replace(':year', year), '_blank');
+        window.open(`<?php echo e(route('bendahara.cetak.keuangan.tahunan', ['year' => ':year'])); ?>`.replace(':year', year), '_blank');
     } else {
         showWarningToast('Silakan pilih tahun terlebih dahulu');
     }
@@ -293,7 +293,7 @@ function cetakTahunan() {
 function downloadTahunanPDF() {
     const year = document.getElementById('tahunan-year').value;
     if (year) {
-        window.open(`{{ route('bendahara.laporan.pdf.keuangan.tahunan', ['year' => ':year']) }}`.replace(':year', year), '_blank');
+        window.open(`<?php echo e(route('bendahara.laporan.pdf.keuangan.tahunan', ['year' => ':year'])); ?>`.replace(':year', year), '_blank');
     } else {
         showWarningToast('Silakan pilih tahun terlebih dahulu');
     }
@@ -304,7 +304,7 @@ function cetakKeuangan() {
     const month = document.getElementById('keuangan-month').value;
     const year = document.getElementById('keuangan-year').value;
     if (month && year) {
-        window.open(`{{ route('bendahara.cetak.keuangan', ['month' => ':month', 'year' => ':year']) }}`.replace(':month', month).replace(':year', year), '_blank');
+        window.open(`<?php echo e(route('bendahara.cetak.keuangan', ['month' => ':month', 'year' => ':year'])); ?>`.replace(':month', month).replace(':year', year), '_blank');
     } else {
         showWarningToast('Silakan pilih bulan dan tahun terlebih dahulu');
     }
@@ -314,7 +314,7 @@ function downloadKeuanganPDF() {
     const month = document.getElementById('keuangan-month').value;
     const year = document.getElementById('keuangan-year').value;
     if (month && year) {
-        window.open(`{{ route('bendahara.laporan.pdf.keuangan', ['month' => ':month', 'year' => ':year']) }}`.replace(':month', month).replace(':year', year), '_blank');
+        window.open(`<?php echo e(route('bendahara.laporan.pdf.keuangan', ['month' => ':month', 'year' => ':year'])); ?>`.replace(':month', month).replace(':year', year), '_blank');
     } else {
         showWarningToast('Silakan pilih bulan dan tahun terlebih dahulu');
     }
@@ -325,7 +325,7 @@ function cetakPembayaran() {
     const month = document.getElementById('pembayaran-month').value;
     const year = document.getElementById('pembayaran-year').value;
     if (month && year) {
-        window.open(`{{ route('bendahara.cetak.pembayaran.siswa', ['month' => ':month', 'year' => ':year']) }}`.replace(':month', month).replace(':year', year), '_blank');
+        window.open(`<?php echo e(route('bendahara.cetak.pembayaran.siswa', ['month' => ':month', 'year' => ':year'])); ?>`.replace(':month', month).replace(':year', year), '_blank');
     } else {
         showWarningToast('Silakan pilih bulan dan tahun terlebih dahulu');
     }
@@ -335,7 +335,7 @@ function downloadPembayaranPDF() {
     const month = document.getElementById('pembayaran-month').value;
     const year = document.getElementById('pembayaran-year').value;
     if (month && year) {
-        window.open(`{{ route('bendahara.laporan.pdf.pembayaran', ['month' => ':month', 'year' => ':year']) }}`.replace(':month', month).replace(':year', year), '_blank');
+        window.open(`<?php echo e(route('bendahara.laporan.pdf.pembayaran', ['month' => ':month', 'year' => ':year'])); ?>`.replace(':month', month).replace(':year', year), '_blank');
     } else {
         showWarningToast('Silakan pilih bulan dan tahun terlebih dahulu');
     }
@@ -374,7 +374,7 @@ function showWarningToast(message) {
     }, 3000);
 }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
 
 <!-- Dashboard CSS -->
 <style>
@@ -449,3 +449,4 @@ function showWarningToast(message) {
         </main>
     </div>
 </div>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/laporan.blade.php ENDPATH**/ ?>

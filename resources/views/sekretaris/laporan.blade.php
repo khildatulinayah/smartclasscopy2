@@ -67,114 +67,15 @@
                 </div>
             </section>
 
-            <!-- Features & Information -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                <!-- Features Card -->
-                <div class="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100 rounded-2xl p-8">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900">Fitur Laporan</h3>
-                            <p class="text-gray-600">Laporan absensi lengkap dan profesional</p>
-                        </div>
-                    </div>
-                    <ul class="space-y-3">
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <div>
-                                <div class="font-semibold text-gray-800">Statistik Lengkap</div>
-                                <div class="text-sm text-gray-600">Total hadir, sakit, izin, alpa per bulan</div>
-                            </div>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <div>
-                                <div class="font-semibold text-gray-800">Detail Per Siswa</div>
-                                <div class="text-sm text-gray-600">Tabel kehadiran per siswa per hari</div>
-                            </div>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <div>
-                                <div class="font-semibold text-gray-800">Exclude Weekend</div>
-                                <div class="text-sm text-gray-600">Otomatis exclude Sabtu/Minggu</div>
-                            </div>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <div>
-                                <div class="font-semibold text-gray-800">Hari Libur</div>
-                                <div class="text-sm text-gray-600">Informasi hari libur dan keterangan</div>
-                            </div>
-                        </li>
-                    </ul>
+            <!-- Note: Section informasi/tampilan dekoratif diperkecil agar halaman laporan tetap ringan untuk banyak laporan -->
+            <section class="mb-12">
+                <div class="bg-white rounded-2xl border border-gray-100 p-6">
+                    <p class="text-gray-600 text-sm">
+                        Pilih bulan & tahun, lalu klik <span class="font-semibold">Cetak</span> atau <span class="font-semibold">Preview PDF</span>.
+                    </p>
                 </div>
+            </section>
 
-                <!-- How to use Card -->
-                <div class="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-8">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900">Cara Penggunaan</h3>
-                            <p class="text-gray-600">Langkah mudah membuat laporan</p>
-                        </div>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="flex gap-4">
-                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <span class="text-blue-600 font-bold text-sm">1</span>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-gray-800">Pilih Periode</div>
-                                <div class="text-sm text-gray-600">Pilih bulan dan tahun laporan</div>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <span class="text-blue-600 font-bold text-sm">2</span>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-gray-800">Pilih Format</div>
-                                <div class="text-sm text-gray-600">Cetak (HTML) atau Preview PDF</div>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <span class="text-blue-600 font-bold text-sm">3</span>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-gray-800">Generate Laporan</div>
-                                <div class="text-sm text-gray-600">Laporan otomatis terbuka di tab baru</div>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <span class="text-blue-600 font-bold text-sm">4</span>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-gray-800">Preview & Download</div>
-                                <div class="text-sm text-gray-600">PDF tampil di browser, bisa download dari browser</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 </div>
