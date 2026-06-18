@@ -320,7 +320,10 @@
 
         @php $rowNumber = 1; @endphp
 
-        @foreach($paymentsByStudent as $studentId => $studentPayments)
+        @foreach($paymentsByStudent->sortBy(function($studentPayments){
+            $student = optional($studentPayments->first())->student;
+            return strtolower(trim($student->name ?? ''));
+        }) as $studentId => $studentPayments)
 
             @php
 

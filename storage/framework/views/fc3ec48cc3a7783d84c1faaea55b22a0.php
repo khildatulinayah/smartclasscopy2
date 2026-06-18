@@ -1,13 +1,11 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="dashboard-layout">
     <!-- Sidebar -->
-    @include('components.sekretaris-sidebar')
+    <?php echo $__env->make('components.sekretaris-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="main-area">
         <main class="main-content">
-            @if(session('success'))
+            <?php if(session('success')): ?>
                 <div id="successAlert" class="stat-card mb-6" style="background: #dcfce7; border-left: 4px solid #10b981; position: relative; animation: slideInRight 0.5s ease;">
                     <div class="stat-header">
                         <div class="stat-icon" style="background: #10b98133; color: #059669;">
@@ -15,12 +13,12 @@
                         </div>
                         <div class="stat-title" style="color: #166534;">✅ Berhasil</div>
                     </div>
-                    <div class="stat-value" style="color: #166534;">{{ session('success') }}</div>
+                    <div class="stat-value" style="color: #166534;"><?php echo e(session('success')); ?></div>
                     <button onclick="this.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #059669; cursor: pointer; font-size: 18px;">×</button>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            @if(session('error'))
+            <?php if(session('error')): ?>
                 <div id="errorAlert" class="stat-card mb-6" style="background: #fee2e2; border-left: 4px solid #ef4444; position: relative; animation: slideInRight 0.5s ease;">
                     <div class="stat-header">
                         <div class="stat-icon" style="background: #ef444433; color: #dc2626;">
@@ -28,10 +26,10 @@
                         </div>
                         <div class="stat-title" style="color: #991b1b;">⚠️ Terjadi Kesalahan</div>
                     </div>
-                    <div class="stat-value" style="color: #991b1b;">{{ session('error') }}</div>
+                    <div class="stat-value" style="color: #991b1b;"><?php echo e(session('error')); ?></div>
                     <button onclick="this.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #dc2626; cursor: pointer; font-size: 18px;">×</button>
                 </div>
-            @endif
+            <?php endif; ?>
 
             <!-- Header Section -->
             <section class="greeting-section mb-8">
@@ -39,10 +37,10 @@
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h1 class="greeting-title">Absensi Harian</h1>
-                            <p class="greeting-subtitle">Update kehadiran siswa untuk {{ \Carbon\Carbon::parse($selectedDate)->locale('id')->translatedFormat('l, d F Y') }}</p>
+                            <p class="greeting-subtitle">Update kehadiran siswa untuk <?php echo e(\Carbon\Carbon::parse($selectedDate)->locale('id')->translatedFormat('l, d F Y')); ?></p>
 
                         </div>
-                        <a href="{{ route('sekretaris.dashboard') }}" class="feature-btn" style="background: #6b7280; padding: 8px 16px; font-size: 14px;">
+                        <a href="<?php echo e(route('sekretaris.dashboard')); ?>" class="feature-btn" style="background: #6b7280; padding: 8px 16px; font-size: 14px;">
                             ← Kembali ke Dashboard
                         </a>
                     </div>
@@ -57,7 +55,7 @@
                         <div class="date-picker-inline">
                             <label for="selectedDate" class="date-picker-label">Pilih Tanggal:</label>
                             <div class="date-input-wrapper">
-                                <input type="date" id="selectedDate" name="selectedDate" value="{{ $selectedDate }}" class="date-input" onchange="window.location.href='/sekretaris/absensi?date=' + this.value">
+                                <input type="date" id="selectedDate" name="selectedDate" value="<?php echo e($selectedDate); ?>" class="date-input" onchange="window.location.href='/sekretaris/absensi?date=' + this.value">
                                 <div class="date-input-icon">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -68,19 +66,19 @@
                         
                         <!-- Quick Navigation -->
                         <div class="quick-nav-buttons">
-                            <a href="{{ route('sekretaris.absensi', ['date' => \Carbon\Carbon::parse($selectedDate)->subDay()->format('Y-m-d')]) }}" class="quick-nav-btn prev-btn">
+                            <a href="<?php echo e(route('sekretaris.absensi', ['date' => \Carbon\Carbon::parse($selectedDate)->subDay()->format('Y-m-d')])); ?>" class="quick-nav-btn prev-btn">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                                 </svg>
                                 Kemarin
                             </a>
-                            <a href="{{ route('sekretaris.absensi') }}" class="quick-nav-btn today-btn">
+                            <a href="<?php echo e(route('sekretaris.absensi')); ?>" class="quick-nav-btn today-btn">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                                 Hari Ini
                             </a>
-                            <a href="{{ route('sekretaris.absensi', ['date' => \Carbon\Carbon::parse($selectedDate)->addDay()->format('Y-m-d')]) }}" class="quick-nav-btn next-btn">
+                            <a href="<?php echo e(route('sekretaris.absensi', ['date' => \Carbon\Carbon::parse($selectedDate)->addDay()->format('Y-m-d')])); ?>" class="quick-nav-btn next-btn">
                                 Besok
                                 <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -91,14 +89,14 @@
                 </div>
             </section>
 
-            @php
+            <?php
     // Cek apakah hari ini adalah weekend
     $dayOfWeek = \Carbon\Carbon::parse($selectedDate)->dayOfWeek;
     $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6); // Sunday or Saturday
     $weekendName = $isWeekend ? ($dayOfWeek == 0 ? 'Minggu' : 'Sabtu') : '';
-@endphp
+?>
 
-    @if($holiday)
+    <?php if($holiday): ?>
         <!-- Holiday Notice -->
         <section class="stats-section mb-8">
             <div class="stat-card" style="border-left: 5px solid #ef4444; background: linear-gradient(135deg, #fee2e2, #fecaca);">
@@ -108,17 +106,17 @@
                     </div>
                     <div class="stat-title">📅 Hari Libur / Hari Merah</div>
                 </div>
-                <div class="stat-value">{{ $holiday->note }}</div>
-                <div class="stat-description">Dibuat oleh: {{ $holiday->creator->name ?? 'Sistem' }}</div>
+                <div class="stat-value"><?php echo e($holiday->note); ?></div>
+                <div class="stat-description">Dibuat oleh: <?php echo e($holiday->creator->name ?? 'Sistem'); ?></div>
                 <div class="progress-container" style="margin-top: 16px;">
                     <div class="flex gap-2 justify-end">
-                        @if(!$isWeekend) <!-- Hanya tampilkan tombol hapus jika bukan weekend -->
-                        <form action="{{ route('sekretaris.absensi.delete_holiday') }}" method="POST" style="display: inline;" onsubmit="return confirm('Hapus keterangan libur untuk {{ $selectedDate }}?')">
-                            @csrf
-                            <input type="hidden" name="date" value="{{ $selectedDate }}">
+                        <?php if(!$isWeekend): ?> <!-- Hanya tampilkan tombol hapus jika bukan weekend -->
+                        <form action="<?php echo e(route('sekretaris.absensi.delete_holiday')); ?>" method="POST" style="display: inline;" onsubmit="return confirm('Hapus keterangan libur untuk <?php echo e($selectedDate); ?>?')">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="date" value="<?php echo e($selectedDate); ?>">
                             <button type="submit" class="logout-btn" style="width: auto; padding: 8px 16px; background: #ef4444; color: white;">Hapus Libur</button>
                         </form>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -132,7 +130,7 @@
                 <p class="stat-description" style="font-size: 16px;">Siswa libur hari ini sesuai keterangan di atas.</p>
             </div>
         </section>
-    @elseif($isWeekend)
+    <?php elseif($isWeekend): ?>
         <!-- Weekend Notice -->
         <section class="stats-section mb-8">
             <div class="stat-card" style="border-left: 5px solid #3b82f6; background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
@@ -140,7 +138,7 @@
                     <div class="stat-icon" style="background: #bfdbfe; color: #1d4ed8;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     </div>
-                    <div class="stat-title">🎉 Hari {{ $weekendName }}</div>
+                    <div class="stat-title">🎉 Hari <?php echo e($weekendName); ?></div>
                 </div>
                 <div class="stat-value">Hari Libur Akhir Pekan</div>
                 <div class="stat-description">Otomatis ditandai sebagai hari libur oleh sistem.</div>
@@ -151,11 +149,11 @@
         <section class="stats-section mb-8">
             <div class="stat-card text-center py-12" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
                 <div class="text-5xl mb-4">🎊</div>
-                <h2 class="greeting-title mb-2" style="font-size: 24px;">Hari {{ $weekendName }} - Libur</h2>
-                <p class="stat-description" style="font-size: 16px;">Tidak ada absensi pada hari {{ $weekendName }}. Hari ini otomatis ditandai sebagai libur oleh sistem.</p>
+                <h2 class="greeting-title mb-2" style="font-size: 24px;">Hari <?php echo e($weekendName); ?> - Libur</h2>
+                <p class="stat-description" style="font-size: 16px;">Tidak ada absensi pada hari <?php echo e($weekendName); ?>. Hari ini otomatis ditandai sebagai libur oleh sistem.</p>
             </div>
         </section>
-    @else
+    <?php else: ?>
                 <!-- Statistics Cards -->
                 <section class="stats-section mb-8">
                     <div class="stats-grid">
@@ -164,35 +162,35 @@
                                 <div class="stat-icon success"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                                 <div class="stat-title">Hadir</div>
                             </div>
-                            <div class="stat-value">{{ $attendances->where('status', 'hadir')->count() }}</div>
+                            <div class="stat-value"><?php echo e($attendances->where('status', 'hadir')->count()); ?></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-header">
                                 <div class="stat-icon warning"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                                 <div class="stat-title">Sakit</div>
                             </div>
-                            <div class="stat-value">{{ $attendances->where('status', 'sakit')->count() }}</div>
+                            <div class="stat-value"><?php echo e($attendances->where('status', 'sakit')->count()); ?></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-header">
                                 <div class="stat-icon info"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                                 <div class="stat-title">Izin</div>
                             </div>
-                            <div class="stat-value">{{ $attendances->where('status', 'izin')->count() }}</div>
+                            <div class="stat-value"><?php echo e($attendances->where('status', 'izin')->count()); ?></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-header">
                                 <div class="stat-icon danger"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                                 <div class="stat-title">Alpha</div>
                             </div>
-                            <div class="stat-value">{{ $attendances->where('status', 'alpha')->count() }}</div>
+                            <div class="stat-value"><?php echo e($attendances->where('status', 'alpha')->count()); ?></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-header">
                                 <div class="stat-icon secondary"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                                 <div class="stat-title">Belum Absen</div>
                             </div>
-                            <div class="stat-value">{{ $attendances->where('status', 'belum_absen')->count() }}</div>
+                            <div class="stat-value"><?php echo e($attendances->where('status', 'belum_absen')->count()); ?></div>
                         </div>
                     </div>
                 </section>
@@ -206,9 +204,9 @@
                                     <h2 class="table-title">Update Absensi Siswa</h2>
                                     <p class="stat-description" style="margin-top: 4px;">Pilih status untuk setiap siswa dan konfirmasi jam masuk jika ada.</p>
                                 </div>
-                                <form action="{{ route('sekretaris.absensi.mark_all_present') }}" method="POST" id="markAllPresentForm">
-                                    @csrf
-                                    <input type="hidden" name="date" value="{{ $selectedDate }}">
+                                <form action="<?php echo e(route('sekretaris.absensi.mark_all_present')); ?>" method="POST" id="markAllPresentForm">
+                                    <?php echo csrf_field(); ?>
+                                    <input type="hidden" name="date" value="<?php echo e($selectedDate); ?>">
                                     <button type="submit" class="feature-btn" style="background: #10b981; white-space: nowrap;">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 6px;">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -234,18 +232,18 @@
                             </div>
                         </div>
                                 <div class="flex items-center justify-end mb-4">
-                                    <form action="{{ route('sekretaris.api.holidays.sync_national') }}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="year" value="{{ \Carbon\Carbon::parse($selectedDate)->year }}">
+                                    <form action="<?php echo e(route('sekretaris.api.holidays.sync_national')); ?>" method="POST">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="year" value="<?php echo e(\Carbon\Carbon::parse($selectedDate)->year); ?>">
                                         <button type="submit" class="feature-btn" style="background:#f59e0b; min-width: 240px;">
                                             🔄 Sync Hari Libur Nasional
                                         </button>
                                     </form>
                                 </div>
 
-                                <form action="{{ route('sekretaris.absensi.update') }}" method="POST" class="table-container">
-                            @csrf
-                            <input type="hidden" name="date" value="{{ $selectedDate }}">
+                                <form action="<?php echo e(route('sekretaris.absensi.update')); ?>" method="POST" class="table-container">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="date" value="<?php echo e($selectedDate); ?>">
                             <div class="overflow-x-auto">
                                 <table class="data-table">
                                     <thead>
@@ -257,46 +255,46 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($students as $index => $student)
-                                            @php
+                                        <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php
                                                 $attendance = $attendances->get($student->id);
                                                 $status = $attendance ? $attendance->status : 'belum_absen';
                                                 $time = $attendance ? $attendance->attendance_time : '-';
-                                            @endphp
+                                            ?>
                                             <tr>
-                                                <td class="text-center font-semibold">{{ $index + 1 }}</td>
+                                                <td class="text-center font-semibold"><?php echo e($index + 1); ?></td>
                                                 <td>
-                                                    <div class="font-medium">{{ $student->name }}</div>
+                                                    <div class="font-medium"><?php echo e($student->name); ?></div>
                                                 </td>
                                                 <td>
                                                     <div class="flex flex gap-1 justify-center items-center status-container">
                                                         <label class="cursor-pointer status-toggle">
-                                                            <input type="radio" name="status[{{ $student->id }}]" value="belum_absen" {{ $status == 'belum_absen' ? 'checked' : '' }} class="peer sr-only">
+                                                            <input type="radio" name="status[<?php echo e($student->id); ?>]" value="belum_absen" <?php echo e($status == 'belum_absen' ? 'checked' : ''); ?> class="peer sr-only">
                                                             <span class="status-badge secondary peer-checked:!bg-gray-600 peer-checked:!text-white peer-checked:!border-gray-600">Belum</span>
                                                         </label>
                                                         <label class="cursor-pointer status-toggle">
-                                                            <input type="radio" name="status[{{ $student->id }}]" value="hadir" {{ $status == 'hadir' ? 'checked' : '' }} class="peer sr-only">
+                                                            <input type="radio" name="status[<?php echo e($student->id); ?>]" value="hadir" <?php echo e($status == 'hadir' ? 'checked' : ''); ?> class="peer sr-only">
                                                             <span class="status-badge success peer-checked:!bg-green-600 peer-checked:!text-white peer-checked:!border-green-600">Hadir</span>
                                                         </label>
                                                         <label class="cursor-pointer status-toggle">
-                                                            <input type="radio" name="status[{{ $student->id }}]" value="sakit" {{ $status == 'sakit' ? 'checked' : '' }} class="peer sr-only">
+                                                            <input type="radio" name="status[<?php echo e($student->id); ?>]" value="sakit" <?php echo e($status == 'sakit' ? 'checked' : ''); ?> class="peer sr-only">
                                                             <span class="status-badge warning peer-checked:!bg-yellow-500 peer-checked:!text-white peer-checked:!border-yellow-500">Sakit</span>
                                                         </label>
                                                         <label class="cursor-pointer status-toggle">
-                                                            <input type="radio" name="status[{{ $student->id }}]" value="izin" {{ $status == 'izin' ? 'checked' : '' }} class="peer sr-only">
+                                                            <input type="radio" name="status[<?php echo e($student->id); ?>]" value="izin" <?php echo e($status == 'izin' ? 'checked' : ''); ?> class="peer sr-only">
                                                             <span class="status-badge info peer-checked:!bg-blue-600 peer-checked:!text-white peer-checked:!border-blue-600">Izin</span>
                                                         </label>
                                                         <label class="cursor-pointer status-toggle">
-                                                            <input type="radio" name="status[{{ $student->id }}]" value="alpha" {{ $status == 'alpha' ? 'checked' : '' }} class="peer sr-only">
+                                                            <input type="radio" name="status[<?php echo e($student->id); ?>]" value="alpha" <?php echo e($status == 'alpha' ? 'checked' : ''); ?> class="peer sr-only">
                                                             <span class="status-badge danger peer-checked:!bg-red-600 peer-checked:!text-white peer-checked:!border-red-600">Alpha</span>
                                                         </label>
                                                     </div>
                                                 </td>
                                                 <td class="text-center">
-                                                    <span class="status-badge secondary px-3 py-1">{{ $time != '-' ? \Carbon\Carbon::parse($time)->format('H:i') : '-' }}</span>
+                                                    <span class="status-badge secondary px-3 py-1"><?php echo e($time != '-' ? \Carbon\Carbon::parse($time)->format('H:i') : '-'); ?></span>
                                                 </td>
                                             </tr>
-                                        @endforeach
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -312,7 +310,7 @@
                         </form>
                     </div>
                 </section>
-            @endif
+            <?php endif; ?>
         </main>
     </div>
 </div>
@@ -836,4 +834,6 @@ function showErrorToast(message) {
 }
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/sekretaris/absensi.blade.php ENDPATH**/ ?>

@@ -895,9 +895,11 @@ class BendaharaController extends Controller
         $payments = WeeklyPayment::where('month', $month)
             ->where('year', $year)
             ->with(['student', 'transaction'])
-            ->orderBy('student_id')
             ->orderBy('week_number')
-            ->get();
+            ->get()
+            ->sortBy(function ($payment) {
+                return strtolower(trim(optional($payment->student)->name ?? ''));
+            });
         
         $paymentsByStudent = $payments->groupBy('student_id');
         $totalPaid = $payments->where('status', 'paid')->sum('amount');

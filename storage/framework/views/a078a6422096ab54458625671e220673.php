@@ -1,0 +1,238 @@
+<?php $__env->startSection('content'); ?>
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <?php echo $__env->make('components.admin-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+    <div class="main-area">
+        <main class="main-content">
+<section class="greeting-section">
+                <div class="greeting-card">
+                    <h1 class="greeting-title">Selamat <?php echo e(\Carbon\Carbon::now()->hour < 12 ? 'Pagi' : (\Carbon\Carbon::now()->hour < 15 ? 'Siang' : (\Carbon\Carbon::now()->hour < 18 ? 'Sore' : 'Malam'))); ?>, <?php echo e(auth()->user()->name); ?>!</h1>
+                    <p class="greeting-subtitle">Pantau semua aktivitas kelas dari satu dashboard</p>
+                </div>
+            </section>
+
+            <!-- Horizontal Navigation Menu -->
+            <section class="feature-cards">
+                <!-- CRUD Siswa -->
+                <div class="feature-card">
+                    <div class="feature-icon blue">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a4 4 0 11-8 0 4 4 0 018 0zm1 3a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">CRUD Siswa</h3>
+                    <p class="feature-description">Kelola data siswa (tambah, edit, hapus)</p>
+                    <a href="<?php echo e(route('admin.students')); ?>" class="feature-btn">Kelola Siswa</a>
+                </div>
+                
+                <!-- Monitor Absensi -->
+                <div class="feature-card">
+                    <div class="feature-icon green">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5 0.5l.5.5 8.5a.5.5 0 01-.5-.5v-8a.5.5 0 011 0v8a.5.5 0 01-.5.5z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Monitor Absensi</h3>
+                    <p class="feature-description">Pantau kehadiran siswa real-time</p>
+                    <a href="<?php echo e(route('admin.monitor.absensi')); ?>" class="feature-btn">Lihat Absensi</a>
+                </div>
+                
+                <!-- Monitor Pembayaran -->
+                <div class="feature-card">
+                    <div class="feature-icon green">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2m2 10h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2m-4 2H7a2 2 0 00-2 2v4a2 2 0 002 2h2"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h1m4 0h1"></path>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Monitor Pembayaran</h3>
+                    <p class="feature-description">Pantau pembayaran kas mingguan</p>
+                    <a href="<?php echo e(route('admin.monitor.pembayaran')); ?>" class="feature-btn">Lihat Pembayaran</a>
+                </div>
+                
+                <!-- Monitor Keuangan -->
+                <div class="feature-card">
+                    <div class="feature-icon orange">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Monitor Keuangan</h3>
+                    <p class="feature-description">Lihat transaksi keuangan kelas</p>
+                    <a href="<?php echo e(route('admin.monitor.keuangan')); ?>" class="feature-btn">Lihat Keuangan</a>
+                </div>
+            </section>
+
+            <?php 
+                $presencePercent = $totalStudents > 0 && isset($totalHadir) ? round(($totalHadir / ($totalStudents * 20)) * 100) : 0; // Approximate 20 days/month
+            ?>
+
+            <section class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header"><div class="stat-icon info"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div><div class="stat-title">Total Siswa</div></div>
+                        <div class="stat-value"><?php echo e($totalStudents ?? 0); ?></div>
+                        <div class="stat-description">Siswa aktif terdaftar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header"><div class="stat-icon income"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><div class="stat-title">Hadir Bulan Ini</div></div>
+                        <div class="stat-value"><?php echo e($totalHadir ?? 0); ?></div>
+                        <div class="stat-description">Total kehadiran bulan ini</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header"><div class="stat-icon expense"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 0l-8 8-4-4-6 6"></path></svg></div><div class="stat-title">Tidak Hadir</div></div>
+                        <div class="stat-value"><?php echo e($totalTidakHadir ?? 0); ?></div>
+                        <div class="stat-description">Absensi tidak hadir bulan ini</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header"><div class="stat-icon remaining"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3v4m0 4h2a2 2 0 002 2v-4a2 2 0 00-2-2h-2a2 2 0 00-2-2v-4m2 6v-4h2a2 2 0 002 2v4a2 2 0 002 2z"></path></svg></div><div class="stat-title">Saldo Kas</div></div>
+                        <div class="stat-value">Rp <?php echo e(number_format($balance ?? 0, 0, ',', '.')); ?></div>
+                        <div class="stat-description">Saldo kas kelas saat ini</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header"><div class="stat-icon payment"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z"></path></svg></div><div class="stat-title">Tingkat Kehadiran</div></div>
+                        <div class="progress-container">
+                            <div class="progress-bar"><div class="progress-fill" style="width: <?php echo e($presencePercent); ?>%"></div></div>
+                            <div class="progress-text"><?php echo e($presencePercent); ?>% Bulanan</div>
+                        </div>
+                        <div class="stat-details">
+                            <div class="detail-item"><span class="detail-label">Hadir</span><span class="detail-value"><?php echo e($totalHadir ?? 0); ?></span></div>
+                            <div class="detail-item"><span class="detail-label">Total</span><span class="detail-value"><?php echo e($totalStudents ?? 0); ?> siswa</span></div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header"><div class="stat-icon balance"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><div class="stat-title">Keuangan Bulan Ini</div></div>
+                        <div class="class-info">
+                            <div class="info-row"><span class="info-label">Pemasukan:</span><span class="info-value">Rp <?php echo e(number_format($totalIncome ?? 0, 0, ',', '.')); ?></span></div>
+                            <div class="info-row"><span class="info-label">Pengeluaran:</span><span class="info-value">Rp <?php echo e(number_format($totalExpense ?? 0, 0, ',', '.')); ?></span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tables-section">
+                <div class="table-card">
+                    <div class="table-header"><h2 class="table-title">Siswa Terbaru</h2><a href="<?php echo e(route('admin.students')); ?>" class="feature-btn" style="float:right;font-size:13px;padding:8px 16px;">Kelola Semua →</a></div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Nama</th><th>Email</th><th>Status</th><th>Dibuat</th></tr></thead>
+                            <tbody>
+                                <?php
+                                    $recentStudents = \App\Models\User::where('role', 'siswa')->orderBy('created_at', 'desc')->take(5)->get();
+                                ?>
+                                <?php $__empty_1 = true; $__currentLoopData = $recentStudents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <tr>
+                                    <td><?php echo e($student->name); ?></td>
+                                    <td><?php echo e($student->email); ?></td>
+                                    <td><span class="status-badge success">Aktif</span></td>
+                                    <td><?php echo e($student->created_at->format('d M Y')); ?></td>
+                                </tr>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                <tr><td colspan="4" class="text-center py-4 text-gray-500">Belum ada siswa</td></tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+.dashboard-layout { display: flex; height: 100vh; background: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.sidebar { width: 280px; background: white; border-right: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+.sidebar-header { padding: 24px 20px; border-bottom: 1px solid #e2e8f0; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
+.logo-text { font-size: 20px; font-weight: 700; color: #1e293b; }
+.sidebar-nav { flex: 1; padding: 16px 0; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #64748b; text-decoration: none; transition: all 0.2s ease; border-radius: 0 8px 8px 0; margin: 0 12px; }
+.nav-item:hover { background: #f8fafc; color: #3b82f6; }
+.nav-item.active { background: #eff6ff; color: #3b82f6; font-weight: 600; }
+.nav-icon { width: 20px; height: 20px; }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid #e2e8f0; }
+.user-profile-mini { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.user-avatar-mini { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; }
+.user-name-mini { font-size: 13px; font-weight: 600; color: #1e293b; }
+.user-role-mini { font-size: 11px; color: #64748b; }
+.logout-form { display: block; }
+.logout-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: #fee2e2; color: #dc2626; border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.logout-btn:hover { background: #fecaca; }
+.logout-icon { width: 16px; height: 16px; }
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.main-content { flex: 1; padding: 32px; overflow-y: auto; }
+.greeting-section { margin-bottom: 32px; }
+.greeting-title { font-size: 32px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+.greeting-card { 
+    background: white; 
+    padding: 32px; 
+    border-radius: 16px; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    border: 1px solid #e2e8f0; 
+    margin-bottom: 32px; 
+}
+.greeting-subtitle { font-size: 16px; color: #64748b; }
+.feature-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+.feature-card { background: white; padding: 32px 24px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: center; transition: all 0.2s ease; }
+.feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+.feature-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.feature-icon.blue { background: #dbeafe; color: #3b82f6; }
+.feature-icon.green { background: #dcfce7; color: #10b981; }
+.feature-icon.orange { background: #fed7aa; color: #f97316; }
+.feature-icon svg { width: 32px; height: 32px; }
+.feature-title { font-size: 20px; font-weight: 600; color: #1e293b; margin-bottom: 12px; }
+.feature-description { font-size: 14px; color: #64748b; margin-bottom: 24px; line-height: 1.5; }
+.feature-btn { display: inline-block; background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s ease; }
+.feature-btn:hover { background: #2563eb; }
+.stats-section { margin-bottom: 32px; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.stat-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+.stat-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.stat-icon.balance { background: #dbeafe; color: #3b82f6; }
+.stat-icon.income { background: #dcfce7; color: #10b981; }
+.stat-icon.expense { background: #fee2e2; color: #ef4444; }
+.stat-icon.remaining { background: #fef3c7; color: #f59e0b; }
+.stat-icon.payment { background: #e0e7ff; color: #6366f1; }
+.stat-icon.info { background: #f3f4f6; color: #6b7280; }
+.stat-icon svg { width: 20px; height: 20px; }
+.stat-title { font-size: 16px; font-weight: 600; color: #1e293b; }
+.stat-value { font-size: 28px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+.stat-description { font-size: 14px; color: #64748b; }
+.progress-container { margin-bottom: 16px; }
+.progress-bar { width: 100%; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #2563eb); border-radius: 4px; transition: width 0.3s ease; }
+.progress-text { text-align: center; font-size: 24px; font-weight: 700; color: #1e293b; margin-top: 8px; }
+.stat-details { display: flex; justify-content: space-between; gap: 16px; }
+.detail-item { flex: 1; text-align: center; padding: 12px; background: #f8fafc; border-radius: 8px; }
+.detail-label { font-size: 12px; color: #64748b; display: block; margin-bottom: 4px; }
+.detail-value { font-size: 14px; font-weight: 600; color: #1e293b; }
+.class-info { display: flex; flex-direction: column; gap: 12px; }
+.info-row { display: flex; justify-content: space-between; padding: 12px; background: #f8fafc; border-radius: 8px; }
+.info-label { font-size: 14px; color: #64748b; }
+.info-value { font-size: 14px; font-weight: 600; color: #1e293b; }
+.tables-section { display: grid; grid-template-columns: 1fr; gap: 24px; }
+.table-card { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; overflow: hidden; }
+.table-header { padding: 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+.table-title { font-size: 18px; font-weight: 600; color: #1e293b; margin: 0; }
+.table-container { padding: 24px; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { background: #f8fafc; color: #475569; padding: 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; }
+.data-table td { padding: 16px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; }
+.data-table tr:hover td { background: #f8fafc; }
+.status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.status-badge.success { background: #dcfce7; color: #166534; }
+.text-center { text-align: center; }
+.py-4 { padding-top: 16px; padding-bottom: 16px; }
+.text-gray-500 { color: #6b7280; }
+@media (max-width: 1400px) { .feature-cards { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .feature-cards { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .sidebar { width: 260px; } .main-content { padding: 20px; } .feature-cards { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr; gap: 16px; } }
+</style>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/admin/dashboard.blade.php ENDPATH**/ ?>
