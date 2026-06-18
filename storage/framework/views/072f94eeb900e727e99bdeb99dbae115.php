@@ -1,0 +1,216 @@
+<!-- Detail Modal Income (Kas Masuk) -->
+<div id="incomeDetailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200 flex items-center justify-between gap-4 sticky top-0 bg-white">
+            <div>
+<h2 class="text-2xl font-bold text-gray-900">Detail Kas Masuk</h2>
+                <p id="incomeDetailSubtitle" class="text-sm text-gray-500 mt-1">Pilih sumber kas masuk</p>
+            </div>
+            <button type="button" onclick="closeIncomeDetail()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="p-6">
+            <div id="incomeDetailLoading" class="text-center py-10 hidden">
+                <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-full bg-indigo-100 text-indigo-700 animate-pulse">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"></circle>
+                        <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Memuat data...
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="flex flex-wrap gap-3 items-center justify-between">
+                    <div class="flex-1 min-w-[220px]">
+                        <input type="text" id="incomeDetailSearch" placeholder="🔍 Cari pemasukan..." class="w-full pl-4 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-base placeholder-gray-500">
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <span class="font-semibold" id="incomeDetailCount">0</span> transaksi
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 mb-4">
+                <button type="button" onclick="openIncomeDetailSource('weekly')" class="px-4 py-2 rounded-lg font-semibold text-sm bg-indigo-600 hover:bg-indigo-700 text-white transition">
+                    Kas Masuk (Weekly)
+                </button>
+                <button type="button" onclick="openIncomeDetailSource('non_weekly')" class="px-4 py-2 rounded-lg font-semibold text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 transition">
+                    Kas Masuk (Di Luar Weekly)
+                </button>
+            </div>
+
+            <div id="incomeDetailContainer" class="divide-y divide-gray-100">
+                <!-- dynamic -->
+            </div>
+
+            <div id="incomeDetailEmpty" class="text-center py-10 hidden">
+                <div class="text-6xl mb-3">💰</div>
+                <h3 class="text-xl font-bold text-gray-700 mb-2">Belum ada kas masuk</h3>
+                <p class="text-gray-500">Transaksi pemasukan akan muncul di sini.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// income detail uses the same `transactions` array from simple-cash page.
+window.__incomeDetailSource = 'weekly';
+
+window.openIncomeDetail = () => {
+
+
+    const modal = document.getElementById('incomeDetailModal');
+    const container = document.getElementById('incomeDetailContainer');
+    const empty = document.getElementById('incomeDetailEmpty');
+
+    document.getElementById('incomeDetailLoading').classList.remove('hidden');
+
+    const searchInput = document.getElementById('incomeDetailSearch');
+    if (searchInput) searchInput.value = '';
+
+    // Ensure `transactions` are available (loaded async) before filtering.
+    const source = Array.isArray(window.transactions) ? window.transactions : [];
+
+    // debug (bisa dihapus setelah yakin)
+    console.log('[IncomeDetail] transactions array:', window.transactions);
+
+    window.__incomeDetailSearchTerm = '';
+
+    // Identify income by common possibilities in backend/API.
+    const incomeTransactions = source.filter(t => {
+        const type = (t.type ?? '').toString().toLowerCase();
+        const jenis = (t.jenis ?? '').toString().toLowerCase();
+
+        return type === 'income' || type === 'kas masuk' || type === 'kas_masuk' ||
+               jenis === 'income' || jenis === 'kas masuk' || jenis === 'kas_masuk' ||
+               t.type === 'Kas Masuk' || t.jenis === 'Kas Masuk';
+    });
+
+    // Split by weekly payment usage.
+    // Berdasarkan backend: controller membuat `used_in_weekly_payment`.
+    window.__incomeDetailTransactions = incomeTransactions.filter(t => {
+        const used = !!t.used_in_weekly_payment;
+        return window.__incomeDetailSource === 'weekly' ? used : !used;
+    });
+
+    const filtered = window.__incomeDetailTransactions;
+    document.getElementById('incomeDetailCount').textContent = filtered.length;
+
+    container.innerHTML = filtered.map(t => createIncomeDetailCard(t)).join('');
+    empty.classList.toggle('hidden', filtered.length !== 0);
+
+    document.getElementById('incomeDetailLoading').classList.add('hidden');
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+};
+
+window.openIncomeDetailSource = (source) => {
+    window.__incomeDetailSource = source;
+    window.openIncomeDetail();
+};
+
+// Backward compatibility for old function name (if any onclick still uses it)
+window.openIncomeDetailSource = window.openIncomeDetailSource;
+
+window.closeIncomeDetail = () => {
+    const modal = document.getElementById('incomeDetailModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+};
+
+// Ensure modal works even if simple-cash page doesn't set `window.transactions` yet.
+window.openIncomeDetail = window.openIncomeDetail || (() => {
+    const modal = document.getElementById('incomeDetailModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+});
+
+function createIncomeDetailCard(t) {
+    const studentName = t.student?.name || (t.used_in_weekly_payment ? 'Siswa' : '');
+    const showStudent = !!t.student?.name;
+    const formattedDate = t.date ? new Date(t.date).toLocaleDateString('id-ID') : '-';
+
+    return `
+        <div class="p-4 hover:bg-gray-50/50 transition-colors">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
+                            PEMASUKAN
+                        </span>
+                        <span class="text-sm font-semibold text-gray-900">${escapeHtml(t.description || '')}</span>
+                    </div>
+                    <div class="mt-1 text-sm text-gray-500 flex gap-3 flex-wrap">
+                        ${showStudent ? `<span>👤 ${escapeHtml(studentName)}</span>` : ''}
+                        <span>📅 ${escapeHtml(formattedDate)}</span>
+                        <span>👁️ ${escapeHtml(t.creator?.name || 'Sistem')}</span>
+                    </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <div class="text-xl font-bold text-green-600">+ Rp ${Number(t.amount).toLocaleString('id-ID')}</div>
+                    <div class="mt-2">
+                        <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-semibold transition border border-blue-600" onclick="window.showTransactionDetail(${t.id})">
+                            Detail
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '<')
+        .replaceAll('>', '>')
+        .replaceAll('"', '"')
+        .replaceAll("'", '&#039;');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('incomeDetailSearch');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', (e) => {
+        window.__incomeDetailSearchTerm = e.target.value.toLowerCase();
+
+        const container = document.getElementById('incomeDetailContainer');
+        const empty = document.getElementById('incomeDetailEmpty');
+        const list = window.__incomeDetailTransactions || [];
+
+        const term = window.__incomeDetailSearchTerm;
+        const filtered = list.filter(t => {
+            const desc = (t.description || '').toLowerCase();
+            const student = (t.student?.name || '').toLowerCase();
+            const date = (t.date || '').toLowerCase();
+            return !term || desc.includes(term) || student.includes(term) || date.includes(term);
+        });
+
+        document.getElementById('incomeDetailCount').textContent = filtered.length;
+        container.innerHTML = filtered.map(t => createIncomeDetailCard(t)).join('');
+        empty.classList.toggle('hidden', filtered.length !== 0);
+    });
+
+    const modal = document.getElementById('incomeDetailModal');
+    modal?.addEventListener('click', (e) => {
+        if (e.target === modal) closeIncomeDetail();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modalEl = document.getElementById('incomeDetailModal');
+            if (modalEl && !modalEl.classList.contains('hidden')) closeIncomeDetail();
+        }
+    });
+});
+</script>
+
+<?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/detail.blade.php ENDPATH**/ ?>

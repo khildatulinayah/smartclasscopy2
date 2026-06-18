@@ -519,10 +519,12 @@ class BendaharaController extends Controller
             }
         }
         
-        // Eager-load adjustments untuk kebutuhan display/indikator adjustment (immutability-friendly)
-        $adjustmentsByPaymentId = \App\Models\PaymentAdjustment::pending()
-            ->get()
-            ->groupBy('weekly_payment_id');
+        // Load SEMUA adjustment untuk kebutuhan modal (pending + processed + cancelled)
+        $pendingAdjustments = \App\Models\PaymentAdjustment::with(['weeklyPayment.student'])
+            ->whereIn('weekly_payment_id', $payments->pluck('id'))
+            ->get();
+
+
 
         return view('bendahara.weekly-payments', compact(
             'paymentsByStudent',

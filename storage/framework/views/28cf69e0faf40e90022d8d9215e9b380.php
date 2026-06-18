@@ -1,11 +1,10 @@
-@extends('layouts.app')
 <?php use Carbon\Carbon; ?>
 
-@section('title', 'Pembayaran Mingguan')
+<?php $__env->startSection('title', 'Pembayaran Mingguan'); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="dashboard-layout">
-    @include('components.bendahara-sidebar')
+    <?php echo $__env->make('components.bendahara-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="main-area">
         <main class="main-content">
@@ -21,58 +20,59 @@
     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
         <div class="flex items-center justify-between">
             <div>
-                <h3 class="text-lg font-semibold text-blue-800">Data Pembayaran: {{ $currentMonthName }}</h3>
+                <h3 class="text-lg font-semibold text-blue-800">Data Pembayaran: <?php echo e($currentMonthName); ?></h3>
                 <p class="text-sm text-blue-600">
-                    {{ $weeksInMonth }} minggu pembayaran • 
-                    {{ $totalBills }} tagihan untuk {{ $totalStudents }} siswa
+                    <?php echo e($weeksInMonth); ?> minggu pembayaran • 
+                    <?php echo e($totalBills); ?> tagihan untuk <?php echo e($totalStudents); ?> siswa
                 </p>
             </div>
             <div class="text-right">
                 <div class="text-sm text-blue-600">Nominal per Minggu:</div>
-                <div class="text-xl font-bold text-blue-800">Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}</div>
+                <div class="text-xl font-bold text-blue-800">Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></div>
             </div>
         </div>
-        @if(isset($wednesdayDates) && count($wednesdayDates) > 0)
+        <?php if(isset($wednesdayDates) && count($wednesdayDates) > 0): ?>
             <div class="mt-3 pt-3 border-t border-blue-200">
                 <div class="text-sm text-blue-600">Jadwal pembayaran:</div>
                 <div class="flex flex-wrap gap-2 mt-1">
-                    @foreach($wednesdayDates as $index => $date)
+                    <?php $__currentLoopData = $wednesdayDates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $date): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                            Minggu {{ $index + 1 }}: {{ $date->locale('id')->translatedFormat('d M') }}
+                            Minggu <?php echo e($index + 1); ?>: <?php echo e($date->locale('id')->translatedFormat('d M')); ?>
+
                         </span>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
             </div>
-        @endif
+        <?php endif; ?>
     </div>
 
-    @if(!empty($kasSettingWarning))
+    <?php if(!empty($kasSettingWarning)): ?>
         <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
             <h3 class="text-sm font-semibold text-orange-800">Nominal Belum Diatur</h3>
-            <p class="text-sm text-orange-700 mt-1">{{ $kasSettingWarning }}</p>
-            <a href="{{ route('bendahara.kas.settings', ['month' => $month, 'year' => $year]) }}" class="inline-block mt-3 text-sm font-semibold text-orange-700 hover:text-orange-900">
+            <p class="text-sm text-orange-700 mt-1"><?php echo e($kasSettingWarning); ?></p>
+            <a href="<?php echo e(route('bendahara.kas.settings', ['month' => $month, 'year' => $year])); ?>" class="inline-block mt-3 text-sm font-semibold text-orange-700 hover:text-orange-900">
                 Buka Pengaturan Kas
             </a>
         </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- Banner Dinamis Hari Rabu --}}
-    @if(isset($isCurrentMonth) && $isCurrentMonth)
-        @if(isset($isWednesday) && $isWednesday)
+    
+    <?php if(isset($isCurrentMonth) && $isCurrentMonth): ?>
+        <?php if(isset($isWednesday) && $isWednesday): ?>
             <div class="bg-red-500 text-white p-6 mb-6 rounded-xl text-center border-4 border-red-600 shadow-2xl">
                 <h2 class="text-2xl font-bold mb-2 animate-pulse">🚨 HARI RABU - PEMBAYARAN KAS!</h2>
-                <p class="text-lg">Prioritaskan <strong>{{ $currentWeekUnpaid }}</strong> siswa untuk Minggu ke-{{ $currentWeek }}</p>
+                <p class="text-lg">Prioritaskan <strong><?php echo e($currentWeekUnpaid); ?></strong> siswa untuk Minggu ke-<?php echo e($currentWeek); ?></p>
             </div>
-        @else
+        <?php else: ?>
             <div class="bg-yellow-400 text-black p-6 mb-6 rounded-xl text-center border-4 border-yellow-500 shadow-xl">
                 <h2 class="text-xl font-bold mb-2">⏳ Selanjutnya: Hari Rabu</h2>
-                <p class="text-lg">Rabu, {{ $nextWednesday ?? 'Minggu ini' }} | {{ $currentWeekUnpaid ?? 0 }} belum bayar minggu ini</p>
+                <p class="text-lg">Rabu, <?php echo e($nextWednesday ?? 'Minggu ini'); ?> | <?php echo e($currentWeekUnpaid ?? 0); ?> belum bayar minggu ini</p>
             </div>
-        @endif
-    @endif
+        <?php endif; ?>
+    <?php endif; ?>
 
     <!-- Info Panel untuk Petunjuk Pembayaran -->
-    @if($totalBills > 0 && $paidBills === 0)
+    <?php if($totalBills > 0 && $paidBills === 0): ?>
         <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
             <div class="flex items-center justify-between">
                 <div>
@@ -82,19 +82,19 @@
                     </p>
                 </div>
                 <div class="text-right">
-                    <a href="{{ route('bendahara.kas') }}" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium">
+                    <a href="<?php echo e(route('bendahara.kas')); ?>" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium">
                         Buat Transaksi Kas
                     </a>
                 </div>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 
-    @if(!empty($pendingAdjustmentCount) && $pendingAdjustmentCount > 0)
+    <?php if(!empty($pendingAdjustmentCount) && $pendingAdjustmentCount > 0): ?>
         <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
-                    <h3 class="text-lg font-semibold text-indigo-800">⚠️ Ada {{ $pendingAdjustmentCount }} penyesuaian pembayaran</h3>
+                    <h3 class="text-lg font-semibold text-indigo-800">⚠️ Ada <?php echo e($pendingAdjustmentCount); ?> penyesuaian pembayaran</h3>
                     <p class="text-sm text-indigo-700 mt-1">
                         Pembayaran lunas bulan ini membutuhkan tindakan koreksi kas. Gunakan tombol Lunasi/Kembalikan.
                     </p>
@@ -107,9 +107,9 @@
                 </div>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 
-    @include('bendahara.payment-adjustment-modal')
+    <?php echo $__env->make('bendahara.payment-adjustment-modal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 
 
@@ -124,7 +124,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-bold text-gray-800">{{ $totalStudents }}</div>
+                    <div class="text-2xl font-bold text-gray-800"><?php echo e($totalStudents); ?></div>
                     <div class="text-sm text-gray-500">Total Siswa</div>
                 </div>
             </div>
@@ -138,7 +138,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-bold text-gray-800">{{ $totalBills }}</div>
+                    <div class="text-2xl font-bold text-gray-800"><?php echo e($totalBills); ?></div>
                     <div class="text-sm text-gray-500">Total Tagihan</div>
                 </div>
             </div>
@@ -152,7 +152,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-bold text-green-600">{{ $paidBills }}</div>
+                    <div class="text-2xl font-bold text-green-600"><?php echo e($paidBills); ?></div>
                     <div class="text-sm text-gray-500">Sudah Bayar</div>
                 </div>
             </div>
@@ -166,13 +166,13 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-bold text-red-600">{{ $unpaidBills }}</div>
+                    <div class="text-2xl font-bold text-red-600"><?php echo e($unpaidBills); ?></div>
                     <div class="text-sm text-gray-500">Belum Bayar</div>
                 </div>
             </div>
         </div>
         
-        @if(isset($isFriday) && $isFriday)
+        <?php if(isset($isFriday) && $isFriday): ?>
         <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div class="flex items-center mb-2">
                 <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
@@ -181,12 +181,12 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-bold text-orange-600">{{ $currentWeekUnpaid }}</div>
+                    <div class="text-2xl font-bold text-orange-600"><?php echo e($currentWeekUnpaid); ?></div>
                     <div class="text-sm text-gray-500">Minggu Ini Belum</div>
                 </div>
             </div>
         </div>
-        @endif
+        <?php endif; ?>
         
         <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div class="flex items-center mb-2">
@@ -196,7 +196,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-bold text-blue-600">Rp {{ number_format($paidAmount, 0, ',', '.') }}</div>
+                    <div class="text-2xl font-bold text-blue-600">Rp <?php echo e(number_format($paidAmount, 0, ',', '.')); ?></div>
                     <div class="text-sm text-gray-500">Kas Masuk</div>
                 </div>
             </div>
@@ -210,7 +210,7 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-2xl font-bold text-yellow-600">Rp {{ number_format($unpaidAmount, 0, ',', '.') }}</div>
+                    <div class="text-2xl font-bold text-yellow-600">Rp <?php echo e(number_format($unpaidAmount, 0, ',', '.')); ?></div>
                     <div class="text-sm text-gray-500">Tunggakan</div>
                 </div>
             </div>
@@ -241,7 +241,7 @@
             <!-- Month Navigation with Dropdown and Arrows -->
             <div class="flex items-center space-x-2 pl-4 border-l border-gray-200">
                 <!-- Arrow Navigation -->
-                <a href="?month={{ $prevMonth }}&year={{ $prevYear }}" class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors" title="Bulan Sebelumnya">
+                <a href="?month=<?php echo e($prevMonth); ?>&year=<?php echo e($prevYear); ?>" class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors" title="Bulan Sebelumnya">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
@@ -251,28 +251,30 @@
                 <form id="monthForm" method="GET" class="flex items-center space-x-2">
                     <select name="month" id="monthSelect" onchange="this.form.submit()" 
                             class="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg font-semibold text-sm border-0 focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                        @for($m = 1; $m <= 12; $m++)
-                            <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>
-                                {{ Carbon::create()->month($m)->locale('id')->translatedFormat('F') }}
+                        <?php for($m = 1; $m <= 12; $m++): ?>
+                            <option value="<?php echo e($m); ?>" <?php echo e($month == $m ? 'selected' : ''); ?>>
+                                <?php echo e(Carbon::create()->month($m)->locale('id')->translatedFormat('F')); ?>
+
                             </option>
-                        @endfor
+                        <?php endfor; ?>
                     </select>
                     <select name="year" id="yearSelect" onchange="this.form.submit()" 
                             class="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg font-semibold text-sm border-0 focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                        @for($y = date('Y') - 2; $y <= date('Y') + 2; $y++)
-                            <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>
-                                {{ $y }}
+                        <?php for($y = date('Y') - 2; $y <= date('Y') + 2; $y++): ?>
+                            <option value="<?php echo e($y); ?>" <?php echo e($year == $y ? 'selected' : ''); ?>>
+                                <?php echo e($y); ?>
+
                             </option>
-                        @endfor
+                        <?php endfor; ?>
                     </select>
                     <!-- Hidden inputs to preserve other GET parameters -->
-                    @foreach(request()->except(['month', 'year']) as $key => $value)
-                        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-                    @endforeach
+                    <?php $__currentLoopData = request()->except(['month', 'year']); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <input type="hidden" name="<?php echo e($key); ?>" value="<?php echo e($value); ?>">
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </form>
                 
                 <!-- Arrow Navigation -->
-                <a href="?month={{ $nextMonth }}&year={{ $nextYear }}" class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors" title="Bulan Selanjutnya">
+                <a href="?month=<?php echo e($nextMonth); ?>&year=<?php echo e($nextYear); ?>" class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors" title="Bulan Selanjutnya">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                     </svg>
@@ -284,11 +286,11 @@
     
     <!-- Daftar Pembayaran per Siswa -->
     <div id="studentsList" class="space-y-4">
-        @php
+        <?php
             $studentIndex = 0;
-        @endphp
-        @foreach($paymentsByStudent as $studentId => $payments)
-            @php
+        ?>
+        <?php $__currentLoopData = $paymentsByStudent; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $payments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php
                 $index = ++$studentIndex;
                 $totalPaid = $payments->where('status', 'paid')->count() * $weeklyPaymentAmount;
                 
@@ -324,24 +326,24 @@
                 // Dynamic status based on eligible weeks (not total weeks in month)
                 $status = $totalArrears === 0 ? 'Lunas' : ($paidCount > 0 ? 'Tunggakan' : 'Belum Lunas');
                 $statusColor = $totalArrears === 0 ? 'green' : ($paidCount > 0 ? 'yellow' : 'red');
-            @endphp
+            ?>
             
-            <div class="student-card bg-white rounded-xl shadow-sm p-6 border border-gray-100" data-student-id="{{ $studentId }}" data-student-name="{{ strtolower($payments->first()->student->name) }}">
+            <div class="student-card bg-white rounded-xl shadow-sm p-6 border border-gray-100" data-student-id="<?php echo e($studentId); ?>" data-student-name="<?php echo e(strtolower($payments->first()->student->name)); ?>">
                 <div class="flex justify-between items-center mb-4">
                     <div class="flex items-center">
-                        <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full font-bold text-sm mr-3">{{ $index }}</span>
-                        <h3 class="text-lg font-semibold text-gray-800 student-name">{{ $payments->first()->student->name }}</h3>
+                        <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full font-bold text-sm mr-3"><?php echo e($index); ?></span>
+                        <h3 class="text-lg font-semibold text-gray-800 student-name"><?php echo e($payments->first()->student->name); ?></h3>
                     </div>
                     <div class="text-right">
-                        <div class="text-lg font-bold text-gray-800">Rp {{ number_format($totalBill, 0, ',', '.') }}</div>
+                        <div class="text-lg font-bold text-gray-800">Rp <?php echo e(number_format($totalBill, 0, ',', '.')); ?></div>
                         <div class="text-sm text-gray-500">Total Tagihan</div>
                     </div>
                 </div>
                 
                 <!-- Grid untuk minggu-minggu -->
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
-                    @for($week = 1; $week <= $weeksInMonth; $week++)
-                        @php
+                    <?php for($week = 1; $week <= $weeksInMonth; $week++): ?>
+                        <?php
                             $payment = $payments->where('week_number', $week)->first();
                             $isPaid = $payment && $payment->status === 'paid';
                             // Pastikan accessor paid_with_old_nominal dipanggil dengan benar
@@ -371,61 +373,64 @@
                             
                             // Highlight current week only if viewing current month AND it's Wednesday
                             $highlightClass = (isset($isCurrentMonth) && $isCurrentMonth && isset($isWednesday) && $isWednesday && $week == $currentWeek) ? 'ring-4 ring-yellow-400 bg-yellow-50' : '';
-                        @endphp
-                        <div class="text-center p-4 border-2 rounded-lg {{ $cardClass }} {{ $highlightClass }}" data-week="{{ $week }}">
-                            <div class="font-bold text-sm mb-1">Minggu {{ $week }}</div>
-                            @if($dateLabel)
-                                <div class="text-xs text-gray-600 mb-2">Rabu, {{ $dateLabel }}</div>
-                            @endif
-                            @php $pendingAdjustment = $payment->pendingAdjustment; @endphp
+                        ?>
+                        <div class="text-center p-4 border-2 rounded-lg <?php echo e($cardClass); ?> <?php echo e($highlightClass); ?>" data-week="<?php echo e($week); ?>">
+                            <div class="font-bold text-sm mb-1">Minggu <?php echo e($week); ?></div>
+                            <?php if($dateLabel): ?>
+                                <div class="text-xs text-gray-600 mb-2">Rabu, <?php echo e($dateLabel); ?></div>
+                            <?php endif; ?>
+                            <?php $pendingAdjustment = $payment->pendingAdjustment; ?>
                             <div class="font-bold mb-2">
-                                @if($isPaid)
-                                    <span class="{{ $textClass }}">✓ Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
-                                    @if(!$pendingAdjustment && $payment->amount != $weeklyPaymentAmount)
+                                <?php if($isPaid): ?>
+                                    <span class="<?php echo e($textClass); ?>">✓ Rp <?php echo e(number_format($payment->amount, 0, ',', '.')); ?></span>
+                                    <?php if(!$pendingAdjustment && $payment->amount != $weeklyPaymentAmount): ?>
                                         <div class="text-xs text-yellow-800 mt-2">
-                                            Nominal baru: Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}
+                                            Nominal baru: Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?>
+
                                         </div>
-                                    @endif
-                                @else
-                                    <span class="{{ $textClass }}">✗ Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}</span>
-                                @endif
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="<?php echo e($textClass); ?>">✗ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?></span>
+                                <?php endif; ?>
                             </div>
-                            @if($isPaid && $pendingAdjustment)
+                            <?php if($isPaid && $pendingAdjustment): ?>
                                 <div class="space-y-2 mb-2">
-                                    @if($pendingAdjustment->isShortage())
+                                    <?php if($pendingAdjustment->isShortage()): ?>
                                         <span class="inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 text-yellow-900 text-xs font-semibold">
-                                            Kurang {{ $pendingAdjustment->formatted_amount }}
+                                            Kurang <?php echo e($pendingAdjustment->formatted_amount); ?>
+
                                         </span>
 
                                         <form method="POST"
-                                              action="{{ route('bendahara.adjustment.shortage', $pendingAdjustment->id) }}">
-                                            @csrf
+                                              action="<?php echo e(route('bendahara.adjustment.shortage', $pendingAdjustment->id)); ?>">
+                                            <?php echo csrf_field(); ?>
 
                                             <button class="w-full px-2 py-1 bg-yellow-500 text-white rounded text-xs font-semibold hover:bg-yellow-600">
                                                 Lunasi
                                             </button>
                                         </form>
-                                    @endif
+                                    <?php endif; ?>
 
-                                    @if($pendingAdjustment->isOverpayment())
+                                    <?php if($pendingAdjustment->isOverpayment()): ?>
                                         <span class="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">
-                                            Lebih {{ $pendingAdjustment->formatted_amount }}
+                                            Lebih <?php echo e($pendingAdjustment->formatted_amount); ?>
+
                                         </span>
 
                                         <form method="POST"
-                                              action="{{ route('bendahara.adjustment.refund', $pendingAdjustment->id) }}">
-                                            @csrf
+                                              action="<?php echo e(route('bendahara.adjustment.refund', $pendingAdjustment->id)); ?>">
+                                            <?php echo csrf_field(); ?>
 
                                             <button class="w-full px-2 py-1 bg-blue-500 text-white rounded text-xs font-semibold hover:bg-blue-600">
                                                 Kembalikan
                                             </button>
                                         </form>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
-                            @endif
+                            <?php endif; ?>
 
-                            @if(!$isPaid)
-                                @php
+                            <?php if(!$isPaid): ?>
+                                <?php
                                     // Tentukan warna tombol berdasarkan kondisi
                                     if ($wednesdayPassed) {
                                         // Rabu sudah lewat = tunggakan (tombol merah)
@@ -434,44 +439,45 @@
                                         // Rabu belum lewat = belum waktunya (tombol hijau)
                                         $buttonClass = 'bg-green-500 hover:bg-green-600';
                                     }
-                                @endphp
-                                <button onclick="console.log('Button clicked!'); showPaymentModal('{{ $payment->id ?? 'new-'.$studentId.'-'.$week.'-'.$month.'-'.$year }}', '{{ $payments->first()->student->name }}', {{ $week }}, {{ $studentId }})" 
-                                        class="inline-flex items-center justify-center w-16 h-8 rounded {{ $buttonClass }} {{ $highlightClass }} transition-colors text-white text-xs font-bold"
-                                        title="Bayar Minggu {{ $week }} ({{ $wednesdayDates[$week-1]->format('d M') ?? 'Tgl tidak diketahui' }})">
+                                ?>
+                                <button onclick="console.log('Button clicked!'); showPaymentModal('<?php echo e($payment->id ?? 'new-'.$studentId.'-'.$week.'-'.$month.'-'.$year); ?>', '<?php echo e($payments->first()->student->name); ?>', <?php echo e($week); ?>, <?php echo e($studentId); ?>)" 
+                                        class="inline-flex items-center justify-center w-16 h-8 rounded <?php echo e($buttonClass); ?> <?php echo e($highlightClass); ?> transition-colors text-white text-xs font-bold"
+                                        title="Bayar Minggu <?php echo e($week); ?> (<?php echo e($wednesdayDates[$week-1]->format('d M') ?? 'Tgl tidak diketahui'); ?>)">
                                     Bayar
                                 </button>
-                            @endif
+                            <?php endif; ?>
                         </div>
-                    @endfor
+                    <?php endfor; ?>
                 </div>
                 
                 <!-- Total dan Status per siswa -->
                 <div class="flex justify-between items-center pt-4 border-t border-gray-200">
                     <div class="flex items-center space-x-4">
                         <span class="text-sm text-gray-600">
-                            Total: <span class="font-bold">Rp {{ number_format($totalBill, 0, ',', '.') }}</span>
+                            Total: <span class="font-bold">Rp <?php echo e(number_format($totalBill, 0, ',', '.')); ?></span>
                         </span>
                         <span class="text-sm text-gray-600">
-                            Lunas: <span class="font-bold text-green-700">{{ $paidCount }}/{{ $eligibleWeeks }}</span>
+                            Lunas: <span class="font-bold text-green-700"><?php echo e($paidCount); ?>/<?php echo e($eligibleWeeks); ?></span>
                         </span>
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full 
-                            @if($statusColor === 'green') bg-green-100 text-green-800
-                            @elseif($statusColor === 'yellow') bg-yellow-100 text-yellow-800
-                            @else bg-red-100 text-red-800 @endif">
-                            {{ $status }}
+                            <?php if($statusColor === 'green'): ?> bg-green-100 text-green-800
+                            <?php elseif($statusColor === 'yellow'): ?> bg-yellow-100 text-yellow-800
+                            <?php else: ?> bg-red-100 text-red-800 <?php endif; ?>">
+                            <?php echo e($status); ?>
+
                         </span>
-                        @if($totalArrears > 0)
-                            <button onclick="showArrearsModal({{ $studentId }}, '{{ $payments->first()->student->name }}', {{ $totalArrears }}, '{{ $payments->where('status', 'unpaid')->pluck('week_number')->implode(',') }}')" 
+                        <?php if($totalArrears > 0): ?>
+                            <button onclick="showArrearsModal(<?php echo e($studentId); ?>, '<?php echo e($payments->first()->student->name); ?>', <?php echo e($totalArrears); ?>, '<?php echo e($payments->where('status', 'unpaid')->pluck('week_number')->implode(',')); ?>')" 
                                     class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600 transition-colors">
                                 Lunasi Tunggakan
                             </button>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
-        @endforeach
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>
     
     <!-- Action Buttons -->
@@ -482,7 +488,7 @@
             </svg>
             Lihat Daftar Tunggakan
         </button>
-        <a href="{{ route('bendahara.dashboard') }}" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium shadow-sm">
+        <a href="<?php echo e(route('bendahara.dashboard')); ?>" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium shadow-sm">
             <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -502,13 +508,13 @@
         
         <div class="p-6">
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-center">
-                <div class="text-sm font-semibold text-blue-800">{{ $currentMonthName }}</div>
+                <div class="text-sm font-semibold text-blue-800"><?php echo e($currentMonthName); ?></div>
                 <div class="text-xs text-gray-600">Pembayaran kas setiap hari Rabu</div>
             </div>
             
             <!-- Total Tunggakan -->
             <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-center">
-                @php
+                <?php
                     // Hitung total tunggakan hanya untuk Rabu yang sudah lewat
                     $totalEligibleArrears = 0;
                     $now = Carbon::now();
@@ -528,20 +534,21 @@
                             }
                         }
                     }
-                @endphp
+                ?>
                 <div class="text-2xl font-bold text-red-700">
-                    Rp {{ number_format($totalEligibleArrears, 0, ',', '.') }}
+                    Rp <?php echo e(number_format($totalEligibleArrears, 0, ',', '.')); ?>
+
                 </div>
                 <div class="text-sm text-red-600">Total Tunggakan Bulan Ini</div>
             </div>
             
             <!-- Daftar Siswa Menunggak -->
             <div class="space-y-4">
-                @php
+                <?php
                     $arrearsIndex = 0;
-                @endphp
-                @foreach($paymentsByStudent as $studentId => $payments)
-                    @php
+                ?>
+                <?php $__currentLoopData = $paymentsByStudent; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $payments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php
                     // Hanya hitung tunggakan untuk hari Rabu yang sudah lewat
                     $eligibleUnpaidPayments = collect();
                     $now = Carbon::now();
@@ -567,16 +574,17 @@
                     $arrearsIndex++;
                     $totalArrears = $eligibleUnpaidPayments->sum('amount');
                     $unpaidWeeks = $eligibleUnpaidPayments->pluck('week_number');
-                    @endphp
+                    ?>
                     <div class="bg-red-50 border border-red-200 rounded-lg p-4">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center">
-                                <span class="inline-flex items-center justify-center w-6 h-6 bg-red-100 text-red-800 rounded-full font-bold text-xs mr-2">{{ $arrearsIndex }}</span>
-                                <h3 class="text-sm font-semibold text-gray-800">{{ $payments->first()->student->name }}</h3>
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-red-100 text-red-800 rounded-full font-bold text-xs mr-2"><?php echo e($arrearsIndex); ?></span>
+                                <h3 class="text-sm font-semibold text-gray-800"><?php echo e($payments->first()->student->name); ?></h3>
                                 <p class="text-xs text-gray-600 mt-1">
-                                    Menunggak {{ $eligibleUnpaidPayments->count() }} minggu:<br>
-                                    Minggu {{ implode(', ', $unpaidWeeks->toArray()) }}
-@php
+                                    Menunggak <?php echo e($eligibleUnpaidPayments->count()); ?> minggu:<br>
+                                    Minggu <?php echo e(implode(', ', $unpaidWeeks->toArray())); ?>
+
+<?php
                                     $now = Carbon::now();
                                     $startOfMonth = Carbon::create($now->year, $now->month)->startOfMonth();
                                     $firstWednesday = $startOfMonth->copy()->next(Carbon::WEDNESDAY);
@@ -584,22 +592,23 @@
                                         $uwWednesday = $firstWednesday->copy()->addWeeks($uw - 1);
                                         echo '(Rabu, ' . $uwWednesday->locale('id')->isoFormat('D MMM') . ') ';
                                     }
-                                    @endphp
+                                    ?>
                                 </p>
                             </div>
                             <div class="text-right">
                                 <div class="text-lg font-bold text-red-700">
-                                    Rp {{ number_format($totalArrears, 0, ',', '.') }}
+                                    Rp <?php echo e(number_format($totalArrears, 0, ',', '.')); ?>
+
                                 </div>
                                 <div class="text-xs text-gray-500 mb-2">Total Tunggakan</div>
                                 <button class="px-3 py-2 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
-                                        onclick="showArrearsModal({{ $studentId }}, '{{ $payments->first()->student->name }}', {{ $totalArrears }}, '{{ implode(',', $unpaidWeeks->toArray()) }}')">
+                                        onclick="showArrearsModal(<?php echo e($studentId); ?>, '<?php echo e($payments->first()->student->name); ?>', <?php echo e($totalArrears); ?>, '<?php echo e(implode(',', $unpaidWeeks->toArray())); ?>')">
                                     Lunasi Tunggakan
                                 </button>
                             </div>
                         </div>
                     </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         </div>
         
@@ -634,7 +643,8 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah:</label>
                 <div class="px-3 py-2 bg-green-100 rounded-lg text-sm font-bold text-green-700">
-                    Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}
+                    Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?>
+
                 </div>
             </div>
             
@@ -806,10 +816,10 @@ function processPaymentWithTransaction(paymentId) {
         .then(api => {
             const transactions = api.transactions ?? api;
             console.log('Transactions received:', transactions);
-            console.log('Payment amount from settings:', {{ $weeklyPaymentAmount }});
+            console.log('Payment amount from settings:', <?php echo e($weeklyPaymentAmount); ?>);
             
             // Cari transaksi income yang belum digunakan
-            const paymentAmount = {{ $weeklyPaymentAmount }};
+            const paymentAmount = <?php echo e($weeklyPaymentAmount); ?>;
             const availableTransaction = transactions.find(t => 
                 t.type === 'income' && 
                 Number(t.amount) === paymentAmount && 
@@ -1038,8 +1048,8 @@ document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
     const paymentId = document.getElementById('payment_id').value;
     const paymentDate = document.getElementById('payment_date').value;
     const description = document.getElementById('description').value;
-    const month = {{ $month }};
-    const year = {{ $year }};
+    const month = <?php echo e($month); ?>;
+    const year = <?php echo e($year); ?>;
     const weekNumber = document.getElementById('week_number').textContent;
     
     console.log('Form data:', {paymentId, paymentDate, description});
@@ -1395,7 +1405,7 @@ function updateStudentUI(studentId, weekNumber) {
             if (amountText) {
                 amountText.classList.remove('text-red-700');
                 amountText.classList.add('text-green-700');
-                amountText.innerHTML = '✓ Rp {{ number_format($weeklyPaymentAmount, 0, ',', '.') }}';
+                amountText.innerHTML = '✓ Rp <?php echo e(number_format($weeklyPaymentAmount, 0, ',', '.')); ?>';
             }
         }
         
@@ -1410,7 +1420,7 @@ function updateStudentUI(studentId, weekNumber) {
 </script>
 
 
-@endsection
+<?php $__env->stopSection(); ?>
 
 <!-- Dashboard CSS -->
 <style>
@@ -1516,3 +1526,4 @@ html {
         </main>
     </div>
 </div>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/weekly-payments.blade.php ENDPATH**/ ?>

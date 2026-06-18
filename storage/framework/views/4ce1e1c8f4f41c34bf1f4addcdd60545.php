@@ -1,17 +1,15 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="dashboard-layout">
-    @include('components.bendahara-sidebar')
+    <?php echo $__env->make('components.bendahara-sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-    @include('bendahara.detail')
+    <?php echo $__env->make('bendahara.detail', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="main-area">
         <main class="main-content">
             <section class="greeting-section">
                 <div class="greeting-card">
                     <h1 class="greeting-title">Manajemen Kas Digital</h1>
-                    <p class="greeting-subtitle">{{ \Carbon\Carbon::now()->locale('id')->format('F Y') }}</p>
+                    <p class="greeting-subtitle"><?php echo e(\Carbon\Carbon::now()->locale('id')->format('F Y')); ?></p>
                 </div>
             </section>
 
@@ -24,7 +22,7 @@
                             </div>
                             <div class="stat-title">Kas Masuk</div>
                         </div>
-                        <div class="stat-value text-green-600" id="total-income">Rp {{ number_format($totalIncome, 0, ',', '.') }}</div>
+                        <div class="stat-value text-green-600" id="total-income">Rp <?php echo e(number_format($totalIncome, 0, ',', '.')); ?></div>
                         <div class="stat-description">Total pemasukan</div>
                     </div>
                     <div class="stat-card">
@@ -34,7 +32,7 @@
                             </div>
                             <div class="stat-title">Kas Keluar</div>
                         </div>
-                        <div class="stat-value text-red-600" id="total-expense">Rp {{ number_format($totalExpense, 0, ',', '.') }}</div>
+                        <div class="stat-value text-red-600" id="total-expense">Rp <?php echo e(number_format($totalExpense, 0, ',', '.')); ?></div>
                         <div class="stat-description">Total pengeluaran</div>
                     </div>
                     <div class="stat-card">
@@ -44,7 +42,7 @@
                             </div>
                             <div class="stat-title">Saldo Akhir</div>
                         </div>
-                        <div class="stat-value text-blue-600" id="balance">Rp {{ number_format($balance, 0, ',', '.') }}</div>
+                        <div class="stat-value text-blue-600" id="balance">Rp <?php echo e(number_format($balance, 0, ',', '.')); ?></div>
                         <div class="stat-description">Saldo kas tersedia</div>
                     </div>
                 </div>
@@ -53,7 +51,7 @@
             <section class="mb-8">
                 <div class="flex flex-wrap gap-4 items-center justify-between">
                     <div class="flex gap-4">
-                        <a href="{{ route('bendahara.dashboard') }}" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center">
+                        <a href="<?php echo e(route('bendahara.dashboard')); ?>" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m14 14l-7-7m-7 7l7-7m-7 7l7-7m7 7l7-7m-7 7l7-7m-7 7l7-7m-7 7l7-7"></path></svg>
                             Dashboard
                         </a>
@@ -166,9 +164,9 @@
                     <select id="student_id" name="student_id" 
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">-- Pilih Siswa --</option>
-                        @foreach($students as $student)
-                            <option value="{{ $student->id }}">{{ $student->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($student->id); ?>"><?php echo e($student->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 
@@ -183,7 +181,7 @@
                     <label for="date" class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label>
                     <input type="date" id="date" name="date" required
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           value="{{ now()->format('Y-m-d') }}">
+                           value="<?php echo e(now()->format('Y-m-d')); ?>">
                 </div>
                 
                 <!-- Bukti Transaksi (Hanya untuk uang keluar) -->
@@ -299,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadTransactions() {
     showLoading();
     try {
-        const res = await fetch(`{{ route('bendahara.api.transactions') }}?t=${Date.now()}`);
+        const res = await fetch(`<?php echo e(route('bendahara.api.transactions')); ?>?t=${Date.now()}`);
         const data = await res.json();
         console.log('API Response:', data);
         console.log('Summary data:', data.summary);
@@ -939,7 +937,7 @@ document.addEventListener('keydown', function(e) {
 });
 </script>
 
-{{-- Dashboard CSS --}}
+
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 .dashboard-layout { display: flex; height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); font-family: 'Inter', sans-serif; }
@@ -1049,4 +1047,6 @@ document.addEventListener('keydown', function(e) {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .stat-card, .greeting-card { animation: fadeIn 0.6s ease-out; }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/bendahara/simple-cash.blade.php ENDPATH**/ ?>
