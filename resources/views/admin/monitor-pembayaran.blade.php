@@ -96,13 +96,23 @@
                                 <th>No</th>
                                 <th>Siswa</th>
                                 @foreach($wednesdayDates as $index => $date)
-                                    <th>{{ $date->format('d M') }}<br><small style="font-weight: normal; text-transform: none;">Rabu</small><br><small style="font-weight: normal; text-transform: none; color: #3b82f6;">Minggu {{ $index + 1 }}</small></th>
+                                    <th>
+                                        {{ $date->format('d M') }}<br>
+                                        <small style="font-weight: normal; text-transform: none;">Rabu</small><br>
+                                        <small style="font-weight: normal; text-transform: none; color: #3b82f6;">Minggu {{ $index + 1 }}</small>
+                                    </th>
                                 @endforeach
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($weeklyPayments->groupBy('student_id') as $studentId => $studentPayments)
+@php
+    // Precompute adjustments for O(1) lookup in the table (read-only)
+    $adjustmentByStudentWeek = $adjustmentByStudentWeek ?? [];
+@endphp
+
+@foreach($weeklyPayments->groupBy('student_id') as $studentId => $studentPayments)
+
                             @php
                                 $student = $studentPayments->first()->student;
                                 $totalWeeks = count($wednesdayDates);
@@ -111,25 +121,56 @@
                             <tr data-name="{{ strtolower($student->name) }}">
                                 <td>{{ $index + 1 }}</td>
                                 <td class="font-semibold">{{ $student->name }}</td>
-                                @foreach($wednesdayDates as $index => $date)
-                                    @php
-                                        $weekNumber = $index + 1;
-                                        $payment = $studentPayments->where('week_number', $weekNumber)->first();
-                                        $status = $payment ? $payment->status : 'unpaid';
-                                        $amount = $payment ? $payment->amount : $currentKasNominal;
-                                    @endphp
+
+
+                                    @foreach($wednesdayDates as $weekIndex => $date)
+                                        @php
+                                            $weekNumber = $weekIndex + 1;
+                                            $payment = $studentPayments->where('week_number', $weekNumber)->first();
+                                            $status = $payment ? $payment->status : 'unpaid';
+                                            $amount = $payment ? $payment->amount : $currentKasNominal;
+
+                                            // Read-only kas adjustment badge
+                                            $adj = null;
+                                            if (!empty($adjustmentByStudentWeek) && $payment) {
+                                                $key = $payment->student_id . ':' . $payment->week_number;
+                                                $adj = $adjustmentByStudentWeek[$key] ?? null;
+                                            }
+                                        @endphp
+
+                                        <td>
+                                            <div class="cell-wrap">
+                                                <span class="status-badge {{ $status == 'paid' ? 'success' : 'warning' }}">
+                                                    {{ $status == 'paid' ? '✓' : '○' }} Rp {{ number_format($amount, 0, ',', '.') }}
+                                                </span>
+
+                                                @if($adj)
+                                                    @php
+                                                        $adjType = $adj->adjustment_type_label ?? ($adj->adjustment_type === 'shortage' ? 'Kurang Bayar' : ($adj->adjustment_type === 'overpayment' ? 'Kelebihan Bayar' : 'Tidak Diketahui'));
+                                                        $adjStatus = $adj->status_label ?? $adj->status;
+                                                        $adjAmountAbs = isset($adj->adjustment_amount) ? abs((float)$adj->adjustment_amount) : null;
+                                                        $adjAmountStr = $adjAmountAbs !== null ? ('Rp ' . number_format($adjAmountAbs, 0, ',', '.')) : '-';
+                                                        $handling = $adj->handling_method_label ?? ($adj->handling_method ?? '');
+                                                        $tooltip = "{$adjType} | {$adjStatus}\nSelisih: {$adjAmountStr}\nMetode: {$handling}";
+                                                    @endphp
+
+                                                    <span
+                                                        class="adj-badge {{ $adj->adjustment_type === 'shortage' ? 'adj-shortage' : 'adj-overpayment' }}"
+                                                        title="{{ $tooltip }}"
+                                                    >
+                                                        {{ $adj->adjustment_type === 'shortage' ? 'SHORT' : 'OVER' }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    @endforeach
+
                                     <td>
-                                        <span class="status-badge {{ $status == 'paid' ? 'success' : 'warning' }}">
-                                            {{ $status == 'paid' ? '✓' : '○' }} Rp {{ number_format($amount, 0, ',', '.') }}
+                                        <span class="status-badge {{ $studentPayments->where('status', 'paid')->count() == $totalWeeks ? 'success' : 'warning' }}">
+                                            {{ $studentPayments->where('status', 'paid')->count() }}/{{ $totalWeeks }} Lunas
                                         </span>
                                     </td>
-                                @endforeach
-                                <td>
-                                    <span class="status-badge {{ $studentPayments->where('status', 'paid')->count() == $totalWeeks ? 'success' : 'warning' }}">
-                                        {{ $studentPayments->where('status', 'paid')->count() }}/{{ $totalWeeks }} Lunas
-                                    </span>
-                                </td>
-                            </tr>
+                                </tr>
                             @endforeach
                         </tbody>
                     </table>
@@ -566,6 +607,9 @@
     border-radius: 20px; 
     font-size: 12px; 
     font-weight: 600; 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .status-badge.success { 
@@ -576,6 +620,34 @@
 .status-badge.warning { 
     background: #fef3c7; 
     color: #92400e; 
+}
+
+/* Adjustment badge (read-only) */
+.cell-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    align-items:center;
+}
+
+.adj-badge{
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+
+.adj-shortage{
+    background:#fef3c7;
+    color:#92400e;
+    border:1px solid rgba(146,64,14,.25);
+}
+
+.adj-overpayment{
+    background:#e0e7ff;
+    color:#3730a3;
+    border:1px solid rgba(55,48,163,.25);
 }
 
 /* Responsive */
@@ -623,7 +695,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Search functionality for payments table
     const searchPaymentInput = document.getElementById('searchPayment');
     const paymentsRows = document.querySelectorAll('#paymentsTable tbody tr');
-    
+
     if (searchPaymentInput) {
         searchPaymentInput.addEventListener('input', function() {
             const query = this.value.toLowerCase();
@@ -640,3 +712,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endsection
+

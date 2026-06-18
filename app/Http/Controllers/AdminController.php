@@ -203,14 +203,33 @@ class AdminController extends Controller
             ->orderBy('week_number')
             ->select('weekly_payments.*')
             ->get();
-        
+
         // Format nama bulan untuk tampilan
         $monthName = $currentDate->format('F Y');
-        
+
         // Ambil tanggal Rabu dalam bulan
         $wednesdayDates = WeeklyPayment::getWednesdayDatesInMonth($month, $year);
         $currentKasNominal = KasSetting::getNominal((int) $month, (int) $year) ?? 0;
-        
+
+        // Build read-only adjustment map untuk tampilan badge
+        // Key: "student_id:week_number"
+        $adjustmentByStudentWeek = collect();
+        if ($weeklyPayments->isNotEmpty()) {
+            $weeklyPaymentIds = $weeklyPayments->pluck('id')->all();
+
+            $adjustments = \App\Models\PaymentAdjustment::with(['weeklyPayment'])
+                ->whereIn('weekly_payment_id', $weeklyPaymentIds)
+                ->get();
+
+            $adjustmentByStudentWeek = $adjustments->mapWithKeys(function ($adj) {
+                $wp = $adj->weeklyPayment;
+                if (!$wp) {
+                    return [];
+                }
+                return [($wp->student_id . ':' . $wp->week_number) => $adj];
+            });
+        }
+
         return view('admin.monitor-pembayaran', compact(
             'weeklyPayments',
             'month',
@@ -219,7 +238,8 @@ class AdminController extends Controller
             'prevDate',
             'nextDate',
             'wednesdayDates',
-            'currentKasNominal'
+            'currentKasNominal',
+            'adjustmentByStudentWeek'
         ));
     }
     

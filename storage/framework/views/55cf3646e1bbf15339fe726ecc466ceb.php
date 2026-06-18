@@ -94,13 +94,23 @@
                                 <th>No</th>
                                 <th>Siswa</th>
                                 <?php $__currentLoopData = $wednesdayDates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $date): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <th><?php echo e($date->format('d M')); ?><br><small style="font-weight: normal; text-transform: none;">Rabu</small><br><small style="font-weight: normal; text-transform: none; color: #3b82f6;">Minggu <?php echo e($index + 1); ?></small></th>
+                                    <th>
+                                        <?php echo e($date->format('d M')); ?><br>
+                                        <small style="font-weight: normal; text-transform: none;">Rabu</small><br>
+                                        <small style="font-weight: normal; text-transform: none; color: #3b82f6;">Minggu <?php echo e($index + 1); ?></small>
+                                    </th>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php $__currentLoopData = $weeklyPayments->groupBy('student_id'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $studentPayments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+<?php
+    // Precompute adjustments for O(1) lookup in the table (read-only)
+    $adjustmentByStudentWeek = $adjustmentByStudentWeek ?? [];
+?>
+
+<?php $__currentLoopData = $weeklyPayments->groupBy('student_id'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $studentId => $studentPayments): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+
                             <?php
                                 $student = $studentPayments->first()->student;
                                 $totalWeeks = count($wednesdayDates);
@@ -109,26 +119,58 @@
                             <tr data-name="<?php echo e(strtolower($student->name)); ?>">
                                 <td><?php echo e($index + 1); ?></td>
                                 <td class="font-semibold"><?php echo e($student->name); ?></td>
-                                <?php $__currentLoopData = $wednesdayDates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $date): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <?php
-                                        $weekNumber = $index + 1;
-                                        $payment = $studentPayments->where('week_number', $weekNumber)->first();
-                                        $status = $payment ? $payment->status : 'unpaid';
-                                        $amount = $payment ? $payment->amount : $currentKasNominal;
-                                    ?>
-                                    <td>
-                                        <span class="status-badge <?php echo e($status == 'paid' ? 'success' : 'warning'); ?>">
-                                            <?php echo e($status == 'paid' ? '✓' : '○'); ?> Rp <?php echo e(number_format($amount, 0, ',', '.')); ?>
 
+
+                                    <?php $__currentLoopData = $wednesdayDates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $weekIndex => $date): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
+                                            $weekNumber = $weekIndex + 1;
+                                            $payment = $studentPayments->where('week_number', $weekNumber)->first();
+                                            $status = $payment ? $payment->status : 'unpaid';
+                                            $amount = $payment ? $payment->amount : $currentKasNominal;
+
+                                            // Read-only kas adjustment badge
+                                            $adj = null;
+                                            if (!empty($adjustmentByStudentWeek) && $payment) {
+                                                $key = $payment->student_id . ':' . $payment->week_number;
+                                                $adj = $adjustmentByStudentWeek[$key] ?? null;
+                                            }
+                                        ?>
+
+                                        <td>
+                                            <div class="cell-wrap">
+                                                <span class="status-badge <?php echo e($status == 'paid' ? 'success' : 'warning'); ?>">
+                                                    <?php echo e($status == 'paid' ? '✓' : '○'); ?> Rp <?php echo e(number_format($amount, 0, ',', '.')); ?>
+
+                                                </span>
+
+                                                <?php if($adj): ?>
+                                                    <?php
+                                                        $adjType = $adj->adjustment_type_label ?? ($adj->adjustment_type === 'shortage' ? 'Kurang Bayar' : ($adj->adjustment_type === 'overpayment' ? 'Kelebihan Bayar' : 'Tidak Diketahui'));
+                                                        $adjStatus = $adj->status_label ?? $adj->status;
+                                                        $adjAmountAbs = isset($adj->adjustment_amount) ? abs((float)$adj->adjustment_amount) : null;
+                                                        $adjAmountStr = $adjAmountAbs !== null ? ('Rp ' . number_format($adjAmountAbs, 0, ',', '.')) : '-';
+                                                        $handling = $adj->handling_method_label ?? ($adj->handling_method ?? '');
+                                                        $tooltip = "{$adjType} | {$adjStatus}\nSelisih: {$adjAmountStr}\nMetode: {$handling}";
+                                                    ?>
+
+                                                    <span
+                                                        class="adj-badge <?php echo e($adj->adjustment_type === 'shortage' ? 'adj-shortage' : 'adj-overpayment'); ?>"
+                                                        title="<?php echo e($tooltip); ?>"
+                                                    >
+                                                        <?php echo e($adj->adjustment_type === 'shortage' ? 'SHORT' : 'OVER'); ?>
+
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
+                                    <td>
+                                        <span class="status-badge <?php echo e($studentPayments->where('status', 'paid')->count() == $totalWeeks ? 'success' : 'warning'); ?>">
+                                            <?php echo e($studentPayments->where('status', 'paid')->count()); ?>/<?php echo e($totalWeeks); ?> Lunas
                                         </span>
                                     </td>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                <td>
-                                    <span class="status-badge <?php echo e($studentPayments->where('status', 'paid')->count() == $totalWeeks ? 'success' : 'warning'); ?>">
-                                        <?php echo e($studentPayments->where('status', 'paid')->count()); ?>/<?php echo e($totalWeeks); ?> Lunas
-                                    </span>
-                                </td>
-                            </tr>
+                                </tr>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
                     </table>
@@ -565,6 +607,9 @@
     border-radius: 20px; 
     font-size: 12px; 
     font-weight: 600; 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .status-badge.success { 
@@ -575,6 +620,34 @@
 .status-badge.warning { 
     background: #fef3c7; 
     color: #92400e; 
+}
+
+/* Adjustment badge (read-only) */
+.cell-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    align-items:center;
+}
+
+.adj-badge{
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+
+.adj-shortage{
+    background:#fef3c7;
+    color:#92400e;
+    border:1px solid rgba(146,64,14,.25);
+}
+
+.adj-overpayment{
+    background:#e0e7ff;
+    color:#3730a3;
+    border:1px solid rgba(55,48,163,.25);
 }
 
 /* Responsive */
@@ -622,7 +695,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Search functionality for payments table
     const searchPaymentInput = document.getElementById('searchPayment');
     const paymentsRows = document.querySelectorAll('#paymentsTable tbody tr');
-    
+
     if (searchPaymentInput) {
         searchPaymentInput.addEventListener('input', function() {
             const query = this.value.toLowerCase();
@@ -639,5 +712,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <?php $__env->stopSection(); ?>
+
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\projectsc - Copy\resources\views/admin/monitor-pembayaran.blade.php ENDPATH**/ ?>
