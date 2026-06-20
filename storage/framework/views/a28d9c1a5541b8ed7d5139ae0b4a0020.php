@@ -112,7 +112,7 @@
                     <td class="text-center"><?php echo e($row['monthName']); ?></td>
                     <td class="text-right">Rp <?php echo e(number_format($row['income'],0,',','.')); ?></td>
                     <td class="text-right">Rp <?php echo e(number_format($row['expense'],0,',','.')); ?></td>
-                    <td class="text-right">Rp <?php echo e(number_format($row['balance'],0,',','.')); ?></td>
+                    <td class="text-right">Rp <?php echo e(number_format($row['cum_balance'],0,',','.')); ?></td>
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 

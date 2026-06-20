@@ -112,7 +112,7 @@
                     <td class="text-center">{{ $row['monthName'] }}</td>
                     <td class="text-right">Rp {{ number_format($row['income'],0,',','.') }}</td>
                     <td class="text-right">Rp {{ number_format($row['expense'],0,',','.') }}</td>
-                    <td class="text-right">Rp {{ number_format($row['balance'],0,',','.') }}</td>
+                    <td class="text-right">Rp {{ number_format($row['cum_balance'],0,',','.') }}</td>
                 </tr>
             @endforeach
 
