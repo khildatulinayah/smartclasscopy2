@@ -105,6 +105,17 @@
                 <th width="30%">Uang Keluar</th>
                 <th width="20%">Saldo Bulan</th>
             </tr>
+            <tr>
+                <th colspan="4" style="border-top: none; padding-top: 6px; font-weight: bold; text-align: left;">
+                    Keterangan Uang Masuk (Sumber Kas)
+                </th>
+            </tr>
+            <tr>
+                <th width="20%">Bulan</th>
+                <th width="40%">Keterangan</th>
+                <th width="20%">Jumlah</th>
+                <th width="20%">Satuan</th>
+            </tr>
         </thead>
         <tbody>
             @foreach($monthly as $row)
@@ -112,8 +123,26 @@
                     <td class="text-center">{{ $row['monthName'] }}</td>
                     <td class="text-right">Rp {{ number_format($row['income'],0,',','.') }}</td>
                     <td class="text-right">Rp {{ number_format($row['expense'],0,',','.') }}</td>
-                    <td class="text-right">Rp {{ number_format($row['cum_balance'],0,',','.') }}</td>
+                    <td class="text-right">Rp {{ number_format($row['cum_balance'] ?? 0,0,',','.') }}</td>
                 </tr>
+
+                @if(!empty($row['income_details']) && is_array($row['income_details']))
+                    @foreach($row['income_details'] as $detail)
+                        <tr>
+                            <td class="text-center">&nbsp;</td>
+                            <td>
+                                {{ $detail['label'] }}
+                            </td>
+                            <td class="text-right">Rp {{ number_format($detail['amount'],0,',','.') }}</td>
+                            <td class="text-center">{{ $detail['unit'] ?? 'Total' }}</td>
+                        </tr>
+                    @endforeach
+                @elseif(isset($row['income']) && empty($row['income_details']))
+                    <tr>
+                        <td class="text-center">&nbsp;</td>
+                        <td colspan="3">(Keterangan uang masuk belum tersedia)</td>
+                    </tr>
+                @endif
             @endforeach
 
             <tr class="total-row">

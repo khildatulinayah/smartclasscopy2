@@ -105,6 +105,17 @@
                 <th width="30%">Uang Keluar</th>
                 <th width="20%">Saldo Bulan</th>
             </tr>
+            <tr>
+                <th colspan="4" style="border-top: none; padding-top: 6px; font-weight: bold; text-align: left;">
+                    Keterangan Uang Masuk (Sumber Kas)
+                </th>
+            </tr>
+            <tr>
+                <th width="20%">Bulan</th>
+                <th width="40%">Keterangan</th>
+                <th width="20%">Jumlah</th>
+                <th width="20%">Satuan</th>
+            </tr>
         </thead>
         <tbody>
             <?php $__currentLoopData = $monthly; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -112,8 +123,27 @@
                     <td class="text-center"><?php echo e($row['monthName']); ?></td>
                     <td class="text-right">Rp <?php echo e(number_format($row['income'],0,',','.')); ?></td>
                     <td class="text-right">Rp <?php echo e(number_format($row['expense'],0,',','.')); ?></td>
-                    <td class="text-right">Rp <?php echo e(number_format($row['cum_balance'],0,',','.')); ?></td>
+                    <td class="text-right">Rp <?php echo e(number_format($row['cum_balance'] ?? 0,0,',','.')); ?></td>
                 </tr>
+
+                <?php if(!empty($row['income_details']) && is_array($row['income_details'])): ?>
+                    <?php $__currentLoopData = $row['income_details']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $detail): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <tr>
+                            <td class="text-center">&nbsp;</td>
+                            <td>
+                                <?php echo e($detail['label']); ?>
+
+                            </td>
+                            <td class="text-right">Rp <?php echo e(number_format($detail['amount'],0,',','.')); ?></td>
+                            <td class="text-center"><?php echo e($detail['unit'] ?? 'Total'); ?></td>
+                        </tr>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                <?php elseif(isset($row['income']) && empty($row['income_details'])): ?>
+                    <tr>
+                        <td class="text-center">&nbsp;</td>
+                        <td colspan="3">(Keterangan uang masuk belum tersedia)</td>
+                    </tr>
+                <?php endif; ?>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
             <tr class="total-row">
