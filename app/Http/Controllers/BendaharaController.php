@@ -698,14 +698,18 @@ class BendaharaController extends Controller
         
         $payment = WeeklyPayment::find($request->payment_id);
         $transaction = Transaction::find($request->transaction_id);
-        
+
         $payment->update([
             'status' => 'paid',
             'payment_date' => $transaction->date,
             'transaction_id' => $transaction->id,
-            'amount' => $transaction->amount,
+                'amount' => $transaction->amount,
         ]);
-        
+
+        // Pastikan kolom transactions.weekly_payment_id ikut terhubung
+        $transaction->weekly_payment_id = $payment->id;
+        $transaction->save();
+
         return response()->json([
             'success' => true,
             'message' => 'Pembayaran berhasil dicatat'
@@ -737,17 +741,31 @@ class BendaharaController extends Controller
                                         ->get();
             
             foreach ($unpaidPayments as $payment) {
+                // Untuk menjaga konsistensi 1-to-1 dengan transactions.weekly_payment_id,
+                // buat transaksi per weekly payment (bukan 1 transaksi untuk banyak weekly payment).
+                $paymentTransaction = Transaction::create([
+                    'student_id' => $payment->student_id,
+                    'type' => 'income',
+                    'amount' => $payment->amount,
+                    'description' => 'Pelunasan tunggakan mingguan',
+                    'date' => $transaction->date,
+                    'created_by' => auth()->id(),
+                ]);
+
                 $payment->update([
                     'status' => 'paid',
-                    'transaction_id' => $transaction->id,
-                    'payment_date' => $transaction->date,
+                    'transaction_id' => $paymentTransaction->id,
+                    'payment_date' => $paymentTransaction->date,
+                ]);
+
+                // Link transactions.weekly_payment_id
+                $paymentTransaction->update([
+                    'weekly_payment_id' => $payment->id,
                 ]);
 
                 // Sync adjustment shortage yang pending menjadi processed saat lunasi
                 $adjustment = $payment->adjustment()->where('status', 'pending')->first();
                 if ($adjustment && $adjustment->isShortage()) {
-                    // processShortageAsUnpaid saat ini tidak membuat transaction baru,
-                    // hanya memindahkan adjustment dari pending -> processed (immutability terjaga)
                     $paymentAdjustmentService->processShortageAsUnpaid(
                         adjustment: $adjustment,
                         processedBy: auth()->user(),
@@ -990,28 +1008,68 @@ class BendaharaController extends Controller
     public function cetakKeuangan($month, $year = null)
     {
         $year = $year ?? now()->year;
-        
+
         $monthName = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ][$month] ?? 'Tahun Ini';
-        
+
+        // Transaksi untuk bagian pengeluaran (dan ringkasan saldo)
         $transactions = Transaction::whereMonth('date', $month)
             ->whereYear('date', $year)
             ->with(['student', 'creator'])
             ->orderBy('date', 'desc')
             ->get();
-        
-        $income = $transactions->where('type', 'income')->sum('amount');
-        $expense = $transactions->where('type', 'expense')->sum('amount');
+
+        $income = (float) $transactions->where('type', 'income')->sum('amount');
+        $expense = (float) $transactions->where('type', 'expense')->sum('amount');
         $balance = $income - $expense;
-        
+
+        // Data pemasukan dari kas siswa per minggu: ambil dari weekly_payments
+        // (akurat per minggu sesuai week_number di database).
+        $weeklyPaymentsIncome = WeeklyPayment::query()
+            ->where('month', $month)
+            ->where('year', $year)
+            ->where('status', 'paid')
+            ->get()
+            ->groupBy('week_number');
+
+        $incomeRows = collect(range(1, 6))
+            ->map(function ($w) use ($weeklyPaymentsIncome) {
+                $rows = $weeklyPaymentsIncome->get($w, collect());
+
+                if ($rows->isEmpty()) {
+                    return null;
+                }
+
+                $totalAmount = (float) $rows->sum('amount');
+                $studentCount = (int) $rows->pluck('student_id')->unique()->count();
+
+                // Tanggal label: ambil payment_date terkecil/terawal untuk minggu itu.
+                $firstDate = $rows->sortBy('payment_date')->first()?->payment_date;
+                $label = $firstDate
+                    ? Carbon::parse($firstDate)->locale('id')->translatedFormat('d F Y')
+                    : ('Minggu ke-' . $w);
+
+                return [
+                    'label' => $label,
+                    'week' => $w,
+                    'amount' => $totalAmount,
+                    'student_count' => $studentCount,
+                    'per_student_amount' => $studentCount > 0 ? ($totalAmount / $studentCount) : 0,
+                ];
+            })
+            ->filter(fn ($r) => $r && ($r['amount'] ?? 0) != 0)
+            ->values();
+
         return view('bendahara.laporan-keuangan-cetak', compact(
-            'transactions', 'income', 'expense', 'balance', 
-            'month', 'year', 'monthName'
+            'transactions', 'income', 'expense', 'balance',
+            'month', 'year', 'monthName',
+            'incomeRows'
         ));
     }
+
 
     /**
      * Cetak Pembayaran Siswa - Cetak laporan pembayaran

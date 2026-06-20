@@ -35,14 +35,63 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-3 mb-4">
-                <button type="button" onclick="openIncomeDetailSource('weekly')" class="px-4 py-2 rounded-lg font-semibold text-sm bg-indigo-600 hover:bg-indigo-700 text-white transition">
-                    Kas Masuk (Weekly)
-                </button>
-                <button type="button" onclick="openIncomeDetailSource('non_weekly')" class="px-4 py-2 rounded-lg font-semibold text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 transition">
-                    Kas Masuk (Di Luar Weekly)
-                </button>
+            {{-- Filter Month/Year + Jenis Sumber Kas Masuk --}}
+            <div class="flex flex-wrap gap-3 mb-4 items-center">
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Tipe Kas</label>
+                    <select id="incomeDetailType" class="w-full pl-4 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-base bg-white">
+                        <option value="all">Semua</option>
+                        <option value="weekly">Weekly Payments</option>
+                        <option value="non_weekly">Di Luar Weekly</option>
+                        <option value="adjustment">Adjustment (Adj.)</option>
+                    </select>
+                </div>
+
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Bulan</label>
+                    <select id="incomeDetailMonth" class="w-full pl-4 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-base bg-white">
+                        <option value="all">Semua</option>
+                        <option value="1">Januari</option>
+                        <option value="2">Februari</option>
+                        <option value="3">Maret</option>
+                        <option value="4">April</option>
+                        <option value="5">Mei</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">Agustus</option>
+                        <option value="9">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Desember</option>
+                    </select>
+                </div>
+
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Tahun</label>
+                    <select id="incomeDetailYear" class="w-full pl-4 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-base bg-white">
+                        <option value="all">Semua</option>
+                        <option value="2020">2020</option>
+                        <option value="2021">2021</option>
+                        <option value="2022">2022</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
+                        <option value="2030">2030</option>
+                    </select>
+                </div>
+
+                <div class="flex items-end">
+                    <button type="button" id="incomeDetailResetFilters" class="px-4 py-3 rounded-xl font-semibold text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 transition w-full min-w-[140px]">
+                        Reset
+                    </button>
+                </div>
             </div>
+
+
 
             <div id="incomeDetailContainer" class="divide-y divide-gray-100">
                 <!-- dynamic -->
@@ -93,16 +142,15 @@ window.openIncomeDetail = () => {
 
     // Split by weekly payment usage.
     // Berdasarkan backend: controller membuat `used_in_weekly_payment`.
-    window.__incomeDetailTransactions = incomeTransactions.filter(t => {
-        const used = !!t.used_in_weekly_payment;
-        return window.__incomeDetailSource === 'weekly' ? used : !used;
-    });
+    window.__incomeDetailTransactions = incomeTransactions;
+
+    // Render awal pakai applyFilters (berdasarkan dropdown bulan/tahun/tipe kas)
 
     const filtered = window.__incomeDetailTransactions;
     document.getElementById('incomeDetailCount').textContent = filtered.length;
-
     container.innerHTML = filtered.map(t => createIncomeDetailCard(t)).join('');
     empty.classList.toggle('hidden', filtered.length !== 0);
+
 
     document.getElementById('incomeDetailLoading').classList.add('hidden');
 
@@ -110,13 +158,15 @@ window.openIncomeDetail = () => {
     modal.classList.add('flex');
 };
 
-window.openIncomeDetailSource = (source) => {
+    window.openIncomeDetailSource = (source) => {
     window.__incomeDetailSource = source;
     window.openIncomeDetail();
 };
 
-// Backward compatibility for old function name (if any onclick still uses it)
+// Backward compatibility: dulu pakai button weekly/non_weekly.
+// Sekarang UI diganti dropdown filter.
 window.openIncomeDetailSource = window.openIncomeDetailSource;
+
 
 window.closeIncomeDetail = () => {
     const modal = document.getElementById('incomeDetailModal');
@@ -179,27 +229,101 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('incomeDetailSearch');
     if (!searchInput) return;
 
-    searchInput.addEventListener('input', (e) => {
-        window.__incomeDetailSearchTerm = e.target.value.toLowerCase();
+    function getSelectedMonthYear() {
+        const monthEl = document.getElementById('incomeDetailMonth');
+        const yearEl = document.getElementById('incomeDetailYear');
+        const monthVal = monthEl?.value ?? 'all';
+        const yearVal = yearEl?.value ?? 'all';
+        return { month: monthVal, year: yearVal };
+    }
 
+    function applyFilters() {
         const container = document.getElementById('incomeDetailContainer');
         const empty = document.getElementById('incomeDetailEmpty');
         const list = window.__incomeDetailTransactions || [];
 
-        const term = window.__incomeDetailSearchTerm;
+        const term = (window.__incomeDetailSearchTerm || '').toLowerCase();
+        const { month, year } = getSelectedMonthYear();
+        const typeEl = document.getElementById('incomeDetailType');
+        const selectedType = typeEl?.value ?? 'all';
+
+        function isAdjustment(t) {
+            const desc = (t.description || '').toString().toLowerCase();
+            return desc.includes('adjustment') || desc.includes('adj.') || desc.includes('pelunasan') || desc.includes('tunggakan') || desc.includes('kekurangan') || desc.includes('pengembalian') || desc.includes('refund');
+        }
+
+        function isWeeklyPayment(t) {
+            return !!t.used_in_weekly_payment;
+        }
+
+        function matchesType(t) {
+            if (selectedType === 'all') return true;
+            if (selectedType === 'weekly') return isWeeklyPayment(t);
+            if (selectedType === 'non_weekly') return !isWeeklyPayment(t);
+            if (selectedType === 'adjustment') return isAdjustment(t);
+            return true;
+        }
+
         const filtered = list.filter(t => {
             const desc = (t.description || '').toLowerCase();
             const student = (t.student?.name || '').toLowerCase();
-            const date = (t.date || '').toLowerCase();
-            return !term || desc.includes(term) || student.includes(term) || date.includes(term);
+            const dateStr = (t.date || '').toLowerCase();
+
+            const matchesSearch = !term || desc.includes(term) || student.includes(term) || dateStr.includes(term);
+
+            let matchesMonth = true;
+            let matchesYear = true;
+
+            if (t.date) {
+                const d = new Date(t.date);
+                if (month !== 'all') matchesMonth = (d.getMonth() + 1).toString() === month;
+                if (year !== 'all') matchesYear = d.getFullYear().toString() === year;
+            } else {
+                if (month !== 'all') matchesMonth = false;
+                if (year !== 'all') matchesYear = false;
+            }
+
+            return matchesSearch && matchesMonth && matchesYear && matchesType(t);
         });
 
+        // DEBUG biar gampang lihat kenapa kosong
+        // console.log('[IncomeDetail][applyFilters]', { term, month, year, selectedType, total: list.length, filtered: filtered.length });
+
+
         document.getElementById('incomeDetailCount').textContent = filtered.length;
+
         container.innerHTML = filtered.map(t => createIncomeDetailCard(t)).join('');
         empty.classList.toggle('hidden', filtered.length !== 0);
+    }
+
+    searchInput.addEventListener('input', (e) => {
+        window.__incomeDetailSearchTerm = e.target.value.toLowerCase();
+        applyFilters();
     });
 
+    document.getElementById('incomeDetailMonth')?.addEventListener('change', () => {
+        applyFilters();
+    });
+
+    document.getElementById('incomeDetailYear')?.addEventListener('change', () => {
+        applyFilters();
+    });
+
+    document.getElementById('incomeDetailResetFilters')?.addEventListener('click', () => {
+        const monthEl = document.getElementById('incomeDetailMonth');
+        const yearEl = document.getElementById('incomeDetailYear');
+        if (monthEl) monthEl.value = 'all';
+        if (yearEl) yearEl.value = 'all';
+        window.__incomeDetailSearchTerm = '';
+        if (searchInput) searchInput.value = '';
+        applyFilters();
+    });
+
+    // initial render when modal content already prepared
+    applyFilters();
+
     const modal = document.getElementById('incomeDetailModal');
+
     modal?.addEventListener('click', (e) => {
         if (e.target === modal) closeIncomeDetail();
     });
@@ -212,4 +336,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-

@@ -274,52 +274,32 @@
             $incomeRows = collect($incomeRows ?? []);
         ?>
 
-<?php
-            if ($incomeRows->count() === 0 && isset($transactions)) {
-                // Ringkasan pemasukan per minggu (maks 1 baris per minggu)
-                $txIncome = collect($transactions)
-                    ->where('type', 'income')
-                    ->sortBy('date')
-                    ->values();
 
-                // Bagi transaksi menjadi 6 minggu (fallback jika week_number tidak tersedia)
-                $incomeBuckets = collect();
-                $incomeFirstDateByWeek = [];
-
-                $cnt = max(1, $txIncome->count());
-                foreach ($txIncome as $i => $tx) {
-                    $week = (isset($tx->week_number) && $tx->week_number) ? (int)$tx->week_number : ((int) floor(($i / $cnt) * 6) + 1);
-                    $week = max(1, min(6, $week));
-
-                    $incomeBuckets[$week] = ($incomeBuckets[$week] ?? 0) + (float)($tx->amount ?? 0);
-                    if (!isset($incomeFirstDateByWeek[$week])) {
-                        $incomeFirstDateByWeek[$week] = $tx->date;
-                    }
-                }
-
-                $weeksRange = range(1, 6);
-                $incomeRows = collect($weeksRange)
-                    ->map(function($w) use ($incomeBuckets, $incomeFirstDateByWeek) {
-                        $date = $incomeFirstDateByWeek[$w] ?? null;
-                        $label = $date ? \Carbon\Carbon::parse($date)->translatedFormat('d F Y') : ('Minggu ke-' . $w);
-                        $amount = (float)($incomeBuckets[$w] ?? 0);
-
-                        return [
-                            'label' => $label,
-                            'amount' => $amount,
-                        ];
-                    })
-                    ->filter(fn($r) => $r['amount'] != 0)
-                    ->values();
-            }
-        ?>
 
         <?php if($incomeRows->count() > 0): ?>
-            <?php $__currentLoopData = $incomeRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+<?php $__currentLoopData = $incomeRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <tr>
                     <td class="text-center"><?php echo e($index + 1); ?></td>
                     <td><?php echo e($row['label']); ?></td>
-                    <td>PEMASUKAN DARI KAS SISWA</td>
+                    <td>
+                        <?php
+                            $weekNum = $row['week'] ?? null;
+                            $studentCount = (int)($row['student_count'] ?? 0);
+                            $perStudentAmount = (float)($row['per_student_amount'] ?? 0);
+
+                            $ket = 'Kas siswa';
+                            if (!empty($weekNum)) {
+                                $ket .= ' - Minggu ke-' . $weekNum;
+                            }
+
+                            // format: nominal kasnya berapa x jumlah siswa
+                            if ($studentCount > 0) {
+                                $ket .= ' (Rp ' . number_format($perStudentAmount, 0, ',', '.') . ' x ' . $studentCount . ' siswa)';
+                            }
+                        ?>
+                        <?php echo e($ket); ?>
+
+                    </td>
                     <td class="text-center">Masuk</td>
                     <td class="text-right income">
                         + Rp <?php echo e(number_format($row['amount'] ?? 0, 0, ',', '.')); ?>
