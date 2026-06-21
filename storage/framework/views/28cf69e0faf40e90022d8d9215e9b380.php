@@ -117,6 +117,7 @@
     <!-- Statistics Cards -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+
             <div class="flex items-center mb-2">
                 <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
                     <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,6 +216,10 @@
                 </div>
             </div>
         </div>
+
+
+
+
     </div>
     
     <!-- Search Box with Month Navigation -->

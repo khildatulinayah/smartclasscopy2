@@ -126,6 +126,8 @@ class BendaharaController extends Controller
 
         $balanceTotal = $incomeTotal - $expenseTotal;
 
+        // Gunakan template PDF yang sama persis dengan cetak HTML
+        // Template tahunan per-bulan:
         $pdf = Pdf::loadView('bendahara.laporan-keuangan-tahunan-perbulan-cetak', compact(
             'monthly', 'incomeTotal', 'expenseTotal', 'balanceTotal', 'year', 'currentMonth', 'endMonthName'
         ));
@@ -1022,7 +1024,16 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
     {
         $year = $year ?? now()->year;
 
+        $monthRaw = $month;
+        $month = is_numeric($month) ? (int) $month : 0;
+        Log::warning('Invalid month input received', ['method' => __FUNCTION__, 'raw_month' => $monthRaw, 'normalized_month' => $month, 'raw_year' => $year]);
+        if ($month < 1 || $month > 12) {
+            abort(400, 'Invalid month.');
+        }
+
         $monthName = [
+
+
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
@@ -1099,8 +1110,14 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
     public function cetakPembayaranSiswa($month, $year = null)
     {
         $year = $year ?? now()->year;
+
+        $month = (int) $month;
+        if ($month < 1 || $month > 12) {
+            abort(400, 'Invalid month.');
+        }
         
         $monthName = [
+
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
@@ -1179,8 +1196,17 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
     public function laporanKeuanganPdf($month, $year = null)
     {
         $year = $year ?? now()->year;
+
+        // Pastikan month dari URL tidak kosong/string aneh.
+        // Jika invalid, fallback ke bulan berjalan agar tidak "Invalid month".
+        $month = is_numeric($month) ? (int) $month : (int) now()->month;
+        if ($month < 1 || $month > 12) {
+            $month = (int) now()->month;
+        }
+
         
         // Data untuk PDF keuangan
+
         $transactions = Transaction::with(['student', 'creator'])
             ->whereMonth('date', $month)
             ->whereYear('date', $year)
@@ -1194,9 +1220,51 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
         
         $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
 
+        // Data pemasukan dari kas siswa per minggu: ambil dari weekly_payments
+        // (akurat per minggu sesuai week_number di database).
+        // PENTING: blok ini HARUS sama persis dengan yang ada di cetakKeuangan()
+        // (versi HTML), supaya tabel "A. Tabel Pemasukan" di PDF tidak kehilangan
+        // baris rincian kas mingguan siswa seperti yang terjadi sebelumnya.
+        $weeklyPaymentsIncome = WeeklyPayment::query()
+            ->where('month', $month)
+            ->where('year', $year)
+            ->where('status', 'paid')
+            ->whereDoesntHave('adjustments')
+            ->get()
+            ->groupBy('week_number');
+
+        $incomeRows = collect(range(1, 6))
+            ->map(function ($w) use ($weeklyPaymentsIncome) {
+                $rows = $weeklyPaymentsIncome->get($w, collect());
+
+                if ($rows->isEmpty()) {
+                    return null;
+                }
+
+                $totalAmount = (float) $rows->sum('amount');
+                $studentCount = (int) $rows->count();
+                $perStudentAmount = (float) ($rows->first()->amount ?? 0);
+
+                $firstDate = $rows->sortBy('payment_date')->first()?->payment_date;
+                $label = $firstDate
+                    ? Carbon::parse($firstDate)->locale('id')->translatedFormat('d F Y')
+                    : ('Minggu ke-' . $w);
+
+                return [
+                    'label' => $label,
+                    'week' => $w,
+                    'amount' => $totalAmount,
+                    'student_count' => $studentCount,
+                    'per_student_amount' => $perStudentAmount,
+                ];
+            })
+            ->filter(fn ($r) => $r && ($r['amount'] ?? 0) != 0)
+            ->values();
+
         $pdf = Pdf::loadView('bendahara.laporan-keuangan-cetak', compact(
             'transactions', 'income', 'expense', 'balance', 
-            'month', 'year', 'monthName'
+            'month', 'year', 'monthName',
+            'incomeRows'
         ));
         $pdf->setPaper('a4', 'landscape'); // Landscape untuk format bendahara
         $pdf->setOptions([
@@ -1221,8 +1289,14 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
     public function laporanPembayaranPdf($month, $year = null)
     {
         $year = $year ?? now()->year;
+
+        $month = (int) $month;
+        if ($month < 1 || $month > 12) {
+            abort(400, 'Invalid month.');
+        }
         
         try {
+
 
             // Cek autentikasi user untuk PDF
             if (!auth()->check()) {
@@ -1304,5 +1378,156 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
                 'trace' => $e->getTraceAsString()
             ], 500);
         }
+    }
+
+    // ============= LAPORAN TUNGGAKAN (per tahun, Jan s/d bulan berjalan) =============
+
+    /**
+     * Helper bersama: siapkan data tunggakan per siswa untuk tahun tertentu.
+     * Dipakai oleh cetakTunggakan() (HTML) dan laporanTunggakanPdf() (PDF)
+     * supaya kedua output SELALU konsisten (tidak divergen seperti kasus sebelumnya).
+     *
+     * Cakupan: Januari s/d bulan berjalan SEKARANG (bukan s/d Desember),
+     * berapapun tahun yang dipilih. Jadi untuk tahun lampau pun, batas atasnya
+     * tetap bulan berjalan sekarang (mis. dipilih 2024, dihitung Jan-Jun 2024
+     * jika sekarang bulan Juni).
+     *
+     * Aturan dihitung sebagai tunggakan: status = 'unpaid' DAN tanggal Rabu
+     * untuk minggu tersebut sudah lewat (sama dengan aturan di dashboard()
+     * dan weeklyPayments()).
+     */
+    private function buildTunggakanData(int $year): array
+    {
+        $now = Carbon::now();
+        $nowStart = $now->copy()->startOfDay();
+        $currentMonth = $now->month;
+
+        // Ambil weekly payment berstatus unpaid, dibatasi tahun yang dipilih
+        // dan bulan 1 s/d bulan berjalan sekarang.
+        $unpaidPayments = WeeklyPayment::with('student')
+            ->where('status', 'unpaid')
+            ->where('year', $year)
+            ->where('month', '<=', $currentMonth)
+            ->orderBy('month')
+            ->orderBy('week_number')
+            ->get();
+
+        // Cache tanggal Rabu per bulan supaya tidak query/hitung berulang.
+        $wednesdayDatesCache = [];
+
+        $rows = collect();
+
+        foreach ($unpaidPayments->groupBy('month') as $m => $paymentsInMonth) {
+            $m = (int) $m;
+
+            if (!isset($wednesdayDatesCache[$m])) {
+                $wednesdayDatesCache[$m] = WeeklyPayment::getWednesdayDatesInMonth($m, $year);
+            }
+            $wednesdayDates = $wednesdayDatesCache[$m];
+
+            foreach ($paymentsInMonth as $payment) {
+                $wednesdayDate = $wednesdayDates[$payment->week_number - 1] ?? null;
+                if (!$wednesdayDate) {
+                    continue;
+                }
+
+                // Aturan sama dengan dashboard: hanya dihitung tunggakan jika
+                // tanggal Rabu minggu tersebut sudah lewat.
+                if (!$wednesdayDate->copy()->startOfDay()->lt($nowStart)) {
+                    continue;
+                }
+
+                $rows->push([
+                    'student_id' => $payment->student_id,
+                    'student' => $payment->student,
+                    'month' => $m,
+                    'year' => $year,
+                    'week_number' => $payment->week_number,
+                    'amount' => (float) $payment->amount,
+                    'due_date' => $wednesdayDate,
+                ]);
+            }
+        }
+
+        $monthNameMap = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        // Ringkas per siswa: nama + total tunggakan + jumlah minggu tertunggak
+        // + rentang periode tertunggak (untuk konteks, bukan rincian per minggu).
+        $tunggakanPerSiswa = $rows
+            ->groupBy('student_id')
+            ->map(function ($studentRows) use ($monthNameMap) {
+                $student = $studentRows->first()['student'] ?? null;
+
+                $sorted = $studentRows->sortBy(fn ($r) => $r['due_date'])->values();
+
+                $weekDetails = $sorted->map(function ($r) use ($monthNameMap) {
+                    return [
+                        'label' => $monthNameMap[$r['month']] . ' ' . $r['year'] . ' - Minggu ke-' . $r['week_number'],
+                        'amount' => $r['amount'],
+                    ];
+                })->values();
+
+                return [
+                    'student_id' => $student?->id,
+                    'student_name' => $student?->name ?? 'Siswa Tidak Diketahui',
+                    'week_count' => $studentRows->count(),
+                    'total_amount' => (float) $studentRows->sum('amount'),
+                    'week_details' => $weekDetails,
+                ];
+            })
+            ->sortByDesc('total_amount')
+            ->values();
+
+        $totalTunggakan = $tunggakanPerSiswa->sum('total_amount');
+        $totalSiswaMenunggak = $tunggakanPerSiswa->count();
+        $totalMingguTertunggak = $tunggakanPerSiswa->sum('week_count');
+
+        $endMonthName = $monthNameMap[$currentMonth];
+
+        return compact(
+            'tunggakanPerSiswa', 'totalTunggakan', 'totalSiswaMenunggak',
+            'totalMingguTertunggak', 'year', 'endMonthName'
+        );
+    }
+
+    /**
+     * Cetak Daftar Tunggakan (HTML) - per tahun, Jan s/d bulan berjalan.
+     */
+    public function cetakTunggakan($year)
+    {
+        $data = $this->buildTunggakanData((int) $year);
+
+        return view('bendahara.laporan-tunggakan-cetak', $data);
+    }
+
+    /**
+     * PDF Daftar Tunggakan - per tahun, Jan s/d bulan berjalan.
+     * Menggunakan helper data yang sama persis dengan versi HTML.
+     */
+    public function laporanTunggakanPdf($year)
+    {
+        $data = $this->buildTunggakanData((int) $year);
+
+        $pdf = Pdf::loadView('bendahara.laporan-tunggakan-cetak', $data);
+
+        $pdf->setPaper('a4', 'portrait');
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'Arial',
+            'isFontSubsettingEnabled' => true,
+            'dpi' => 150
+        ]);
+
+        return response($pdf->output())
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="laporan-tunggakan-' . $year . '.pdf"')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 }

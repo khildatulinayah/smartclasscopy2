@@ -16,7 +16,7 @@
             </section>
 
             <!-- Report Cards -->
-            <section class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch">
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12 items-stretch">
             <!-- Card 3: Laporan Tahunan -->
                 <div class="report-card bg-white rounded-2xl shadow-xl border border-gray-100 p-8 hover:shadow-2xl transition-all duration-300">
                     <div class="flex items-start gap-4 mb-6">
@@ -165,6 +165,51 @@
                         </div>
                     </form>
                 </div>
+
+                <!-- Card 4: Daftar Tunggakan -->
+                <div class="report-card bg-white rounded-2xl shadow-xl border border-gray-100 p-8 hover:shadow-2xl transition-all duration-300">
+                    <div class="flex items-start gap-4 mb-6">
+                        <div class="report-icon bg-gradient-to-br from-red-500 to-rose-600 p-4 rounded-xl shadow-lg">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-1">Daftar Tunggakan</h2>
+                            <p class="text-gray-600">Rekap tunggakan siswa per tahun (Jan - bulan berjalan)</p>
+                        </div>
+                    </div>
+
+                    <form id="tunggakan-form" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-3">Pilih Tahun</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <select name="year" id="tunggakan-year" class="form-select" required>
+                                    <option value="">Pilih Tahun</option>
+                                    @foreach($years as $y)
+                                        <option value="{{ $y }}" {{ $currentYear == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <button type="button" onclick="cetakTunggakan()" class="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
+                                <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v.5"></path>
+                                </svg>
+                                Cetak
+                            </button>
+                            <button type="button" onclick="downloadTunggakanPDF()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
+                                <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                Preview PDF
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </section>
 
             <!-- Features & How to use -->
@@ -293,7 +338,11 @@ function cetakTahunan() {
 function downloadTahunanPDF() {
     const year = document.getElementById('tahunan-year').value;
     if (year) {
-        window.open(`{{ route('bendahara.laporan.pdf.keuangan.tahunan', ['year' => ':year']) }}`.replace(':year', year), '_blank');
+        // Arahkan ke Blade "laporan-keuangan-tahunan-perbulan-cetak" (preview PDF)
+window.open(`{{ route('bendahara.laporan.pdf.keuangan.tahunan', ['year' => ':year']) }}`.replace(':year', year), '_blank');
+        // Pastikan endpoint tahunan menggunakan template laporan-keuangan-tahunan-perbulan-cetak.php
+        // (bukan template laporan-keuangan-cetak.php).
+        
     } else {
         showWarningToast('Silakan pilih tahun terlebih dahulu');
     }
@@ -338,6 +387,24 @@ function downloadPembayaranPDF() {
         window.open(`{{ route('bendahara.laporan.pdf.pembayaran', ['month' => ':month', 'year' => ':year']) }}`.replace(':month', month).replace(':year', year), '_blank');
     } else {
         showWarningToast('Silakan pilih bulan dan tahun terlebih dahulu');
+    }
+}
+
+function cetakTunggakan() {
+    const year = document.getElementById('tunggakan-year').value;
+    if (year) {
+        window.open(`{{ route('bendahara.cetak.tunggakan', ['year' => ':year']) }}`.replace(':year', year), '_blank');
+    } else {
+        showWarningToast('Silakan pilih tahun terlebih dahulu');
+    }
+}
+
+function downloadTunggakanPDF() {
+    const year = document.getElementById('tunggakan-year').value;
+    if (year) {
+        window.open(`{{ route('bendahara.laporan.pdf.tunggakan', ['year' => ':year']) }}`.replace(':year', year), '_blank');
+    } else {
+        showWarningToast('Silakan pilih tahun terlebih dahulu');
     }
 }
 

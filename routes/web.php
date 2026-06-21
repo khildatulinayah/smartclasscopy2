@@ -86,14 +86,25 @@ Route::middleware('auth')->group(function () {
         // Laporan Routes
         Route::get('/laporan', [BendaharaController::class, 'laporan'])->name('laporan');
         Route::get('/laporan/pembayaran', [BendaharaController::class, 'laporanPembayaran'])->name('laporan.pembayaran');
-        Route::get('/laporan/pdf/keuangan/{month}/{year}', [BendaharaController::class, 'laporanKeuanganPdf'])->name('laporan.pdf.keuangan');
+
+        // PENTING: Route "tahunan" (lebih spesifik) HARUS didefinisikan
+        // SEBELUM route "{month}/{year}" (lebih umum). Laravel mencocokkan
+        // route dari atas ke bawah dan berhenti pada match pertama, jadi
+        // jika route umum ditaruh di atas, ia akan menelan request tahunan
+        // (mis. /keuangan/tahunan/2025 cocok dengan {month}={tahunan}, {year}=2025).
+        Route::get('/laporan/pdf/keuangan/tahunan/{year}', [BendaharaController::class, 'laporanKeuanganTahunanPdf'])->name('laporan.pdf.keuangan.tahunan');
+        Route::get('/laporan/keuangan/tahunan/cetak/{year}', [BendaharaController::class, 'cetakLaporanTahunanKeuangan'])->name('cetak.keuangan.tahunan');
+
+        Route::get('/laporan/pdf/keuangan/{month}/{year}', [BendaharaController::class, 'laporanKeuanganPdf'])
+            ->where(['month' => '[0-9]+', 'year' => '[0-9]+'])
+            ->name('laporan.pdf.keuangan');
         Route::get('/laporan/pdf/pembayaran/{month}/{year}', [BendaharaController::class, 'laporanPembayaranPdf'])->name('laporan.pdf.pembayaran');
         Route::get('/laporan/keuangan/cetak/{month}/{year?}', [BendaharaController::class, 'cetakKeuangan'])->name('cetak.keuangan');
         Route::get('/laporan/pembayaran-siswa/cetak/{month}/{year?}', [BendaharaController::class, 'cetakPembayaranSiswa'])->name('cetak.pembayaran.siswa');
 
-        // Laporan Tahunan (Jan s/d bulan sekarang) - bendahara
-        Route::get('/laporan/keuangan/tahunan/cetak/{year}', [BendaharaController::class, 'cetakLaporanTahunanKeuangan'])->name('cetak.keuangan.tahunan');
-        Route::get('/laporan/pdf/keuangan/tahunan/{year}', [BendaharaController::class, 'laporanKeuanganTahunanPdf'])->name('laporan.pdf.keuangan.tahunan');
+        // Laporan Tunggakan (per tahun, Jan s/d bulan berjalan)
+        Route::get('/laporan/tunggakan/cetak/{year}', [BendaharaController::class, 'cetakTunggakan'])->name('cetak.tunggakan');
+        Route::get('/laporan/pdf/tunggakan/{year}', [BendaharaController::class, 'laporanTunggakanPdf'])->name('laporan.pdf.tunggakan');
     });
     
     // Sekretaris routes

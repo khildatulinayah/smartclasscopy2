@@ -11,48 +11,73 @@
             font-family: DejaVu Sans, sans-serif;
             color:#222;
             font-size:12px;
-            line-height:1.5;
+            line-height:1.45;
         }
 
-        .container{ padding:25px; }
+        .container{ padding:24px 28px; }
 
-        .header{ width:100%; margin-bottom:25px; }
-        .header-table{ width:100%; border-collapse:collapse; }
+        @page{ margin:1.1cm; size:A4 landscape; }
+
+        /* HEADER */
+        .header{ width:100%; margin-bottom:14px; }
+        .header-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
         .header-table td{ vertical-align:top; }
-        .school-info{ text-align:center; }
-        .school-name{ font-size:22px; font-weight:bold; text-transform:uppercase; }
+        .school-info{ text-align:center; padding:2px 10px; }
+        .school-name{
+            font-size:22px;
+            font-weight:700;
+            text-transform:uppercase;
+            letter-spacing:0.5px;
+        }
         .school-address{ font-size:11px; margin-top:4px; }
-        .report-title{ margin-top:15px; font-size:18px; font-weight:bold; text-transform:uppercase; }
-        .period{ margin-top:5px; font-size:12px; }
-        .line{ margin-top:18px; border-top:2px solid #000; border-bottom:1px solid #000; height:4px; }
+        .report-title{ margin-top:10px; font-size:18px; font-weight:700; text-transform:uppercase; }
+        .period{ margin-top:4px; font-size:12px; }
+        .line{ margin-top:12px; border-top:2px solid #000; border-bottom:1px solid #000; height:4px; }
 
-        .summary{ margin:20px 0; }
-        .summary-table{ width:100%; border-collapse:collapse; }
-        .summary-table td{ border:1px solid #000; padding:12px; text-align:center; }
-        .summary-title{ font-size:11px; margin-bottom:6px; font-weight:bold; }
-        .summary-value{ font-size:16px; font-weight:bold; }
-
-        .main-table{ width:100%; border-collapse:collapse; margin-top:10px; }
-        .main-table th{
-            background:#eaeaea;
+        /* SUMMARY */
+        .summary{ margin:12px 0 10px; }
+        .summary-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+        .summary-table td{
             border:1px solid #000;
             padding:10px 8px;
             text-align:center;
+            vertical-align:middle;
+        }
+        .summary-title{ font-size:11px; font-weight:700; margin-bottom:4px; }
+        .summary-value{ font-size:16px; font-weight:800; }
+
+        /* SECTION TITLE */
+        .section-title{ margin:14px 0 8px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; }
+
+        /* MAIN TABLE */
+        .main-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+        .main-table th{
+            background:#e9e9e9;
+            border:1px solid #000;
+            padding:8px 6px;
+            text-align:center;
             font-size:11px;
         }
-        .main-table td{ border:1px solid #000; padding:8px; font-size:11px; }
+        .main-table td{
+            border:1px solid #000;
+            padding:7px 6px;
+            font-size:11px;
+            vertical-align:top;
+        }
 
         .text-center{ text-align:center; }
         .text-right{ text-align:right; }
 
-        .total-row{ background:#f3f3f3; font-weight:bold; }
+        .total-row td{ background:#f3f3f3; font-weight:800; }
 
-        .footer{ margin-top:60px; width:100%; }
-        .signature{ width:250px; text-align:center; float:right; }
+        .muted{ font-style:italic; color:#222; }
+        .nowrap{ white-space:nowrap; }
+
+        /* FOOTER */
+        .footer{ margin-top:55px; width:100%; }
+        .signature{ width:260px; text-align:center; float:right; }
         .signature-space{ height:70px; }
-        .signature-name{ font-weight:bold; text-decoration:underline; }
-
-        @page{ margin:1.2cm; size:A4 landscape; }
+        .signature-name{ font-weight:700; text-decoration:underline; }
     </style>
 </head>
 
@@ -62,13 +87,14 @@
     <div class="header">
         <table class="header-table">
             <tr>
-                <td width="70%" class="school-info">
+                <td class="school-info">
                     <div class="school-name">SMARTCLASS</div>
                     <div class="school-address">Sistem Manajemen Keuangan dan Administrasi Kelas</div>
                     <div class="report-title">Laporan Keuangan Tahunan</div>
-                    <div class="period">Periode Januari - {{ $endMonthName }} Tahun {{ $year }}</div>
+                    <div class="period">
+                        Periode Januari - <span class="nowrap">{{ $endMonthName }}</span> Tahun {{ $year }}
+                    </div>
                 </td>
-                <td width="15%"></td>
             </tr>
         </table>
         <div class="line"></div>
@@ -77,15 +103,15 @@
     <div class="summary">
         <table class="summary-table">
             <tr>
-                <td width="33%">
+                <td>
                     <div class="summary-title">TOTAL UANG MASUK</div>
                     <div class="summary-value">Rp {{ number_format($incomeTotal,0,',','.') }}</div>
                 </td>
-                <td width="33%">
+                <td>
                     <div class="summary-title">TOTAL UANG KELUAR</div>
                     <div class="summary-value">Rp {{ number_format($expenseTotal,0,',','.') }}</div>
                 </td>
-                <td width="34%">
+                <td>
                     <div class="summary-title">SALDO AKHIR</div>
                     <div class="summary-value">Rp {{ number_format($balanceTotal,0,',','.') }}</div>
                 </td>
@@ -93,56 +119,39 @@
         </table>
     </div>
 
-    <div style="margin-top:20px; font-weight:bold; text-transform:uppercase;">
-        Rekap per Bulan (Uang Masuk & Uang Keluar)
-    </div>
+    <div class="section-title">Rekap per Bulan (Uang Masuk &amp; Uang Keluar)</div>
 
     <table class="main-table">
         <thead>
             <tr>
-                <th width="20%">Bulan</th>
-                <th width="30%">Uang Masuk</th>
-                <th width="30%">Uang Keluar</th>
-                <th width="20%">Saldo Bulan</th>
-            </tr>
-            <tr>
-                <th colspan="4" style="border-top: none; padding-top: 6px; font-weight: bold; text-align: left;">
-                    Keterangan Uang Masuk (Sumber Kas)
-                </th>
-            </tr>
-            <tr>
-                <th width="20%">Bulan</th>
-                <th width="40%">Keterangan</th>
-                <th width="20%">Jumlah</th>
-                <th width="20%">Satuan</th>
+                <th style="width:20%;">Bulan</th>
+                <th style="width:30%;">Uang Masuk</th>
+                <th style="width:30%;">Uang Keluar</th>
+                <th style="width:20%;">Saldo Bulan</th>
             </tr>
         </thead>
         <tbody>
+
             @foreach($monthly as $row)
                 <tr>
                     <td class="text-center">{{ $row['monthName'] }}</td>
                     <td class="text-right">Rp {{ number_format($row['income'],0,',','.') }}</td>
                     <td class="text-right">Rp {{ number_format($row['expense'],0,',','.') }}</td>
-                    <td class="text-right">Rp {{ number_format($row['cum_balance'] ?? 0,0,',','.') }}</td>
+                    <td class="text-right">Rp {{ number_format($row['balance'] ?? 0,0,',','.') }}</td>
+
                 </tr>
 
-                @if(!empty($row['income_details']) && is_array($row['income_details']))
+                @if(!empty($row['income_details']) && is_array($row['income_details']) && count($row['income_details']) > 0)
                     @foreach($row['income_details'] as $detail)
                         <tr>
                             <td class="text-center">&nbsp;</td>
-                            <td>
-                                {{ $detail['label'] }}
-                            </td>
-                            <td class="text-right">Rp {{ number_format($detail['amount'],0,',','.') }}</td>
+                            <td>{{ $detail['label'] ?? '-' }}</td>
+                            <td class="text-right">Rp {{ number_format($detail['amount'] ?? 0,0,',','.') }}</td>
                             <td class="text-center">{{ $detail['unit'] ?? 'Total' }}</td>
                         </tr>
                     @endforeach
-                @elseif(isset($row['income']) && empty($row['income_details']))
-                    <tr>
-                        <td class="text-center">&nbsp;</td>
-                        <td colspan="3">(Keterangan uang masuk belum tersedia)</td>
-                    </tr>
                 @endif
+
             @endforeach
 
             <tr class="total-row">
@@ -166,4 +175,5 @@
 </div>
 </body>
 </html>
+
 
