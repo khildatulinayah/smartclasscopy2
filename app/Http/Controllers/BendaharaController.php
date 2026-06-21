@@ -482,12 +482,17 @@ class BendaharaController extends Controller
         try {
             Log::info('getTransactions called');
             
-            $transactions = Transaction::with(['student', 'creator'])
+$transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
                 ->orderBy('date', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($transaction) {
-                    $transaction->used_in_weekly_payment = WeeklyPayment::where('transaction_id', $transaction->id)->exists();
+                    $transaction->used_in_weekly_payment = $transaction->weekly_payment_id !== null;
+
+                    // Untuk keperluan filter berdasarkan weekly_payments bulan/tahun
+                    $transaction->weekly_payment_month = $transaction->weeklyPayment?->month;
+                    $transaction->weekly_payment_year = $transaction->weeklyPayment?->year;
+
                     return $transaction;
                 });
             
@@ -806,6 +811,10 @@ class BendaharaController extends Controller
 
         $adjustment->markAsProcessed(auth()->user());
 
+        // Link FK transaksi ke payment adjustment
+        $transaction->payment_adjustment_id = $adjustment->id;
+        $transaction->save();
+
         return back()->with('success', 'Kekurangan berhasil dilunasi');
     }
 
@@ -828,6 +837,10 @@ class BendaharaController extends Controller
         ]);
 
         $adjustment->markAsProcessed(auth()->user());
+
+        // Link FK transaksi ke payment adjustment
+        $transaction->payment_adjustment_id = $adjustment->id;
+        $transaction->save();
 
         return back()->with('success', 'Pengembalian berhasil diproses');
     }
@@ -1028,10 +1041,12 @@ class BendaharaController extends Controller
 
         // Data pemasukan dari kas siswa per minggu: ambil dari weekly_payments
         // (akurat per minggu sesuai week_number di database).
+        // Catatan: weekly payment yang punya adjustment (payments_adjustments) tidak dimasukkan.
         $weeklyPaymentsIncome = WeeklyPayment::query()
             ->where('month', $month)
             ->where('year', $year)
             ->where('status', 'paid')
+            ->whereDoesntHave('adjustments')
             ->get()
             ->groupBy('week_number');
 
@@ -1043,8 +1058,15 @@ class BendaharaController extends Controller
                     return null;
                 }
 
+                // Total nominal minggu itu (akumulasi amount mingguan per siswa)
                 $totalAmount = (float) $rows->sum('amount');
-                $studentCount = (int) $rows->pluck('student_id')->unique()->count();
+
+                // jumlah yang bayar = jumlah baris weekly_payments (setara jumlah pembayaran yang tercatat)
+                $studentCount = (int) $rows->count();
+
+                // Ambil nominal per siswa dari salah satu baris (karena amount weekly_payment memang per siswa)
+                // Gunakan nilai first yang tersedia.
+                $perStudentAmount = (float) ($rows->first()->amount ?? 0);
 
                 // Tanggal label: ambil payment_date terkecil/terawal untuk minggu itu.
                 $firstDate = $rows->sortBy('payment_date')->first()?->payment_date;
@@ -1057,7 +1079,7 @@ class BendaharaController extends Controller
                     'week' => $w,
                     'amount' => $totalAmount,
                     'student_count' => $studentCount,
-                    'per_student_amount' => $studentCount > 0 ? ($totalAmount / $studentCount) : 0,
+                    'per_student_amount' => $perStudentAmount,
                 ];
             })
             ->filter(fn ($r) => $r && ($r['amount'] ?? 0) != 0)

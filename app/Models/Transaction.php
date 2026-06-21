@@ -10,12 +10,33 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['student_id', 'type', 'amount', 'description', 'date', 'created_by', 'receipt_path'];
+    protected $fillable = [
+        'student_id',
+        'type',
+        'amount',
+        'description',
+        'date',
+        'created_by',
+        'receipt_path',
+        'weekly_payment_id',
+        'payment_adjustment_id',
+    ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'date' => 'date',
     ];
+
+    public function weeklyPayment()
+    {
+        return $this->belongsTo(WeeklyPayment::class, 'weekly_payment_id');
+    }
+
+    public function paymentAdjustment()
+    {
+        return $this->belongsTo(PaymentAdjustment::class, 'payment_adjustment_id');
+    }
+
 
     public function student()
     {
@@ -43,3 +64,4 @@ class Transaction extends Model
         return $query->whereMonth('date', $month)->whereYear('date', $year);
     }
 }
+

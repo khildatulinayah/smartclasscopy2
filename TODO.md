@@ -1,13 +1,13 @@
-# TODO
+# TODO (PaymentAdjustment -> Transaction FK)
 
-- [x] Tambahkan sidebar mobile off-canvas ke `resources/views/layouts/app.blade.php`:
-  - Pastikan tidak mengubah tampilan desktop.
-  - Pada mobile (< 640px): sidebar disembunyikan via `transform: translateX(-100%)`.
-  - Off-canvas slide-in dari kiri pakai class `open`.
-  - Overlay gelap pakai elemen id `sidebarOverlay`.
-  - Tutup sidebar: klik overlay atau tekan `Esc`.
-  - Tombol toggle: id `sidebarToggle` ditangani di JS layout.
-- [x] Pastikan elemen overlay (`sidebarOverlay`) tersedia pada markup sidebar component.
-- [ ] Uji cepat di desktop dan mobile (manual): sidebar tetap seperti biasa di desktop, dan berperilaku sesuai spesifikasi di mobile.
-
+- [x] Tambahkan relasi & mass-assignment di `app/Models/Transaction.php` untuk `payment_adjustment_id`
+- [x] Tambahkan relasi di `app/Models/PaymentAdjustment.php` untuk transaction FK
+- [x] Set `transactions.payment_adjustment_id` saat membuat transaction dari adjustment flow:
+  - [x] `PaymentAdjustmentService::processShortageAsInvoice`
+  - [x] `PaymentAdjustmentService::processOverpaymentAsRefund`
+- [x] Set `transactions.payment_adjustment_id` juga pada flow controller:
+  - [x] `BendaharaController::processShortage`
+  - [x] `BendaharaController::processRefund`
+- [ ] Run migration (kalau belum): `php artisan migrate`
+- [ ] Cek cepat di DB: transaction dari invoice/refund harus terisi `payment_adjustment_id`
 

@@ -101,7 +101,13 @@ class PaymentAdjustment extends Model
         return $this->belongsTo(Transaction::class, 'credit_transaction_id');
     }
 
+    public function transaction()
+    {
+        return $this->hasOne(Transaction::class, 'payment_adjustment_id');
+    }
+
     // ========== SCOPES ==========
+
 
     /**
      * Scope: adjustment yang masih pending

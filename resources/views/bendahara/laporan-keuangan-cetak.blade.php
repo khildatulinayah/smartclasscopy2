@@ -268,12 +268,42 @@
 
         @php
             $incomeRows = collect($incomeRows ?? []);
+            $transactionsForIncome = isset($transactions)
+                ? collect($transactions)
+                    ->where('type', 'income')
+                    ->sortBy('date')
+                : collect();
+
+            // Gabungkan pemasukan weekly (dibuat dari weekly_payments) dengan pemasukan manual (yang tidak punya weekly_payment_id)
+            // weekly_payment_id: ambil dari transaksi yang terhubung ke weekly_payments
+            $manualIncomeRows = $transactionsForIncome
+                ->filter(fn ($tx) => empty($tx->weekly_payment_id))
+                ->map(function ($tx) {
+                    return [
+                        'label' => \Carbon\Carbon::parse($tx->date)->translatedFormat('d F Y'),
+                        'week' => null,
+                        'student_count' => null,
+                        'per_student_amount' => null,
+                        'description' => $tx->description ?? 'PEMASUKAN',
+                        'amount' => (float) ($tx->amount ?? 0),
+                        'is_manual' => true,
+                    ];
+                })
+                ->values();
+
+            $mergedIncomeRows = $incomeRows
+                ->map(function ($r) {
+                    return array_merge(['is_manual' => false], $r);
+                })
+                ->concat($manualIncomeRows)
+                ->sortBy(function ($r) {
+                    return $r['label'] ?? '';
+                })
+                ->values();
         @endphp
 
-
-
-        @if($incomeRows->count() > 0)
-@foreach($incomeRows as $index => $row)
+        @if($mergedIncomeRows->count() > 0)
+            @foreach($mergedIncomeRows as $index => $row)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>{{ $row['label'] }}</td>
@@ -283,13 +313,16 @@
                             $studentCount = (int)($row['student_count'] ?? 0);
                             $perStudentAmount = (float)($row['per_student_amount'] ?? 0);
 
-                            $ket = 'Kas siswa';
-                            if (!empty($weekNum)) {
+                            $ket = $row['is_manual'] ?? false
+                                ? ($row['description'] ?? 'PEMASUKAN')
+                                : 'Kas siswa';
+
+                            if (!($row['is_manual'] ?? false) && !empty($weekNum)) {
                                 $ket .= ' - Minggu ke-' . $weekNum;
                             }
 
-                            // format: nominal kasnya berapa x jumlah siswa
-                            if ($studentCount > 0) {
+                            // format: nominal kasnya berapa x jumlah siswa (khusus kas siswa weekly)
+                            if (!($row['is_manual'] ?? false) && $studentCount > 0) {
                                 $ket .= ' (Rp ' . number_format($perStudentAmount, 0, ',', '.') . ' x ' . $studentCount . ' siswa)';
                             }
                         @endphp

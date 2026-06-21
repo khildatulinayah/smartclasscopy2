@@ -361,6 +361,11 @@ class PaymentAdjustmentService
                 'invoice_transaction_id' => $transaction->id,
             ]);
 
+            // Link FK transaksi ke payment adjustment
+            $transaction->payment_adjustment_id = $adjustment->id;
+            $transaction->save();
+
+
             // Mark as processed
             $adjustment->markAsProcessed($processedBy, $notes);
 
@@ -447,6 +452,11 @@ class PaymentAdjustmentService
                 'refund_transaction_id' => $transaction->id,
                 'handling_method' => 'refund',
             ]);
+
+            // Link FK transaksi ke payment adjustment
+            $transaction->payment_adjustment_id = $adjustment->id;
+            $transaction->save();
+
 
             // Mark as processed
             $adjustment->markAsProcessed($processedBy, $notes);
