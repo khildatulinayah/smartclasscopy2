@@ -15,6 +15,95 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class BendaharaController extends Controller
 {
+    // ============= HELPER PERIODE LAPORAN =============
+
+    /**
+     * Hitung total income & expense untuk SATU bulan/tahun tertentu.
+     *
+     * Aturan periode (PENTING):
+     * - Transaksi yang punya weekly_payment_id (pembayaran kas mingguan siswa,
+     *   termasuk pelunasan tunggakan/adjustment yang tetap tertaut ke weekly payment)
+     *   dikelompokkan berdasarkan kolom month/year di tabel weekly_payments,
+     *   BUKAN berdasarkan tanggal transaksi dibuat/dibayar.
+     * - Transaksi manual (weekly_payment_id NULL) seperti pengeluaran kelas atau
+     *   pemasukan non-kas-mingguan tetap dikelompokkan berdasarkan kolom date.
+     *
+     * @return array{income: float, expense: float, balance: float}
+     */
+    private function calculateMonthlyTotals(int $month, int $year): array
+    {
+        // Transaksi yang terhubung ke weekly payment pada periode ini,
+        // dicocokkan lewat relasi weeklyPayment.month/year (bukan tx.date).
+        $weeklyLinkedQuery = Transaction::whereHas('weeklyPayment', function ($q) use ($month, $year) {
+            $q->where('month', $month)->where('year', $year);
+        });
+
+        $incomeFromWeekly = (float) (clone $weeklyLinkedQuery)->where('type', 'income')->sum('amount');
+        $expenseFromWeekly = (float) (clone $weeklyLinkedQuery)->where('type', 'expense')->sum('amount');
+
+        // Transaksi manual (tidak terhubung weekly payment) tetap pakai tanggal transaksi.
+        $manualQuery = Transaction::whereNull('weekly_payment_id')
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year);
+
+        $incomeManual = (float) (clone $manualQuery)->where('type', 'income')->sum('amount');
+        $expenseManual = (float) (clone $manualQuery)->where('type', 'expense')->sum('amount');
+
+        $income = $incomeFromWeekly + $incomeManual;
+        $expense = $expenseFromWeekly + $expenseManual;
+
+        return [
+            'income' => $income,
+            'expense' => $expense,
+            'balance' => $income - $expense,
+        ];
+    }
+
+    /**
+     * Ambil seluruh transaksi yang "termasuk" dalam periode bulan/tahun tertentu
+     * mengikuti aturan periode yang sama dengan calculateMonthlyTotals().
+     * Berguna untuk menampilkan rincian transaksi (bukan cuma total).
+     */
+    private function getTransactionsForPeriod(int $month, int $year)
+    {
+        return Transaction::with(['student', 'creator', 'weeklyPayment'])
+            ->where(function ($query) use ($month, $year) {
+                $query->whereHas('weeklyPayment', function ($q) use ($month, $year) {
+                    $q->where('month', $month)->where('year', $year);
+                })->orWhere(function ($q) use ($month, $year) {
+                    $q->whereNull('weekly_payment_id')
+                        ->whereMonth('date', $month)
+                        ->whereYear('date', $year);
+                });
+            })
+            ->orderBy('date', 'desc')
+            ->get();
+    }
+
+    /**
+     * Cek apakah suatu bulan/tahun punya data sama sekali (transaksi ATAU weekly payment),
+     * baik yang sudah menghasilkan transaksi maupun yang masih berstatus unpaid/tagihan saja.
+     * Dipakai untuk menentukan bulan mana yang ditampilkan di laporan tahunan
+     * (bukan cuma Januari s/d bulan berjalan, tapi semua bulan yang memang ada datanya).
+     */
+    private function monthHasData(int $month, int $year): bool
+    {
+        $hasWeeklyLinkedTransaction = Transaction::whereHas('weeklyPayment', function ($q) use ($month, $year) {
+            $q->where('month', $month)->where('year', $year);
+        })->exists();
+
+        $hasManualTransaction = Transaction::whereNull('weekly_payment_id')
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->exists();
+
+        $hasWeeklyPayment = WeeklyPayment::where('month', $month)
+            ->where('year', $year)
+            ->exists();
+
+        return $hasWeeklyLinkedTransaction || $hasManualTransaction || $hasWeeklyPayment;
+    }
+
     // ============= LAPORAN TAHUNAN (Jan s/d bulan sekarang) =============
 
     /**
@@ -27,43 +116,38 @@ class BendaharaController extends Controller
         $now = Carbon::now();
         $currentMonth = $now->month;
 
-        $startDate = Carbon::create($year, 1, 1)->startOfDay();
-        $endDate = Carbon::create($year, $currentMonth, 1)->endOfMonth()->endOfDay();
-
-        $endMonthName = Carbon::create($year, $currentMonth)->locale('id')->translatedFormat('F');
-
-        // Rekap per bulan
+        // Rekap per bulan: TIDAK dibatasi Januari s/d bulan berjalan saja.
+        // Semua bulan (1-12) di tahun ini dicek; yang dimasukkan ke laporan
+        // hanya bulan yang benar-benar punya data (transaksi atau weekly payment),
+        // termasuk bulan setelah bulan berjalan jika datanya sudah ada.
         $monthly = [];
         $incomeTotal = 0;
         $expenseTotal = 0;
+        $lastMonthWithData = $currentMonth;
 
-        for ($m = 1; $m <= $currentMonth; $m++) {
-            $incomeM = (float) Transaction::where('type', 'income')
-                ->whereMonth('date', $m)
-                ->whereYear('date', $year)
-                ->sum('amount');
+        for ($m = 1; $m <= 12; $m++) {
+            if (!$this->monthHasData($m, $year)) {
+                continue;
+            }
 
-            $expenseM = (float) Transaction::where('type', 'expense')
-                ->whereMonth('date', $m)
-                ->whereYear('date', $year)
-                ->sum('amount');
-
-            $balanceM = $incomeM - $expenseM;
+            $totals = $this->calculateMonthlyTotals($m, $year);
 
             $monthNameM = Carbon::create($year, $m)->locale('id')->translatedFormat('F');
 
             $monthly[] = [
                 'monthName' => $monthNameM,
-                'income' => $incomeM,
-                'expense' => $expenseM,
-                'balance' => $balanceM,
+                'income' => $totals['income'],
+                'expense' => $totals['expense'],
+                'balance' => $totals['balance'],
             ];
 
-            $incomeTotal += $incomeM;
-            $expenseTotal += $expenseM;
+            $incomeTotal += $totals['income'];
+            $expenseTotal += $totals['expense'];
+            $lastMonthWithData = $m;
         }
 
         $balanceTotal = $incomeTotal - $expenseTotal;
+        $endMonthName = Carbon::create($year, $lastMonthWithData)->locale('id')->translatedFormat('F');
 
         return view('bendahara.laporan-keuangan-tahunan-perbulan-cetak', compact(
             'monthly', 'incomeTotal', 'expenseTotal', 'balanceTotal', 'year', 'currentMonth', 'endMonthName'
@@ -79,52 +163,36 @@ class BendaharaController extends Controller
         $now = Carbon::now();
         $currentMonth = $now->month;
 
-        $startDate = Carbon::create($year, 1, 1)->startOfDay();
-        $endDate = Carbon::create($year, $currentMonth, 1)->endOfMonth()->endOfDay();
-
-        $endMonthName = Carbon::create($year, $currentMonth)->locale('id')->translatedFormat('F');
-
-        $transactions = Transaction::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->whereYear('date', $year)
-            ->orderBy('date', 'desc')
-            ->get();
-
-        $income = (float) $transactions->where('type', 'income')->sum('amount');
-        $expense = (float) $transactions->where('type', 'expense')->sum('amount');
-        $balance = $income - $expense;
-
-        // Rekap per bulan
+        // Sama dengan cetakLaporanTahunanKeuangan() (versi HTML): tampilkan semua
+        // bulan yang punya data, bukan cuma Januari s/d bulan berjalan.
         $monthly = [];
         $incomeTotal = 0;
         $expenseTotal = 0;
+        $lastMonthWithData = $currentMonth;
 
-        for ($m = 1; $m <= $currentMonth; $m++) {
-            $incomeM = (float) Transaction::where('type', 'income')
-                ->whereMonth('date', $m)
-                ->whereYear('date', $year)
-                ->sum('amount');
+        for ($m = 1; $m <= 12; $m++) {
+            if (!$this->monthHasData($m, $year)) {
+                continue;
+            }
 
-            $expenseM = (float) Transaction::where('type', 'expense')
-                ->whereMonth('date', $m)
-                ->whereYear('date', $year)
-                ->sum('amount');
-
-            $balanceM = $incomeM - $expenseM;
+            $totals = $this->calculateMonthlyTotals($m, $year);
 
             $monthNameM = Carbon::create($year, $m)->locale('id')->translatedFormat('F');
 
             $monthly[] = [
                 'monthName' => $monthNameM,
-                'income' => $incomeM,
-                'expense' => $expenseM,
-                'balance' => $balanceM,
+                'income' => $totals['income'],
+                'expense' => $totals['expense'],
+                'balance' => $totals['balance'],
             ];
 
-            $incomeTotal += $incomeM;
-            $expenseTotal += $expenseM;
+            $incomeTotal += $totals['income'];
+            $expenseTotal += $totals['expense'];
+            $lastMonthWithData = $m;
         }
 
         $balanceTotal = $incomeTotal - $expenseTotal;
+        $endMonthName = Carbon::create($year, $lastMonthWithData)->locale('id')->translatedFormat('F');
 
         // Gunakan template PDF yang sama persis dengan cetak HTML
         // Template tahunan per-bulan:
@@ -663,6 +731,15 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
             ->whereIn('weekly_payment_id', $payments->pluck('id'))
             ->get();
 
+        // Jumlah siswa unik (bukan jumlah record adjustment) yang punya penyesuaian
+        // pembayaran di bulan/tahun ini, mencakup semua status (pending, processed, cancelled).
+        // Dipakai untuk statistic card "Penyesuaian".
+        $adjustmentStudentCount = $pendingAdjustments
+            ->pluck('weeklyPayment.student_id')
+            ->filter()
+            ->unique()
+            ->count();
+
 
 
         return view('bendahara.weekly-payments', compact(
@@ -674,6 +751,8 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
             'paidAmount',
             'unpaidAmount',
             'pendingAdjustmentCount',
+            'adjustmentStudentCount',
+            'pendingAdjustments',
             'isWednesday',
             'isCurrentMonth',
             'currentWeek',
@@ -798,6 +877,13 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
      */
     public function processShortage(PaymentAdjustment $adjustment)
     {
+        // Pengaman server-side: jangan proses lagi kalau adjustment sudah
+        // diproses/dibatalkan sebelumnya. Mencegah transaksi tercipta dobel
+        // jika tombol terklik dua kali, tab lama belum di-refresh, dsb.
+        if ($adjustment->status !== 'pending') {
+            return back()->with('error', 'Penyesuaian ini sudah ' . strtolower($adjustment->status_label) . ', tidak bisa diproses ulang.');
+        }
+
         $transaction = Transaction::create([
             'student_id' => $adjustment->student_id,
             'type' => 'income',
@@ -825,6 +911,12 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
      */
     public function processRefund(PaymentAdjustment $adjustment)
     {
+        // Pengaman server-side: sama seperti processShortage(), cegah
+        // pemrosesan ulang adjustment yang statusnya bukan pending.
+        if ($adjustment->status !== 'pending') {
+            return back()->with('error', 'Penyesuaian ini sudah ' . strtolower($adjustment->status_label) . ', tidak bisa diproses ulang.');
+        }
+
         $transaction = Transaction::create([
             'student_id' => $adjustment->student_id,
             'type' => 'expense',
@@ -1039,16 +1131,15 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ][$month] ?? 'Tahun Ini';
 
-        // Transaksi untuk bagian pengeluaran (dan ringkasan saldo)
-        $transactions = Transaction::whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->with(['student', 'creator'])
-            ->orderBy('date', 'desc')
-            ->get();
+        // Transaksi untuk bagian pengeluaran (dan ringkasan saldo).
+        // Periode ditentukan oleh weekly_payments.month/year untuk transaksi yang
+        // terhubung ke weekly payment, dan oleh tanggal transaksi untuk transaksi manual.
+        $transactions = $this->getTransactionsForPeriod($month, $year);
 
-        $income = (float) $transactions->where('type', 'income')->sum('amount');
-        $expense = (float) $transactions->where('type', 'expense')->sum('amount');
-        $balance = $income - $expense;
+        $totals = $this->calculateMonthlyTotals($month, $year);
+        $income = $totals['income'];
+        $expense = $totals['expense'];
+        $balance = $totals['balance'];
 
         // Data pemasukan dari kas siswa per minggu: ambil dari weekly_payments
         // (akurat per minggu sesuai week_number di database).
@@ -1205,18 +1296,16 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
         }
 
         
-        // Data untuk PDF keuangan
+        // Data untuk PDF keuangan.
+        // Periode mengikuti aturan yang sama dengan cetakKeuangan() (versi HTML):
+        // transaksi yang terhubung weekly payment dikelompokkan dari weekly_payments.month/year,
+        // transaksi manual tetap dari kolom date.
+        $transactions = $this->getTransactionsForPeriod($month, $year);
 
-        $transactions = Transaction::with(['student', 'creator'])
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->orderBy('date', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $income = $transactions->where('type', 'income')->sum('amount');
-        $expense = $transactions->where('type', 'expense')->sum('amount');
-        $balance = $income - $expense;
+        $totals = $this->calculateMonthlyTotals($month, $year);
+        $income = $totals['income'];
+        $expense = $totals['expense'];
+        $balance = $totals['balance'];
         
         $monthName = Carbon::create($year, $month)->locale('id')->translatedFormat('F Y');
 

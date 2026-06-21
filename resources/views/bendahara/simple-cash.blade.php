@@ -602,11 +602,21 @@ window.showTransactionDetail = (transactionId) => {
         day: 'numeric'
     });
     
-    // Parse description untuk mengambil informasi minggu dan bulan
+    // Parse description untuk mengambil informasi minggu (week) saja.
+    // Bulan/tahun TIDAK lagi ditebak dari teks deskripsi — diambil langsung
+    // dari relasi weekly_payment (weekly_payment_month/year) yang dikirim backend,
+    // supaya konsisten dengan periode tagihan kas mingguan di tabel weekly_payments.
     const parsedInfo = parseTransactionDescription(transaction.description);
-    
-    // If no month/year found in description, use transaction date as fallback
-    if (!parsedInfo.month && !parsedInfo.year) {
+
+    if (transaction.used_in_weekly_payment && (transaction.weekly_payment_month || transaction.weekly_payment_year)) {
+        // Sumber kebenaran periode: weekly_payments.month/year (lewat relasi weekly_payment_id)
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                           'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        parsedInfo.monthNumber = transaction.weekly_payment_month || null;
+        parsedInfo.month = parsedInfo.monthNumber ? monthNames[parsedInfo.monthNumber - 1] : parsedInfo.month;
+        parsedInfo.year = transaction.weekly_payment_year ? transaction.weekly_payment_year.toString() : parsedInfo.year;
+    } else if (!parsedInfo.month && !parsedInfo.year) {
+        // Transaksi manual (tidak terhubung weekly payment): fallback ke tanggal transaksi.
         const transactionDate = new Date(transaction.date);
         const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
                            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -707,7 +717,7 @@ window.showTransactionDetail = (transactionId) => {
                 <h4 class="text-sm font-bold text-blue-800 mb-2">📋 Informasi Pelunasan Tunggakan</h4>
                 <p class="text-sm text-blue-700">Transaksi ini merupakan pelunasan tunggakan kas untuk periode ${parsedInfo.month} ${parsedInfo.year}.</p>
                 ${parsedInfo.week ? `<p class="text-xs text-blue-600 mt-1">Mencakup ${parsedInfo.week}</p>` : ''}
-                <p class="text-xs text-blue-500 mt-2">*Bulan diambil dari tanggal transaksi</p>
+                ${!transaction.used_in_weekly_payment ? `<p class="text-xs text-blue-500 mt-2">*Bulan diambil dari tanggal transaksi</p>` : ''}
             </div>
             ` : ''}
         </div>

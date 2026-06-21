@@ -375,6 +375,11 @@
                     ->where('type', 'expense')
                     ->sortBy('date')
                     ->map(function ($tx) {
+                        // Untuk pengeluaran yang terhubung ke weekly payment (jarang terjadi,
+                        // mis. refund/pengembalian), tanggal tetap ditampilkan apa adanya
+                        // karena kolom 'date' transaksi tetap relevan untuk baris pengeluaran;
+                        // periode laporan (bulan/tahun) sudah ditentukan oleh weekly_payment_id
+                        // di query controller, bukan oleh tanggal ini.
                         return [
                             'label' => \Carbon\Carbon::parse($tx->date)->translatedFormat('d F Y'),
                             'amount' => (float)($tx->amount ?? 0),

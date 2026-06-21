@@ -187,6 +187,15 @@ function createIncomeDetailCard(t) {
     const showStudent = !!t.student?.name;
     const formattedDate = t.date ? new Date(t.date).toLocaleDateString('id-ID') : '-';
 
+    // Label periode kas: untuk transaksi yang terhubung weekly payment, tampilkan
+    // periode berdasarkan weekly_payments.month/year (bukan tanggal transaksi),
+    // supaya konsisten dengan dasar pengelompokan/filter bulan-tahun.
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const periodLabel = (t.used_in_weekly_payment && t.weekly_payment_month && t.weekly_payment_year)
+        ? `${monthNames[t.weekly_payment_month - 1]} ${t.weekly_payment_year}`
+        : null;
+
     return `
         <div class="p-4 hover:bg-gray-50/50 transition-colors">
             <div class="flex items-start justify-between gap-4">
@@ -200,6 +209,7 @@ function createIncomeDetailCard(t) {
                     <div class="mt-1 text-sm text-gray-500 flex gap-3 flex-wrap">
                         ${showStudent ? `<span>👤 ${escapeHtml(studentName)}</span>` : ''}
                         <span>📅 ${escapeHtml(formattedDate)}</span>
+                        ${periodLabel ? `<span>🗓️ Periode kas: ${escapeHtml(periodLabel)}</span>` : ''}
                         <span>👁️ ${escapeHtml(t.creator?.name || 'Sistem')}</span>
                     </div>
                 </div>
@@ -274,7 +284,17 @@ document.addEventListener('DOMContentLoaded', () => {
             let matchesMonth = true;
             let matchesYear = true;
 
-            if (t.date) {
+            // Sumber periode:
+            // - Transaksi yang terhubung weekly payment (used_in_weekly_payment) -> pakai
+            //   weekly_payment_month/year (dari relasi weekly_payments.month/year), BUKAN tanggal transaksi.
+            // - Transaksi manual (tidak terhubung weekly payment) -> tetap pakai tanggal transaksi (t.date).
+            if (isWeeklyPayment(t)) {
+                const wMonth = t.weekly_payment_month;
+                const wYear = t.weekly_payment_year;
+
+                if (month !== 'all') matchesMonth = wMonth != null && wMonth.toString() === month;
+                if (year !== 'all') matchesYear = wYear != null && wYear.toString() === year;
+            } else if (t.date) {
                 const d = new Date(t.date);
                 if (month !== 'all') matchesMonth = (d.getMonth() + 1).toString() === month;
                 if (year !== 'all') matchesYear = d.getFullYear().toString() === year;
