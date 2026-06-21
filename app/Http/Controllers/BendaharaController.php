@@ -563,6 +563,16 @@ $transactions = Transaction::with(['student', 'creator', 'weeklyPayment'])
                     $transaction->weekly_payment_month = $transaction->weeklyPayment?->month;
                     $transaction->weekly_payment_year = $transaction->weeklyPayment?->year;
 
+                    // Flag eksplisit "transaksi ini adalah payment adjustment (kekurangan/refund)".
+                    // Sumbernya FK payment_adjustment_id (diisi cuma di processShortage() &
+                    // processRefund()), BUKAN tebak-tebakan dari teks description.
+                    // PENTING: transaksi pelunasan tunggakan biasa (dari processArrears(),
+                    // description "Pelunasan tunggakan mingguan") TIDAK dapat payment_adjustment_id
+                    // sama sekali — itu pembayaran mingguan telat, bukan adjustment. Kalau deteksi
+                    // adjustment dipaksa pakai keyword "pelunasan"/"tunggakan" di description, dua
+                    // jenis transaksi ini ketuker.
+                    $transaction->is_adjustment = $transaction->payment_adjustment_id !== null;
+
                     return $transaction;
                 });
             

@@ -182,6 +182,44 @@ window.openIncomeDetail = window.openIncomeDetail || (() => {
     modal.classList.add('flex');
 });
 
+// Kata kunci fallback (HANYA dipakai kalau backend belum kirim `is_adjustment`,
+// mis. API lama yang belum di-deploy). Sengaja TIDAK mengandung kata
+// "pelunasan"/"tunggakan" karena dua kata itu juga dipakai transaksi pelunasan
+// tunggakan mingguan biasa (processArrears()) yang BUKAN adjustment — kalau
+// dimasukkan, dua jenis transaksi itu jadi ketuker lagi.
+const ADJUSTMENT_FALLBACK_KEYWORDS = [
+    'adjustment', 'adj\\.', 'penyesuaian',
+    'kekurangan kas', 'kelebihan kas', 'refund'
+];
+const ADJUSTMENT_FALLBACK_REGEX = new RegExp('\\b(' + ADJUSTMENT_FALLBACK_KEYWORDS.join('|') + ')\\b', 'i');
+
+window.isAdjustmentTransaction = function (t) {
+    // Sumber kebenaran: flag `is_adjustment` dari backend (BendaharaController::getTransactions()),
+    // yang dihitung dari FK transactions.payment_adjustment_id — diisi hanya saat
+    // adjustment (kekurangan/refund) benar-benar diproses lewat processShortage()/processRefund().
+    if (typeof t.is_adjustment !== 'undefined' && t.is_adjustment !== null) {
+        return !!t.is_adjustment;
+    }
+    // Fallback kalau field belum ada di response (mis. belum sempat deploy ulang API).
+    return ADJUSTMENT_FALLBACK_REGEX.test((t.description || '').toString());
+};
+
+window.isWeeklyPaymentTransaction = function (t) {
+    return !!t.used_in_weekly_payment;
+};
+
+// Satu-satunya sumber kebenaran untuk kategori "Tipe Kas".
+// Dipakai BAIK oleh filter dropdown (applyFilters) MAUPUN oleh kartu transaksi
+// (createIncomeDetailCard), supaya badge yang tampil di kartu selalu konsisten
+// dengan kategori yang dipakai untuk memfilter — tidak ada lagi celah di mana
+// satu transaksi kehitung masuk ke lebih dari satu kategori.
+// Urutan prioritas: adjustment dicek duluan, jadi transaksi koreksi/pelunasan
+// tidak akan pernah nyasar ke kategori "weekly" atau "non_weekly".
+window.classifyIncomeType = function (t) {
+    if (window.isAdjustmentTransaction(t)) return 'adjustment';
+    return window.isWeeklyPaymentTransaction(t) ? 'weekly' : 'non_weekly';
+};
+
 function createIncomeDetailCard(t) {
     const studentName = t.student?.name || (t.used_in_weekly_payment ? 'Siswa' : '');
     const showStudent = !!t.student?.name;
@@ -196,6 +234,13 @@ function createIncomeDetailCard(t) {
         ? `${monthNames[t.weekly_payment_month - 1]} ${t.weekly_payment_year}`
         : null;
 
+    const incomeType = window.classifyIncomeType(t);
+    const typeBadge = incomeType === 'adjustment'
+        ? `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">ADJUSTMENT</span>`
+        : (incomeType === 'weekly'
+            ? `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">WEEKLY</span>`
+            : `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-600 border border-gray-200">DI LUAR WEEKLY</span>`);
+
     return `
         <div class="p-4 hover:bg-gray-50/50 transition-colors">
             <div class="flex items-start justify-between gap-4">
@@ -204,6 +249,7 @@ function createIncomeDetailCard(t) {
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
                             PEMASUKAN
                         </span>
+                        ${typeBadge}
                         <span class="text-sm font-semibold text-gray-900">${escapeHtml(t.description || '')}</span>
                     </div>
                     <div class="mt-1 text-sm text-gray-500 flex gap-3 flex-wrap">
@@ -257,21 +303,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const typeEl = document.getElementById('incomeDetailType');
         const selectedType = typeEl?.value ?? 'all';
 
-        function isAdjustment(t) {
-            const desc = (t.description || '').toString().toLowerCase();
-            return desc.includes('adjustment') || desc.includes('adj.') || desc.includes('pelunasan') || desc.includes('tunggakan') || desc.includes('kekurangan') || desc.includes('pengembalian') || desc.includes('refund');
-        }
-
-        function isWeeklyPayment(t) {
-            return !!t.used_in_weekly_payment;
-        }
-
         function matchesType(t) {
             if (selectedType === 'all') return true;
-            if (selectedType === 'weekly') return isWeeklyPayment(t);
-            if (selectedType === 'non_weekly') return !isWeeklyPayment(t);
-            if (selectedType === 'adjustment') return isAdjustment(t);
-            return true;
+            return window.classifyIncomeType(t) === selectedType;
         }
 
         const filtered = list.filter(t => {
@@ -288,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // - Transaksi yang terhubung weekly payment (used_in_weekly_payment) -> pakai
             //   weekly_payment_month/year (dari relasi weekly_payments.month/year), BUKAN tanggal transaksi.
             // - Transaksi manual (tidak terhubung weekly payment) -> tetap pakai tanggal transaksi (t.date).
-            if (isWeeklyPayment(t)) {
+            if (window.isWeeklyPaymentTransaction(t)) {
                 const wMonth = t.weekly_payment_month;
                 const wYear = t.weekly_payment_year;
 
